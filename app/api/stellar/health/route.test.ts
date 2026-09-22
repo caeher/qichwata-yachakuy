@@ -19,7 +19,8 @@ vi.mock("@/lib/stellar/client", () => ({
 }));
 
 vi.mock("@/lib/stellar/endpoints", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/stellar/endpoints")>();
+  const actual =
+    await importOriginal<typeof import("@/lib/stellar/endpoints")>();
   return {
     ...actual,
     resolveStellarEndpoints: () => ({

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { anchorQuotaExceededBody } from "@/lib/api/anchor-errors";
 import { sessionContext } from "@/lib/api/session";
 import { runAnchorJob } from "@/lib/anchors/job";
 import { getAnchorRuntimeConfig } from "@/lib/anchors/service";
@@ -24,10 +25,7 @@ export async function POST(_request: Request, { params }: Params) {
 
   const runtime = getAnchorRuntimeConfig();
   if (!runtime.configured) {
-    return NextResponse.json(
-      { error: "anchor_unconfigured" },
-      { status: 503 },
-    );
+    return NextResponse.json({ error: "anchor_unconfigured" }, { status: 503 });
   }
 
   const { id } = await params;
@@ -51,11 +49,7 @@ export async function POST(_request: Request, { params }: Params) {
     }
     if (result.error === "anchor_quota_exceeded") {
       return NextResponse.json(
-        {
-          error: "anchor_quota_exceeded",
-          included: result.included,
-          used: result.used,
-        },
+        anchorQuotaExceededBody(result.included, result.used),
         { status: 409 },
       );
     }

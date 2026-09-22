@@ -4,8 +4,7 @@ import { redact } from "@/lib/stellar/redact";
 
 describe("redact", () => {
   it("redacts alchemy key and stellar secret", () => {
-    const secret =
-      "SAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3D";
+    const secret = "SAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3D";
     const env = {
       ALCHEMY_STELLAR_API_KEY: "my-alchemy-key",
       STELLAR_HOT_WALLET_SECRET: secret,

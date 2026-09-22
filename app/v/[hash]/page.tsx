@@ -34,9 +34,7 @@ function ResultBlock({
     | { status: "not_found"; sha256: string };
 }) {
   if (result.status === "not_found") {
-    return (
-      <p className="text-sm">No hay un ancla para este hash.</p>
-    );
+    return <p className="text-sm">No hay un ancla para este hash.</p>;
   }
   return (
     <div className="flex flex-col gap-2 text-sm">

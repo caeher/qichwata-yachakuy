@@ -24,7 +24,11 @@ async function setupUser() {
   return { db, userId };
 }
 
-async function insertDraft(db: Awaited<ReturnType<typeof createTestDb>>["db"], userId: string, sha: string) {
+async function insertDraft(
+  db: Awaited<ReturnType<typeof createTestDb>>["db"],
+  userId: string,
+  sha: string,
+) {
   const [doc] = await db
     .insert(documents)
     .values({

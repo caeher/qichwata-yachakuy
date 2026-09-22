@@ -12,11 +12,7 @@ import type {
   AnchorSubmitResult,
 } from "@/lib/stellar/anchor-types";
 import { mapPollStatus } from "@/lib/stellar/poll-status";
-import {
-  addressToScVal,
-  hashToScVal,
-  metaToScVal,
-} from "@/lib/stellar/scval";
+import { addressToScVal, hashToScVal, metaToScVal } from "@/lib/stellar/scval";
 
 function mapQueryResult(result: unknown): AnchorRecord | null {
   if (result === null || result === undefined) {

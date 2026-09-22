@@ -58,22 +58,22 @@ Abre [http://localhost:3000](http://localhost:3000).
 
 ## Scripts
 
-| Comando               | Descripción                                   |
-| --------------------- | --------------------------------------------- |
-| `pnpm dev`            | Servidor de desarrollo                        |
-| `pnpm build`          | Build de producción (sin credenciales)        |
-| `pnpm start`          | Sirve el build                                |
-| `pnpm test`           | Vitest (PGlite en memoria)                    |
-| `pnpm contract:test`  | Tests del contrato Soroban (Rust)             |
-| `pnpm contract:build` | Compilar WASM del contrato                    |
-| `pnpm contract:deploy`| Desplegar contrato (CLI Stellar v28)          |
-| `pnpm db:generate`    | Generar migraciones Drizzle                   |
-| `pnpm db:migrate`     | Aplicar migraciones (requiere `DATABASE_URL`) |
-| `pnpm db:seed`        | Sembrar planes Free/Pro/Enterprise            |
-| `pnpm lint`           | ESLint                                        |
-| `pnpm typecheck`      | `tsc --noEmit`                                |
-| `pnpm format`         | Prettier (escribe)                            |
-| `pnpm format:check`   | Prettier (solo comprueba)                     |
+| Comando                | Descripción                                   |
+| ---------------------- | --------------------------------------------- |
+| `pnpm dev`             | Servidor de desarrollo                        |
+| `pnpm build`           | Build de producción (sin credenciales)        |
+| `pnpm start`           | Sirve el build                                |
+| `pnpm test`            | Vitest (PGlite en memoria)                    |
+| `pnpm contract:test`   | Tests del contrato Soroban (Rust)             |
+| `pnpm contract:build`  | Compilar WASM del contrato                    |
+| `pnpm contract:deploy` | Desplegar contrato (CLI Stellar v28)          |
+| `pnpm db:generate`     | Generar migraciones Drizzle                   |
+| `pnpm db:migrate`      | Aplicar migraciones (requiere `DATABASE_URL`) |
+| `pnpm db:seed`         | Sembrar planes Free/Pro/Enterprise            |
+| `pnpm lint`            | ESLint                                        |
+| `pnpm typecheck`       | `tsc --noEmit`                                |
+| `pnpm format`          | Prettier (escribe)                            |
+| `pnpm format:check`    | Prettier (solo comprueba)                     |
 
 `next` está fijado en **16.3.5**. No actualices a `latest` sin acordarlo en el proyecto.
 
@@ -87,9 +87,26 @@ Abre [http://localhost:3000](http://localhost:3000).
 
 CI y `pnpm build` **no** requieren claves de Clerk ni base de datos.
 
+`BILLING_ENABLED` queda en `false` por defecto; no hay integración con Stripe ni cobros reales.
+
+## Documentación
+
+- [`docs/architecture.md`](docs/architecture.md) — rutas, datos, cuotas, CI y notas de Vercel
+- [`docs/stellar.md`](docs/stellar.md) — Alchemy, RPC y contrato Soroban
+
+CI: [`.github/workflows/ci.yml`](.github/workflows/ci.yml) (sin secretos en GitHub Actions).
+
 ## Planes de implementación
 
 - [`docs/plans/issue-01-scaffold.md`](docs/plans/issue-01-scaffold.md)
 - [`docs/plans/issue-02-clerk-auth.md`](docs/plans/issue-02-clerk-auth.md)
 - [`docs/plans/issue-03-data-model.md`](docs/plans/issue-03-data-model.md)
 - [`docs/plans/issue-04-upload-sha256.md`](docs/plans/issue-04-upload-sha256.md)
+- [`docs/plans/issue-05-stellar-rpc.md`](docs/plans/issue-05-stellar-rpc.md)
+- [`docs/plans/issue-06-soroban-contract.md`](docs/plans/issue-06-soroban-contract.md)
+- [`docs/plans/issue-07-anchor-job.md`](docs/plans/issue-07-anchor-job.md)
+- [`docs/plans/issue-08-public-verify.md`](docs/plans/issue-08-public-verify.md)
+- [`docs/plans/issue-09-dashboard-ui.md`](docs/plans/issue-09-dashboard-ui.md)
+- [`docs/plans/issue-10-billing-quotas.md`](docs/plans/issue-10-billing-quotas.md)
+- [`docs/plans/issue-11-landing.md`](docs/plans/issue-11-landing.md)
+- [`docs/plans/issue-12-ci-docs.md`](docs/plans/issue-12-ci-docs.md)

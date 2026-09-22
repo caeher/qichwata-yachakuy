@@ -76,11 +76,7 @@ export async function runAnchorJob(
   const requireDetail = async (): Promise<
     DocumentDetail | { error: "not_found" }
   > => {
-    const detail = await loadDocumentDetail(
-      db,
-      input.userId,
-      input.documentId,
-    );
+    const detail = await loadDocumentDetail(db, input.userId, input.documentId);
     if (!detail) {
       return { error: "not_found" };
     }
@@ -204,9 +200,10 @@ export async function runAnchorJob(
     await setPendingTxHash(db, input.documentId, submitted.txHash);
   }
 
-  const polled = submitted.status === "PENDING" && submitted.txHash
-    ? await pollWithBudget(chain, submitted.txHash)
-    : submitted;
+  const polled =
+    submitted.status === "PENDING" && submitted.txHash
+      ? await pollWithBudget(chain, submitted.txHash)
+      : submitted;
 
   if (polled.status === "SUCCESS") {
     try {

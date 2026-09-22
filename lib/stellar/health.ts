@@ -18,9 +18,7 @@ export type HealthSuccessBody = {
   provider: StellarEndpoints["provider"];
 };
 
-export type HealthErrorCode =
-  | "network_mismatch"
-  | "stellar_unreachable";
+export type HealthErrorCode = "network_mismatch" | "stellar_unreachable";
 
 export class NetworkMismatchError extends Error {
   constructor() {
@@ -84,10 +82,7 @@ export async function readHealth(input: {
       }
       if (fallback) {
         try {
-          const result = await probeRpc(
-            fallback,
-            endpoints.expectedPassphrase,
-          );
+          const result = await probeRpc(fallback, endpoints.expectedPassphrase);
           return {
             ok: true,
             network: endpoints.network,

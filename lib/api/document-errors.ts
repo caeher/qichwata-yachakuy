@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { QUOTA_STORAGE } from "@/lib/api/quota-codes";
 import { QuotaExceededError, UploadTooLargeError } from "@/db/quota";
 import {
   ForbiddenFileError,
@@ -16,7 +17,7 @@ export function documentErrorResponse(error: unknown) {
   if (error instanceof QuotaExceededError) {
     return NextResponse.json(
       {
-        error: "quota_exceeded",
+        error: QUOTA_STORAGE,
         limitBytes: error.limitBytes,
         usedBytes: error.usedBytes,
       },

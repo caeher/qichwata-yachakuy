@@ -161,11 +161,12 @@ export function VerifyForm({ initialHash = "" }: Props) {
               <ul className="text-muted-foreground flex flex-col gap-1 text-sm">
                 <li>Red: {result.network}</li>
                 {result.txHash ? <li>Tx: {result.txHash}</li> : null}
-                {result.ledger !== null ? <li>Ledger: {result.ledger}</li> : null}
+                {result.ledger !== null ? (
+                  <li>Ledger: {result.ledger}</li>
+                ) : null}
                 {result.anchoredAt ? (
                   <li>
-                    Fecha:{" "}
-                    {new Date(result.anchoredAt).toLocaleString("es")}
+                    Fecha: {new Date(result.anchoredAt).toLocaleString("es")}
                   </li>
                 ) : null}
                 {result.owner ? (

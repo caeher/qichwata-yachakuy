@@ -42,9 +42,7 @@ describe("resolveStellarEndpoints", () => {
       STELLAR_NETWORK: "mainnet",
       ALCHEMY_STELLAR_API_KEY: "k",
     });
-    expect(endpoints.rpcUrl).toBe(
-      "https://stellar-mainnet.g.alchemy.com/v2/k",
-    );
+    expect(endpoints.rpcUrl).toBe("https://stellar-mainnet.g.alchemy.com/v2/k");
     expect(endpoints.provider).toBe("alchemy");
   });
 

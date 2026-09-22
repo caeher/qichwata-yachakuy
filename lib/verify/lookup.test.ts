@@ -157,9 +157,14 @@ describe("lookupAnchor", () => {
   it("throws ChainUnavailableError when chain fails and db misses", async () => {
     const { db } = await createTestDb();
     await expect(
-      lookupAnchor(db, async () => {
-        throw new Error("rpc down");
-      }, SHA_A, null),
+      lookupAnchor(
+        db,
+        async () => {
+          throw new Error("rpc down");
+        },
+        SHA_A,
+        null,
+      ),
     ).rejects.toBeInstanceOf(ChainUnavailableError);
   });
 

@@ -3,10 +3,7 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/db/client";
 import { FREE_MAX_UPLOAD_BYTES } from "@/db/constants";
 import { createChainLookup } from "@/lib/verify/chain";
-import {
-  buildVerifyClaim,
-  VerifyInputError,
-} from "@/lib/verify/hash-input";
+import { buildVerifyClaim, VerifyInputError } from "@/lib/verify/hash-input";
 import { ChainUnavailableError, lookupWithClaim } from "@/lib/verify/lookup";
 import { clientIp } from "@/lib/verify/rate-limit";
 import { checkVerifyRateLimit } from "@/lib/verify/rate-limit-shared";
@@ -99,10 +96,7 @@ export async function POST(request: Request) {
     return NextResponse.json(result);
   } catch (error) {
     if (error instanceof ChainUnavailableError) {
-      return NextResponse.json(
-        { error: "chain_unavailable" },
-        { status: 503 },
-      );
+      return NextResponse.json({ error: "chain_unavailable" }, { status: 503 });
     }
     throw error;
   }
