@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import { AppClerkProvider } from "@/components/app-clerk-provider";
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
     "SHA-256 de archivos, textos y documentos anclado en Stellar (Soroban).",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
   return (

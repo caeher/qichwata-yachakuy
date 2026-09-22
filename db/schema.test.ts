@@ -116,6 +116,37 @@ describe("schema migrations and seed", () => {
     expect(found?.deletedAt).toBeNull();
   });
 
+  it("allows pending status with pending_tx_hash column", async () => {
+    const { db } = await createTestDb();
+    await seedPlans(db);
+    const free = await db.query.plans.findFirst({
+      where: eq(plans.slug, "free"),
+    });
+    if (!free) throw new Error("missing free plan");
+
+    const [user] = await db
+      .insert(users)
+      .values({ clerkUserId: "pending_user", planId: free.id })
+      .returning();
+
+    const [doc] = await db
+      .insert(documents)
+      .values({
+        userId: user.id,
+        name: "p.txt",
+        mimeType: "text/plain",
+        sizeBytes: 0,
+        sha256: "c".repeat(64),
+        storageKey: `${user.id}/p`,
+        status: "pending",
+        pendingTxHash: null,
+      })
+      .returning();
+
+    expect(doc.status).toBe("pending");
+    expect(doc.pendingTxHash).toBeNull();
+  });
+
   it("creates webhook_events table", async () => {
     const { db } = await createTestDb();
     await db.insert(webhookEvents).values({

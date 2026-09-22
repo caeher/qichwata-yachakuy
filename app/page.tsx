@@ -61,8 +61,14 @@ export default function Home() {
               Entrar
             </Button>
             <Link
-              href="#como-funciona"
+              href="/verify"
               className="border-border bg-background hover:bg-muted hover:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 inline-flex h-8 items-center justify-center rounded-lg border px-2.5 text-sm font-medium whitespace-nowrap transition-all"
+            >
+              Verificar
+            </Link>
+            <Link
+              href="#como-funciona"
+              className="text-muted-foreground hover:text-foreground text-sm font-medium underline-offset-4 hover:underline"
             >
               Ver cómo funciona
             </Link>
@@ -109,7 +115,13 @@ export default function Home() {
       <footer className="border-border border-t">
         <div className="text-muted-foreground mx-auto flex w-full max-w-5xl flex-col gap-1 px-4 py-8 text-sm sm:px-6">
           <p>stellar-data-integrity</p>
-          <p>Aún sin cuentas ni anclaje — solo el scaffold de la aplicación.</p>
+          <p>
+            Verificación pública en{" "}
+            <Link href="/verify" className="underline">
+              /verify
+            </Link>
+            .
+          </p>
         </div>
       </footer>
     </div>

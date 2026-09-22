@@ -24,6 +24,7 @@
 .DS_Store
 *.pem
 .data/
+contracts/anchor/target/
 
 # debug
 npm-debug.log*
