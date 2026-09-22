@@ -56,7 +56,10 @@ export default function Home() {
             prueba anclada en Stellar (Soroban).
           </p>
           <div className="flex flex-wrap items-center gap-3">
-            <Button disabled>Empezar pronto</Button>
+            <Button render={<Link href="/sign-up" />}>Crear cuenta</Button>
+            <Button variant="outline" render={<Link href="/sign-in" />}>
+              Entrar
+            </Button>
             <Link
               href="#como-funciona"
               className="border-border bg-background hover:bg-muted hover:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 inline-flex h-8 items-center justify-center rounded-lg border px-2.5 text-sm font-medium whitespace-nowrap transition-all"

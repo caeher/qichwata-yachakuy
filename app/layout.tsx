@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
+import { AppClerkProvider } from "@/components/app-clerk-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 
 import "./globals.css";
@@ -22,6 +23,8 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
   return (
     <html lang="es" suppressHydrationWarning>
       <body
@@ -33,7 +36,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          {publishableKey ? (
+            <AppClerkProvider>{children}</AppClerkProvider>
+          ) : (
+            children
+          )}
         </ThemeProvider>
       </body>
     </html>
