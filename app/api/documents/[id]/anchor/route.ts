@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 
 import { anchorQuotaExceededBody } from "@/lib/api/anchor-errors";
 import { sessionContext } from "@/lib/api/session";
+import { checkAnchorRateLimit } from "@/lib/http/limits";
+import { rateLimitedResponse } from "@/lib/http/rate-limited";
 import { runAnchorJob } from "@/lib/anchors/job";
 import { getAnchorRuntimeConfig } from "@/lib/anchors/service";
 import { getDb } from "@/db/client";
@@ -21,6 +23,11 @@ export async function POST(_request: Request, { params }: Params) {
       { error: "database_unconfigured" },
       { status: 503 },
     );
+  }
+
+  const anchorRate = checkAnchorRateLimit(session.userId);
+  if (!anchorRate.ok) {
+    return rateLimitedResponse(anchorRate.retryAfterSeconds);
   }
 
   const runtime = getAnchorRuntimeConfig();

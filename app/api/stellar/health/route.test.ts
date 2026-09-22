@@ -60,5 +60,6 @@ describe("GET /api/stellar/health", () => {
     const body = await response.json();
     expect(response.status).toBe(200);
     expect(JSON.stringify(body)).not.toContain("secret-key");
+    expect(body.wallet).toEqual({ configured: false });
   });
 });

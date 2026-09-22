@@ -65,7 +65,12 @@ describe("createDraftDocument", () => {
   it("rejects quota overflow without calling put", async () => {
     const { db, userId } = await setupUser("clerk_quota");
     const put = vi.fn();
-    const storage = { put, get: async () => null, delete: async () => {} };
+    const storage = {
+      put,
+      get: async () => null,
+      delete: async () => {},
+      signedUrl: async () => "/api/storage/download?token=x",
+    };
 
     await db
       .update(users)
@@ -95,7 +100,12 @@ describe("createDraftDocument", () => {
   it("rejects files larger than plan max without calling put", async () => {
     const { db } = await setupUser("clerk_large");
     const put = vi.fn();
-    const storage = { put, get: async () => null, delete: async () => {} };
+    const storage = {
+      put,
+      get: async () => null,
+      delete: async () => {},
+      signedUrl: async () => "/api/storage/download?token=x",
+    };
 
     const oversized = new Uint8Array(FREE_MAX_UPLOAD_BYTES + 1);
     await expect(
@@ -157,6 +167,7 @@ describe("createDraftDocument", () => {
       put: vi.fn().mockRejectedValue(new Error("disk full")),
       get: async () => null,
       delete: async () => {},
+      signedUrl: async () => "/api/storage/download?token=x",
     };
 
     await expect(

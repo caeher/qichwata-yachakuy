@@ -4,7 +4,9 @@ import type { Database } from "@/db/client";
 import type { TestDatabase } from "@/db/pglite";
 import { releaseStorage } from "@/db/quota";
 import { documents } from "@/db/schema";
-import type { ObjectStorage } from "@/lib/storage/types";
+import { recordAudit } from "@/lib/audit/record";
+import type { StorageProvider } from "@/lib/storage/types";
+import { keyBelongsToUser } from "@/lib/uploads/storage-key";
 
 type Db = Database | TestDatabase;
 
@@ -24,7 +26,7 @@ export class DocumentPendingDeleteError extends Error {
 
 export async function deleteDocumentForUser(
   db: Db,
-  storage: ObjectStorage,
+  storage: StorageProvider,
   userId: string,
   documentId: string,
 ): Promise<void> {
@@ -46,12 +48,22 @@ export async function deleteDocumentForUser(
 
   await releaseStorage(db, documentId);
 
-  try {
-    await storage.delete(doc.storageKey);
-  } catch (error) {
-    console.error("storage_delete_failed", {
-      storageKey: doc.storageKey,
-      message: error instanceof Error ? error.message : "unknown",
-    });
+  await recordAudit(db, {
+    userId,
+    action: "document_delete",
+    documentId,
+  });
+
+  if (keyBelongsToUser(doc.storageKey, userId)) {
+    try {
+      await storage.delete(doc.storageKey);
+    } catch (error) {
+      console.error("storage_delete_failed", {
+        storageKey: doc.storageKey,
+        message: error instanceof Error ? error.message : "unknown",
+      });
+    }
+  } else {
+    console.error("storage_key_rejected", { documentId });
   }
 }

@@ -1,30 +1,14 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
+import { sessionContext } from "@/lib/api/session";
 import { getDb } from "@/db/client";
 import { documentErrorResponse } from "@/lib/api/document-errors";
 import { createDraftDocument } from "@/lib/uploads/create-document";
+import { checkUploadRateLimit } from "@/lib/http/limits";
+import { rateLimitedResponse } from "@/lib/http/rate-limited";
 import { createObjectStorage } from "@/lib/storage";
 
 export const runtime = "nodejs";
-
-async function sessionContext() {
-  if (!process.env.CLERK_SECRET_KEY) {
-    return null;
-  }
-  const { userId } = await auth();
-  if (!userId) {
-    return null;
-  }
-  const clerkUser = await currentUser();
-  const email =
-    clerkUser?.emailAddresses.find(
-      (e) => e.id === clerkUser.primaryEmailAddressId,
-    )?.emailAddress ??
-    clerkUser?.emailAddresses[0]?.emailAddress ??
-    null;
-  return { userId, email };
-}
 
 export async function POST(req: Request) {
   const session = await sessionContext();
@@ -36,6 +20,11 @@ export async function POST(req: Request) {
       { error: "database_unconfigured" },
       { status: 503 },
     );
+  }
+
+  const uploadRate = checkUploadRateLimit(session.userId);
+  if (!uploadRate.ok) {
+    return rateLimitedResponse(uploadRate.retryAfterSeconds);
   }
 
   let body: { text?: string; name?: string };

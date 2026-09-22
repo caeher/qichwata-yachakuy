@@ -15,6 +15,7 @@ import type { AuthDb } from "@/lib/auth/provision-user";
 import { loadDocumentDetail } from "@/lib/anchors/document-detail";
 import { stroopsToFeeXlm } from "@/lib/anchors/fee";
 import { logAnchor } from "@/lib/anchors/log";
+import { recordAudit } from "@/lib/audit/record";
 import type { DocumentDetail } from "@/lib/anchors/document-detail";
 import type { AnchorJobResult } from "@/lib/anchors/types";
 import type { AnchorClient } from "@/lib/stellar/anchor-types";
@@ -60,6 +61,12 @@ export async function runAnchorJob(
         documentId: input.documentId,
         included: error.included,
         used: error.used,
+      });
+      await recordAudit(db, {
+        userId: input.userId,
+        action: "anchor_quota",
+        documentId: input.documentId,
+        meta: { included: error.included, used: error.used },
       });
       return {
         error: "anchor_quota_exceeded",
@@ -117,6 +124,12 @@ export async function runAnchorJob(
         txHash: polled.txHash,
         network: input.network,
       });
+      await recordAudit(db, {
+        userId: input.userId,
+        action: "anchor_settled",
+        documentId: input.documentId,
+        meta: { txHash: polled.txHash, network: input.network },
+      });
       const detail = await requireDetail();
       if ("error" in detail) {
         return detail;
@@ -168,6 +181,12 @@ export async function runAnchorJob(
           documentId: input.documentId,
           sha256,
         });
+        await recordAudit(db, {
+          userId: input.userId,
+          action: "anchor_reconcile_missing_tx",
+          documentId: input.documentId,
+          meta: { sha256 },
+        });
         const detail = await requireDetail();
         if ("error" in detail) {
           return detail;
@@ -188,6 +207,12 @@ export async function runAnchorJob(
     documentId: input.documentId,
     sha256,
     network: input.network,
+  });
+  await recordAudit(db, {
+    userId: input.userId,
+    action: "anchor_submit",
+    documentId: input.documentId,
+    meta: { sha256, network: input.network },
   });
 
   const submitted = await chain.submitAnchor({
@@ -229,6 +254,12 @@ export async function runAnchorJob(
       txHash: polled.txHash,
       network: input.network,
     });
+    await recordAudit(db, {
+      userId: input.userId,
+      action: "anchor_settled",
+      documentId: input.documentId,
+      meta: { txHash: polled.txHash, network: input.network },
+    });
     const detail = await requireDetail();
     if ("error" in detail) {
       return detail;
@@ -263,6 +294,12 @@ export async function runAnchorJob(
     logAnchor("anchor_failed", {
       documentId: input.documentId,
       sha256,
+    });
+    await recordAudit(db, {
+      userId: input.userId,
+      action: "anchor_failed",
+      documentId: input.documentId,
+      meta: { sha256 },
     });
     return { error: "anchor_failed" };
   }

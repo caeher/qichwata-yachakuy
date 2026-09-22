@@ -15,24 +15,26 @@
 
 ## Rutas
 
-| Ruta                              | Acceso            | Descripción              |
-| --------------------------------- | ----------------- | ------------------------ |
-| `/`                               | Pública           | Landing                  |
-| `/sign-in`, `/sign-up`            | Pública           | Clerk                    |
-| `/verify`, `/v/[hash]`            | Pública           | Verificación             |
-| `/dashboard`                      | Protegida         | Resumen y cuotas         |
-| `/dashboard/documents`            | Protegida         | Lista de documentos      |
-| `/dashboard/documents/new`        | Protegida         | Subida                   |
-| `/dashboard/documents/[id]`       | Protegida         | Detalle, anclaje, recibo |
-| `/dashboard/billing`              | Protegida         | Plan Free y límites      |
-| `/dashboard/settings`             | Protegida         | Perfil Clerk             |
-| `GET/POST /api/documents`         | Protegida         | Lista y upload           |
-| `POST /api/documents/text`        | Protegida         | Texto                    |
-| `GET/DELETE /api/documents/[id]`  | Protegida         | Detalle y borrado        |
-| `POST /api/documents/[id]/anchor` | Protegida         | Anclaje                  |
-| `GET /api/stellar/health`         | Pública           | Salud RPC                |
-| `POST /api/verify`                | Pública           | Lookup de hash           |
-| `POST /api/webhooks/clerk`        | Pública (firmada) | Provisionado de usuarios |
+| Ruta                               | Acceso            | Descripción              |
+| ---------------------------------- | ----------------- | ------------------------ |
+| `/`                                | Pública           | Landing                  |
+| `/sign-in`, `/sign-up`             | Pública           | Clerk                    |
+| `/verify`, `/v/[hash]`             | Pública           | Verificación             |
+| `/dashboard`                       | Protegida         | Resumen y cuotas         |
+| `/dashboard/documents`             | Protegida         | Lista de documentos      |
+| `/dashboard/documents/new`         | Protegida         | Subida                   |
+| `/dashboard/documents/[id]`        | Protegida         | Detalle, anclaje, recibo |
+| `/dashboard/billing`               | Protegida         | Plan Free y límites      |
+| `/dashboard/settings`              | Protegida         | Perfil Clerk             |
+| `GET/POST /api/documents`          | Protegida         | Lista y upload           |
+| `POST /api/documents/text`         | Protegida         | Texto                    |
+| `GET/DELETE /api/documents/[id]`   | Protegida         | Detalle y borrado        |
+| `GET /api/documents/[id]/download` | Protegida         | URL firmada de descarga  |
+| `GET /api/storage/download`        | Pública (token)   | Redime token local/HMAC  |
+| `POST /api/documents/[id]/anchor`  | Protegida         | Anclaje                  |
+| `GET /api/stellar/health`          | Pública           | Salud RPC                |
+| `POST /api/verify`                 | Pública           | Lookup de hash           |
+| `POST /api/webhooks/clerk`         | Pública (firmada) | Provisionado de usuarios |
 
 Fuente de verdad para rutas API públicas: `lib/auth/public-paths.ts` y `proxy.ts`.
 
@@ -55,7 +57,7 @@ Tablas en `db/schema.ts`:
 - **subscriptions** — fila activa por usuario (Stripe reservado)
 - **webhook_events** — idempotencia Clerk
 
-Borrado de documentos: `deleted_at` + liberación de bytes; el blob se elimina del almacenamiento.
+Borrado de documentos: `deleted_at` + liberación de bytes; el blob se elimina del almacenamiento. Modelo de amenazas: [`docs/security.md`](security.md).
 
 ## Cuotas
 
@@ -76,9 +78,10 @@ El cliente llama `POST /api/documents/:id/anchor`. El servidor firma con `STELLA
 
 ## Almacenamiento
 
-- `STORAGE_DRIVER=local` → `.data/objects`
-- `STORAGE_DRIVER=s3` → R2/AWS (variables `S3_*`)
-- Tests: adaptador en memoria
+- Interfaz `StorageProvider` (`put` / `get` / `delete` / `signedUrl`). Claves `{userId}/{yyyy}/{mm}/{documentId}`; `keyBelongsToUser` en borrado y mint.
+- `STORAGE_DRIVER=local` → `.data/objects`; descarga vía token HMAC en `GET /api/storage/download`.
+- `STORAGE_DRIVER=s3` → R2/AWS (variables `S3_*`); presign `GetObject` ~60 s.
+- Tests: adaptador en memoria. Ver también [`docs/security.md`](security.md) (modelo de amenazas).
 
 ## Entorno
 
@@ -102,19 +105,21 @@ No se crea el proyecto desde este repo. Si despliegas manualmente:
 
 ## Secretos
 
-| Variable                                                | Uso                         | Dónde                                     |
-| ------------------------------------------------------- | --------------------------- | ----------------------------------------- |
-| `DATABASE_URL`                                          | Postgres                    | `.env.local`, host                        |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`                     | UI Clerk                    | `.env.local`, host                        |
-| `CLERK_SECRET_KEY`                                      | Auth servidor               | `.env.local`, host                        |
-| `CLERK_WEBHOOK_SECRET` / `CLERK_WEBHOOK_SIGNING_SECRET` | Webhook                     | `.env.local`, host                        |
-| `STORAGE_DRIVER`, `STORAGE_LOCAL_DIR`                   | Blobs                       | `.env.local`, host                        |
-| `S3_*`                                                  | Solo si `STORAGE_DRIVER=s3` | `.env.local`, host                        |
-| `STELLAR_NETWORK`                                       | testnet/mainnet             | `.env.local`, host                        |
-| `ALCHEMY_STELLAR_API_KEY`                               | RPC Soroban                 | `.env.local`, host (nunca `NEXT_PUBLIC_`) |
-| `STELLAR_HOT_WALLET_SECRET`                             | Firma anclajes              | `.env.local`, host                        |
-| `STELLAR_CONTRACT_ID`                                   | Contrato desplegado         | `.env.local`, host                        |
-| `BILLING_ENABLED`                                       | Interruptor futuro pagos    | `.env.local`, host                        |
+| Variable                                                       | Uso                         | Dónde                                     |
+| -------------------------------------------------------------- | --------------------------- | ----------------------------------------- |
+| `DATABASE_URL`                                                 | Postgres                    | `.env.local`, host                        |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`                            | UI Clerk                    | `.env.local`, host                        |
+| `CLERK_SECRET_KEY`                                             | Auth servidor               | `.env.local`, host                        |
+| `CLERK_WEBHOOK_SECRET` / `CLERK_WEBHOOK_SIGNING_SECRET`        | Webhook                     | `.env.local`, host                        |
+| `STORAGE_DRIVER`, `STORAGE_LOCAL_DIR`                          | Blobs                       | `.env.local`, host                        |
+| `S3_*`                                                         | Solo si `STORAGE_DRIVER=s3` | `.env.local`, host                        |
+| `STORAGE_SIGNED_URL_TTL_SECONDS`, `STORAGE_URL_SIGNING_SECRET` | Descargas local/HMAC        | `.env.local`, host (servidor)             |
+| `STELLAR_HOT_WALLET_MIN_XLM`                                   | Alerta saldo hot wallet     | `.env.local`, host                        |
+| `STELLAR_NETWORK`                                              | testnet/mainnet             | `.env.local`, host                        |
+| `ALCHEMY_STELLAR_API_KEY`                                      | RPC Soroban                 | `.env.local`, host (nunca `NEXT_PUBLIC_`) |
+| `STELLAR_HOT_WALLET_SECRET`                                    | Firma anclajes              | `.env.local`, host                        |
+| `STELLAR_CONTRACT_ID`                                          | Contrato desplegado         | `.env.local`, host                        |
+| `BILLING_ENABLED`                                              | Interruptor futuro pagos    | `.env.local`, host                        |
 
 Nunca commitees `.env.local` ni claves. CI de este repo no usa GitHub Secrets.
 

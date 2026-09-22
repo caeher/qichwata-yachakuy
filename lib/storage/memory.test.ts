@@ -15,4 +15,21 @@ describe("createMemoryStorage", () => {
     expect(loaded).toEqual(body);
     expect(sha256Hex(loaded!)).toBe(hashBefore);
   });
+
+  it("delete removes blob", async () => {
+    const storage = createMemoryStorage();
+    await storage.put("k1", new Uint8Array([1]), "text/plain");
+    await storage.delete("k1");
+    expect(await storage.get("k1")).toBeNull();
+  });
+
+  it("signedUrl returns download path", async () => {
+    const signingKey = new Uint8Array(32).fill(3);
+    const storage = createMemoryStorage({
+      signingKey,
+      nowSeconds: () => 100,
+    });
+    const url = await storage.signedUrl("u/k", { expiresInSeconds: 60 });
+    expect(url.startsWith("/api/storage/download?token=")).toBe(true);
+  });
 });

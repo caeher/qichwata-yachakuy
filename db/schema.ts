@@ -172,6 +172,38 @@ export const subscriptions = pgTable(
   ],
 );
 
+export const auditEvents = pgTable(
+  "audit_events",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id").references(() => users.id),
+    action: text("action").notNull(),
+    documentId: uuid("document_id"),
+    meta: jsonb("meta").notNull().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    check(
+      "audit_events_action_check",
+      sql`${table.action} in (
+        'anchor_submit',
+        'anchor_settled',
+        'anchor_failed',
+        'anchor_quota',
+        'anchor_reconcile_missing_tx',
+        'document_delete',
+        'account_erasure'
+      )`,
+    ),
+    index("audit_events_user_id_created_at_idx").on(
+      table.userId,
+      table.createdAt,
+    ),
+  ],
+);
+
 export const webhookEvents = pgTable("webhook_events", {
   id: text("id").primaryKey(),
   eventType: text("event_type").notNull(),

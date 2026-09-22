@@ -11,6 +11,9 @@ function isPublicApiPath(pathname: string): boolean {
   if (pathname === "/api/verify") {
     return true;
   }
+  if (pathname === "/api/storage/download") {
+    return true;
+  }
   return false;
 }
 
