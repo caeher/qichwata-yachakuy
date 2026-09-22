@@ -24,11 +24,11 @@ Scaffold a pnpm Next.js App Router app pinned to `next@16.3.5`, with TypeScript 
 
 Verified while writing this plan (2026-09-22):
 
-| Tool | Version seen | Requirement |
-| --- | --- | --- |
-| Node | v22.14.0 (`node -v`) | `next@16.3.5` engines: `>=20.9.0`. `prettier-plugin-tailwindcss@0.8.1` engines: `>=20.19`. Use Node 22. |
-| pnpm | 10.33.3 | Prefer the pnpm already on PATH. Do not upgrade pnpm as part of this issue. |
-| corepack | 0.34.6 | Optional. `pnpm` is already installed. |
+| Tool     | Version seen         | Requirement                                                                                             |
+| -------- | -------------------- | ------------------------------------------------------------------------------------------------------- |
+| Node     | v22.14.0 (`node -v`) | `next@16.3.5` engines: `>=20.9.0`. `prettier-plugin-tailwindcss@0.8.1` engines: `>=20.19`. Use Node 22. |
+| pnpm     | 10.33.3              | Prefer the pnpm already on PATH. Do not upgrade pnpm as part of this issue.                             |
+| corepack | 0.34.6               | Optional. `pnpm` is already installed.                                                                  |
 
 `next@16.3.5` and `create-next-app@16.3.5` both exist on the npm registry. Peer range for React is `^18.2.0 || ^19.0.0`. The 16.3.5 app template hard-pins React to `19.2.8` (see `packages/create-next-app/templates/index.ts` on tag `v16.3.5`, `nextjsReactPeerVersion`).
 
@@ -38,19 +38,19 @@ Verified while writing this plan (2026-09-22):
 
 From the v16.3.5 template installer. `next` and `eslint-config-next` are the create-next-app package version (exact, no caret). React is exact.
 
-| Package | Spec in `package.json` |
-| --- | --- |
-| `next` | `16.3.5` |
-| `react` | `19.2.8` |
-| `react-dom` | `19.2.8` |
-| `eslint-config-next` | `16.3.5` (dev) |
-| `typescript` | `^5` (dev) |
-| `@types/node` | `^20` (dev) |
-| `@types/react` | `^19` (dev) |
-| `@types/react-dom` | `^19` (dev) |
-| `tailwindcss` | `^4` (dev) |
-| `@tailwindcss/postcss` | `^4` (dev) |
-| `eslint` | `^9` (dev) |
+| Package                | Spec in `package.json` |
+| ---------------------- | ---------------------- |
+| `next`                 | `16.3.5`               |
+| `react`                | `19.2.8`               |
+| `react-dom`            | `19.2.8`               |
+| `eslint-config-next`   | `16.3.5` (dev)         |
+| `typescript`           | `^5` (dev)             |
+| `@types/node`          | `^20` (dev)            |
+| `@types/react`         | `^19` (dev)            |
+| `@types/react-dom`     | `^19` (dev)            |
+| `tailwindcss`          | `^4` (dev)             |
+| `@tailwindcss/postcss` | `^4` (dev)             |
+| `eslint`               | `^9` (dev)             |
 
 After install, `pnpm-lock.yaml` is the resolved pin for every `^` range. Commit the lockfile. Do not bump `next` or `eslint-config-next` off `16.3.5`.
 
@@ -72,12 +72,12 @@ Do not enable React Compiler. The 16.3.5 default is off. Do not pass `--react-co
 
 Install these exact versions. shadcn runtime deps (`clsx`, `tailwind-merge`, `class-variance-authority`, `lucide-react`, `tw-animate-css`, `@base-ui/react` or `radix-ui`, and the `shadcn` CSS package) are chosen by the CLI. Do not hand-pin them ahead of `shadcn init`. Commit whatever versions the CLI writes into `package.json` and `pnpm-lock.yaml`.
 
-| Package | Spec | Why |
-| --- | --- | --- |
-| `next-themes` | `0.4.6` | Class-based theme provider. Peers include React 19. |
-| `prettier` | `3.9.8` (dev) | Formatter alongside ESLint. |
-| `eslint-config-prettier` | `10.1.8` (dev) | Turns off ESLint rules that fight Prettier. Flat-config compatible. |
-| `prettier-plugin-tailwindcss` | `0.8.1` (dev) | Sorts Tailwind classes. Requires Node `>=20.19` and Prettier 3. |
+| Package                       | Spec           | Why                                                                 |
+| ----------------------------- | -------------- | ------------------------------------------------------------------- |
+| `next-themes`                 | `0.4.6`        | Class-based theme provider. Peers include React 19.                 |
+| `prettier`                    | `3.9.8` (dev)  | Formatter alongside ESLint.                                         |
+| `eslint-config-prettier`      | `10.1.8` (dev) | Turns off ESLint rules that fight Prettier. Flat-config compatible. |
+| `prettier-plugin-tailwindcss` | `0.8.1` (dev)  | Sorts Tailwind classes. Requires Node `>=20.19` and Prettier 3.     |
 
 ## Exact commands
 
@@ -214,14 +214,14 @@ pnpm add -D prettier@3.9.8 eslint-config-prettier@10.1.8 prettier-plugin-tailwin
 
 That is the full UI set for this issue:
 
-| File | Source | Used for |
-| --- | --- | --- |
-| `components/ui/button.tsx` | shadcn `button` | Header toggle trigger and landing CTAs |
-| `components/ui/card.tsx` | shadcn `card` | Three feature cards |
-| `components/ui/dropdown-menu.tsx` | shadcn `dropdown-menu` | Claro / Oscuro / Sistema menu |
-| `components/theme-provider.tsx` | local, not a registry item | `next-themes` wrapper |
-| `components/theme-toggle.tsx` | local, not a registry item | Client toggle |
-| `lib/utils.ts` | shadcn init | `cn` |
+| File                              | Source                     | Used for                               |
+| --------------------------------- | -------------------------- | -------------------------------------- |
+| `components/ui/button.tsx`        | shadcn `button`            | Header toggle trigger and landing CTAs |
+| `components/ui/card.tsx`          | shadcn `card`              | Three feature cards                    |
+| `components/ui/dropdown-menu.tsx` | shadcn `dropdown-menu`     | Claro / Oscuro / Sistema menu          |
+| `components/theme-provider.tsx`   | local, not a registry item | `next-themes` wrapper                  |
+| `components/theme-toggle.tsx`     | local, not a registry item | Client toggle                          |
+| `lib/utils.ts`                    | shadcn init                | `cn`                                   |
 
 Do not run `shadcn add --all`.
 
@@ -260,12 +260,7 @@ const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   prettier,
-  globalIgnores([
-    ".next/**",
-    "out/**",
-    "build/**",
-    "next-env.d.ts",
-  ]),
+  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
 ]);
 ```
 
@@ -454,18 +449,18 @@ Confirm:
 
 ## Acceptance checklist
 
-| Issue criterion | Done when |
-| --- | --- |
-| `create-next-app` with App Router, TypeScript, Tailwind, ESLint | Command in step 2 was used. Evidence: `app/layout.tsx`, `app/page.tsx`, `tsconfig.json` (`strict: true`), `postcss.config.mjs`, `eslint.config.mjs`, `app/globals.css`. |
-| Exact pin `next@16.3.5` | `package.json` `dependencies.next` is `16.3.5` (no caret). `eslint-config-next` is `16.3.5`. Lockfile committed. |
-| shadcn/ui initialized | `components.json` plus `components/ui/button.tsx`, `card.tsx`, `dropdown-menu.tsx` and `lib/utils.ts`. |
-| Root layout typography + theme provider | `app/layout.tsx` loads Geist via `next/font`, `lang="es"`, `suppressHydrationWarning`, and `components/theme-provider.tsx`. Toggle lives in `components/theme-toggle.tsx`. |
-| Minimal landing at `/` | `app/page.tsx` is the Spanish page in step 8. No demo Next.js links. |
-| Scripts `dev`, `build`, `lint`, `typecheck` | Those four keys exist in `package.json` and the step 11 commands exit 0. |
-| README with local setup | `README.md` matches step 10. |
-| `.env.example` with no secrets | File is comments only, and `.gitignore` contains `!.env.example`. |
-| pnpm preferred | `pnpm-lock.yaml` committed, `packageManager` starts with `pnpm@`, no `package-lock.json` or `yarn.lock`. |
-| Prettier alongside ESLint | `.prettierrc.json`, `.prettierignore`, `eslint-config-prettier` last in `eslint.config.mjs`, `format` / `format:check` scripts. |
+| Issue criterion                                                 | Done when                                                                                                                                                                  |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `create-next-app` with App Router, TypeScript, Tailwind, ESLint | Command in step 2 was used. Evidence: `app/layout.tsx`, `app/page.tsx`, `tsconfig.json` (`strict: true`), `postcss.config.mjs`, `eslint.config.mjs`, `app/globals.css`.    |
+| Exact pin `next@16.3.5`                                         | `package.json` `dependencies.next` is `16.3.5` (no caret). `eslint-config-next` is `16.3.5`. Lockfile committed.                                                           |
+| shadcn/ui initialized                                           | `components.json` plus `components/ui/button.tsx`, `card.tsx`, `dropdown-menu.tsx` and `lib/utils.ts`.                                                                     |
+| Root layout typography + theme provider                         | `app/layout.tsx` loads Geist via `next/font`, `lang="es"`, `suppressHydrationWarning`, and `components/theme-provider.tsx`. Toggle lives in `components/theme-toggle.tsx`. |
+| Minimal landing at `/`                                          | `app/page.tsx` is the Spanish page in step 8. No demo Next.js links.                                                                                                       |
+| Scripts `dev`, `build`, `lint`, `typecheck`                     | Those four keys exist in `package.json` and the step 11 commands exit 0.                                                                                                   |
+| README with local setup                                         | `README.md` matches step 10.                                                                                                                                               |
+| `.env.example` with no secrets                                  | File is comments only, and `.gitignore` contains `!.env.example`.                                                                                                          |
+| pnpm preferred                                                  | `pnpm-lock.yaml` committed, `packageManager` starts with `pnpm@`, no `package-lock.json` or `yarn.lock`.                                                                   |
+| Prettier alongside ESLint                                       | `.prettierrc.json`, `.prettierignore`, `eslint-config-prettier` last in `eslint.config.mjs`, `format` / `format:check` scripts.                                            |
 
 ## Risks
 
