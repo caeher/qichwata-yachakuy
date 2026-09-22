@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -11,16 +12,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import type { DocumentDto } from "@/lib/uploads/create-document";
+import { DocumentAnchorPanel } from "@/app/dashboard/document-anchor-panel";
+import type { DocumentDetail } from "@/lib/anchors/document-detail";
 
-type DocumentDto = {
-  id: string;
-  name: string;
-  mimeType: string;
-  sizeBytes: number;
-  sha256: string;
-  status: "draft";
-  createdAt: string;
-};
+function dtoToDetail(dto: DocumentDto): DocumentDetail {
+  return {
+    id: dto.id,
+    name: dto.name,
+    mimeType: dto.mimeType,
+    sizeBytes: dto.sizeBytes,
+    sha256: dto.sha256,
+    status: dto.status,
+    createdAt: dto.createdAt,
+    anchor: null,
+  };
+}
 
 export function UploadForm() {
   const router = useRouter();
@@ -87,6 +94,13 @@ export function UploadForm() {
     }
   }
 
+  const statusDescription: Record<DocumentDto["status"], string> = {
+    draft: "Borrador. Aún no está anclado en Stellar.",
+    pending: "Anclando en Stellar…",
+    anchored: "Anclado en Stellar.",
+    failed: "El anclaje falló.",
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
@@ -125,14 +139,23 @@ export function UploadForm() {
           <CardHeader>
             <CardTitle>{result.name}</CardTitle>
             <CardDescription>
-              Borrador. Aún no está anclado en Stellar.
+              {statusDescription[result.status]}
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             <code className="bg-muted block rounded-md p-3 text-xs break-all">
               {result.sha256}
             </code>
-            <Button disabled>Anclar (próximamente)</Button>
+            <DocumentAnchorPanel detail={dtoToDetail(result)} />
+            <Button
+              variant="outline"
+              className="w-full"
+              render={
+                <Link href={`/dashboard/documents/${result.id}`}>
+                  Ver detalle
+                </Link>
+              }
+            />
           </CardContent>
         </Card>
       ) : null}

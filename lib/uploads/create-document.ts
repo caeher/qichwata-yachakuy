@@ -3,7 +3,11 @@ import { and, desc, eq, isNull } from "drizzle-orm";
 import type { AuthDb } from "@/lib/auth/provision-user";
 import { resolveAppUser } from "@/lib/auth/resolve-app-user";
 import { documents } from "@/db/schema";
-import { reserveStorage, releaseStorage } from "@/db/quota";
+import {
+  reserveStorage,
+  releaseStorage,
+  UploadTooLargeError,
+} from "@/db/quota";
 import { sha256Hex } from "@/lib/uploads/hash";
 import { assertAllowedUpload } from "@/lib/uploads/sniff";
 import type { ObjectStorage } from "@/lib/storage/types";
@@ -14,7 +18,7 @@ export type DocumentDto = {
   mimeType: string;
   sizeBytes: number;
   sha256: string;
-  status: "draft";
+  status: "draft" | "pending" | "anchored" | "failed";
   createdAt: string;
 };
 
@@ -44,7 +48,6 @@ export async function createDraftDocument(
   }
 
   if (input.bytes.byteLength > appUser.maxUploadBytes) {
-    const { UploadTooLargeError } = await import("@/db/quota");
     throw new UploadTooLargeError(appUser.maxUploadBytes);
   }
 
@@ -110,7 +113,7 @@ export async function listDocumentsForUser(db: AuthDb, userId: string) {
     mimeType: doc.mimeType,
     sizeBytes: doc.sizeBytes,
     sha256: doc.sha256,
-    status: doc.status as "draft",
+    status: doc.status as DocumentDto["status"],
     createdAt: doc.createdAt.toISOString(),
   }));
 }

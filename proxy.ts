@@ -2,31 +2,17 @@ import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-function isProtected(pathname: string) {
-  if (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) {
-    return true;
-  }
-  if (!pathname.startsWith("/api/")) {
-    return false;
-  }
-  if (
-    pathname === "/api/webhooks/clerk" ||
-    pathname.startsWith("/api/webhooks/clerk/")
-  ) {
-    return false;
-  }
-  return true;
-}
+import { isProtectedPath } from "@/lib/auth/public-paths";
 
 const runClerk = clerkMiddleware(async (auth, req) => {
-  if (isProtected(req.nextUrl.pathname)) {
+  if (isProtectedPath(req.nextUrl.pathname)) {
     await auth.protect();
   }
 });
 
 export default function proxy(request: NextRequest) {
   if (!process.env.CLERK_SECRET_KEY) {
-    if (isProtected(request.nextUrl.pathname)) {
+    if (isProtectedPath(request.nextUrl.pathname)) {
       const signIn = new URL("/sign-in", request.url);
       return NextResponse.redirect(signIn);
     }

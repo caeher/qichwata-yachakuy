@@ -3,7 +3,9 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { DashboardUserMenu } from "@/components/dashboard-user-menu";
 import { SiteHeader } from "@/components/site-header";
 import { UploadForm } from "@/app/dashboard/upload-form";
+import { countSuccessfulAnchorsThisMonth } from "@/db/anchor-quota";
 import { getDb } from "@/db/client";
+import { FREE_MONTHLY_ANCHORS } from "@/db/constants";
 import { formatBytes } from "@/lib/format-bytes";
 import { resolveAppUser } from "@/lib/auth/resolve-app-user";
 
@@ -36,6 +38,7 @@ export default async function DashboardPage() {
 
   let usageLine =
     "Configura DATABASE_URL y ejecuta pnpm db:migrate && pnpm db:seed.";
+  let anchorLine: string | null = null;
   let planLabel = "Gratis";
 
   if (process.env.DATABASE_URL) {
@@ -45,6 +48,11 @@ export default async function DashboardPage() {
       if (appUser) {
         planLabel = appUser.planSlug === "free" ? "Gratis" : appUser.planName;
         usageLine = `${formatBytes(appUser.storageUsedBytes)} de ${formatBytes(appUser.storageLimitBytes)}`;
+        const usedAnchors = await countSuccessfulAnchorsThisMonth(
+          db,
+          appUser.id,
+        );
+        anchorLine = `Anclajes este mes: ${usedAnchors} de ${FREE_MONTHLY_ANCHORS}`;
       }
     } catch {
       usageLine =
@@ -66,6 +74,7 @@ export default async function DashboardPage() {
           </p>
           <p className="text-sm">
             Plan {planLabel} · {usageLine}
+            {anchorLine ? ` · ${anchorLine}` : null}
           </p>
         </section>
         <UploadForm />

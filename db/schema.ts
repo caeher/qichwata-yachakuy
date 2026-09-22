@@ -72,6 +72,8 @@ export const documents = pgTable(
     sha256: char("sha256", { length: 64 }).notNull(),
     storageKey: text("storage_key").notNull(),
     status: text("status").notNull().default("draft"),
+    pendingTxHash: text("pending_tx_hash"),
+    pendingAt: timestamp("pending_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -80,7 +82,7 @@ export const documents = pgTable(
   (table) => [
     check(
       "documents_status_check",
-      sql`${table.status} in ('draft', 'anchored', 'failed')`,
+      sql`${table.status} in ('draft', 'pending', 'anchored', 'failed')`,
     ),
     index("documents_sha256_idx").on(table.sha256),
     index("documents_user_id_idx").on(table.userId),
