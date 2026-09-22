@@ -45,7 +45,9 @@ export default async function SettingsPage() {
           <p>Correo: {email ?? "Sin correo"}</p>
           <p>Plan: {usage?.planName ?? "—"}</p>
           <p className="text-muted-foreground pt-2">
-            La cuenta la gestiona Clerk.
+            La cuenta la gestiona Clerk. Si eliminas la cuenta en Clerk,
+            borramos el archivo y tus datos de perfil. El anclaje en Stellar, si
+            existe, no se puede borrar.
           </p>
         </CardContent>
       </Card>

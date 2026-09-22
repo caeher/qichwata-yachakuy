@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { createTestDb } from "@/db/pglite";
 import { seedPlans } from "@/db/seed";
-import { documents, usageEvents } from "@/db/schema";
+import { auditEvents, documents, usageEvents } from "@/db/schema";
 import { provisionFreePlan } from "@/lib/auth/provision-user";
 import { runAnchorJob } from "@/lib/anchors/job";
 import type { AnchorClient } from "@/lib/stellar/anchor-types";
@@ -68,6 +68,13 @@ describe("runAnchorJob", () => {
     }
     const events = await db.select().from(usageEvents);
     expect(events.filter((e) => e.type === "anchor")).toHaveLength(1);
+    const audits = await db
+      .select()
+      .from(auditEvents)
+      .where(eq(auditEvents.documentId, doc.id));
+    expect(audits.map((a) => a.action).sort()).toEqual(
+      ["anchor_settled", "anchor_submit"].sort(),
+    );
   });
 
   it("returns hash_already_anchored when meta differs", async () => {

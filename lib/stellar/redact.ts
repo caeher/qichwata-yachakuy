@@ -1,3 +1,5 @@
+import { SERVER_SECRET_ENV_NAMES } from "@/lib/env/secret-names";
+
 const SECRET_PATTERN = /\bS[A-Z2-7]{55}\b/g;
 
 export function redact(
@@ -5,13 +7,11 @@ export function redact(
   env: Record<string, string | undefined> = process.env,
 ): string {
   let out = text;
-  const key = env.ALCHEMY_STELLAR_API_KEY?.trim();
-  if (key && key.length > 0) {
-    out = out.split(key).join("[redacted]");
-  }
-  const hot = env.STELLAR_HOT_WALLET_SECRET?.trim();
-  if (hot && hot.length > 0) {
-    out = out.split(hot).join("[redacted]");
+  for (const name of SERVER_SECRET_ENV_NAMES) {
+    const value = env[name]?.trim();
+    if (value && value.length > 0) {
+      out = out.split(value).join("[redacted]");
+    }
   }
   out = out.replace(SECRET_PATTERN, "[redacted]");
   return out;

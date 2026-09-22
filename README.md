@@ -38,8 +38,8 @@ Abre [http://localhost:3000](http://localhost:3000).
 ## Almacenamiento y límites (plan Gratis)
 
 - `STORAGE_DRIVER=local` (por defecto) guarda blobs en `STORAGE_LOCAL_DIR` (`.data/objects`).
-- Tests usan almacenamiento en memoria; **no** hace falta S3 en CI.
-- Con `STORAGE_DRIVER=s3`, rellena las variables `S3_*` en `.env.local`.
+- Tests usan almacenamiento en memoria; **no** hace falta S3/R2 en CI.
+- Con `STORAGE_DRIVER=s3`, rellena las variables `S3_*` en `.env.local` (Cloudflare R2 o AWS). Las descargas usan URLs firmadas de ~60 s (`GET /api/documents/:id/download`).
 - Plan Gratis: **100 MiB** de almacenamiento total, **25 MiB** por archivo, **10** anclajes/mes (cuota en servidor; anclajes exitosos + documentos `pending` en el mes UTC).
 
 ## Stellar (RPC, anclaje, contrato)
@@ -93,6 +93,7 @@ CI y `pnpm build` **no** requieren claves de Clerk ni base de datos.
 
 - [`docs/architecture.md`](docs/architecture.md) — rutas, datos, cuotas, CI y notas de Vercel
 - [`docs/stellar.md`](docs/stellar.md) — Alchemy, RPC y contrato Soroban
+- [`docs/security.md`](docs/security.md) — Modelo de amenazas y controles
 
 CI: [`.github/workflows/ci.yml`](.github/workflows/ci.yml) (sin secretos en GitHub Actions).
 
@@ -110,3 +111,5 @@ CI: [`.github/workflows/ci.yml`](.github/workflows/ci.yml) (sin secretos en GitH
 - [`docs/plans/issue-10-billing-quotas.md`](docs/plans/issue-10-billing-quotas.md)
 - [`docs/plans/issue-11-landing.md`](docs/plans/issue-11-landing.md)
 - [`docs/plans/issue-12-ci-docs.md`](docs/plans/issue-12-ci-docs.md)
+- [`docs/plans/issue-13-object-storage.md`](docs/plans/issue-13-object-storage.md)
+- [`docs/plans/issue-14-security.md`](docs/plans/issue-14-security.md)

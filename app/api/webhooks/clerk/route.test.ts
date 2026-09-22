@@ -5,8 +5,9 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { createTestDb } from "@/db/pglite";
 import { seedPlans } from "@/db/seed";
-import { users, webhookEvents } from "@/db/schema";
+import { documents, users, webhookEvents } from "@/db/schema";
 import { handleClerkWebhook } from "@/lib/auth/clerk-webhook";
+import { createMemoryStorage } from "@/lib/storage/memory";
 
 const TEST_SECRET =
   "whsec_" +
@@ -113,6 +114,7 @@ describe("POST /api/webhooks/clerk (handleClerkWebhook)", () => {
     const { db } = await createTestDb();
     await seedPlans(db);
     process.env.CLERK_WEBHOOK_SIGNING_SECRET = TEST_SECRET;
+    const storage = createMemoryStorage();
 
     await handleClerkWebhook(
       db,
@@ -124,7 +126,23 @@ describe("POST /api/webhooks/clerk (handleClerkWebhook)", () => {
           primary_email_address_id: null,
         },
       }),
+      storage,
     );
+
+    const user = await db.query.users.findFirst({
+      where: eq(users.clerkUserId, "user_del_wh"),
+    });
+    const storageKey = `${user!.id}/blob`;
+    await db.insert(documents).values({
+      userId: user!.id,
+      name: "f.txt",
+      mimeType: "text/plain",
+      sizeBytes: 1,
+      sha256: "d".repeat(64),
+      storageKey,
+      status: "draft",
+    });
+    await storage.put(storageKey, new Uint8Array([1]), "text/plain");
 
     const delRes = await handleClerkWebhook(
       db,
@@ -132,12 +150,15 @@ describe("POST /api/webhooks/clerk (handleClerkWebhook)", () => {
         type: "user.deleted",
         data: { id: "user_del_wh" },
       }),
+      storage,
     );
     expect(delRes.status).toBe(200);
 
-    const user = await db.query.users.findFirst({
+    const userAfter = await db.query.users.findFirst({
       where: eq(users.clerkUserId, "user_del_wh"),
     });
-    expect(user?.deletedAt).not.toBeNull();
+    expect(userAfter?.deletedAt).not.toBeNull();
+    expect(userAfter?.email).toBeNull();
+    expect(await storage.get(storageKey)).toBeNull();
   });
 });

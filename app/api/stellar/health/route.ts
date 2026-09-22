@@ -14,6 +14,7 @@ import {
   type StellarProbe,
 } from "@/lib/stellar/health";
 import { redact } from "@/lib/stellar/redact";
+import { readHotWalletStatus } from "@/lib/stellar/wallet-balance";
 
 export const runtime = "nodejs";
 
@@ -73,7 +74,38 @@ export async function GET() {
         ),
       );
     }
-    return NextResponse.json(body);
+    const walletSecret = process.env.STELLAR_HOT_WALLET_SECRET?.trim();
+    let wallet: Awaited<ReturnType<typeof readHotWalletStatus>> = {
+      configured: false,
+    };
+    if (walletSecret) {
+      wallet = await readHotWalletStatus({
+        secret: walletSecret,
+        network: endpoints.network,
+        minXlmEnv: process.env.STELLAR_HOT_WALLET_MIN_XLM,
+        loadAccount: (publicKey) => clients.horizon.loadAccount(publicKey),
+      });
+      if (
+        wallet.configured &&
+        !("error" in wallet) &&
+        "low" in wallet &&
+        wallet.low
+      ) {
+        console.warn(
+          redact(
+            JSON.stringify({
+              msg: "hot_wallet_low_balance",
+              publicKey: wallet.publicKey,
+              nativeXlm: wallet.nativeXlm,
+              minXlm: wallet.minXlm,
+              network: endpoints.network,
+            }),
+          ),
+        );
+      }
+    }
+
+    return NextResponse.json({ ...body, wallet });
   } catch (error) {
     if (error instanceof NetworkMismatchError) {
       return NextResponse.json({ error: "network_mismatch" }, { status: 502 });

@@ -5,6 +5,7 @@ import { FREE_MAX_UPLOAD_BYTES } from "@/db/constants";
 import { createChainLookup } from "@/lib/verify/chain";
 import { buildVerifyClaim, VerifyInputError } from "@/lib/verify/hash-input";
 import { ChainUnavailableError, lookupWithClaim } from "@/lib/verify/lookup";
+import { rateLimitedResponse } from "@/lib/http/rate-limited";
 import { clientIp } from "@/lib/verify/rate-limit";
 import { checkVerifyRateLimit } from "@/lib/verify/rate-limit-shared";
 
@@ -13,13 +14,7 @@ export const runtime = "nodejs";
 export async function POST(request: Request) {
   const rate = checkVerifyRateLimit(clientIp(request.headers));
   if (!rate.ok) {
-    return NextResponse.json(
-      { error: "rate_limited", retryAfterSeconds: rate.retryAfterSeconds },
-      {
-        status: 429,
-        headers: { "Retry-After": String(rate.retryAfterSeconds) },
-      },
-    );
+    return rateLimitedResponse(rate.retryAfterSeconds);
   }
 
   if (!process.env.DATABASE_URL) {

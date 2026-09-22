@@ -10,7 +10,8 @@ import {
 } from "@/db/quota";
 import { sha256Hex } from "@/lib/uploads/hash";
 import { assertAllowedUpload } from "@/lib/uploads/sniff";
-import type { ObjectStorage } from "@/lib/storage/types";
+import type { StorageProvider } from "@/lib/storage/types";
+import { storageKeyFor } from "@/lib/uploads/storage-key";
 
 export type DocumentDto = {
   id: string;
@@ -30,16 +31,9 @@ export type CreateDraftInput = {
   bytes: Uint8Array;
 };
 
-function storageKeyFor(userId: string, documentId: string) {
-  const now = new Date();
-  const yyyy = now.getUTCFullYear();
-  const mm = String(now.getUTCMonth() + 1).padStart(2, "0");
-  return `${userId}/${yyyy}/${mm}/${documentId}`;
-}
-
 export async function createDraftDocument(
   db: AuthDb,
-  storage: ObjectStorage,
+  storage: StorageProvider,
   input: CreateDraftInput,
 ): Promise<DocumentDto> {
   const appUser = await resolveAppUser(db, input.clerkUserId, input.email);

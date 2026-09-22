@@ -33,11 +33,29 @@ export function DocumentActions({ doc, variant = "menu" }: Props) {
   const router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   const deleteDescription =
     doc.status === "anchored"
       ? "Se quitará de tu cuenta y se liberará el espacio. El hash puede seguir en Stellar. La verificación pública puede seguir encontrándolo en la red."
       : "Se eliminará el documento y se liberará el espacio.";
+
+  async function downloadDocument() {
+    setDownloading(true);
+    try {
+      const response = await fetch(`/api/documents/${doc.id}/download`);
+      if (!response.ok) {
+        toast.error("No se pudo descargar el documento.");
+        return;
+      }
+      const body = (await response.json()) as { url: string };
+      window.location.assign(body.url);
+    } catch {
+      toast.error("No se pudo descargar el documento.");
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   async function confirmDelete() {
     setDeleting(true);
@@ -69,6 +87,14 @@ export function DocumentActions({ doc, variant = "menu" }: Props) {
         <CopyHashButton sha256={doc.sha256} />
         <Button variant="outline" render={<Link href={`/v/${doc.sha256}`} />}>
           Abrir verificación
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={downloading}
+          onClick={downloadDocument}
+        >
+          {downloading ? "Preparando…" : "Descargar"}
         </Button>
         <Button
           type="button"

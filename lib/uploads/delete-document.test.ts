@@ -31,6 +31,7 @@ describe("deleteDocumentForUser", () => {
     const { db, userId } = await setup();
     const storage = createMemoryStorage();
     const sha = "d".repeat(64);
+    const storageKey = `${userId}/k1`;
     const [doc] = await db
       .insert(documents)
       .values({
@@ -39,7 +40,7 @@ describe("deleteDocumentForUser", () => {
         mimeType: "text/plain",
         sizeBytes: 100,
         sha256: sha,
-        storageKey: "k1",
+        storageKey,
         status: "draft",
       })
       .returning();
@@ -47,12 +48,13 @@ describe("deleteDocumentForUser", () => {
       .update(users)
       .set({ storageUsedBytes: 100 })
       .where(eq(users.id, userId));
-    await storage.put("k1", new Uint8Array([1]), "text/plain");
+    await storage.put(storageKey, new Uint8Array([1]), "text/plain");
     const del = vi.spyOn(storage, "delete");
 
     await deleteDocumentForUser(db, storage, userId, doc.id);
 
-    expect(del).toHaveBeenCalledWith("k1");
+    expect(del).toHaveBeenCalledWith(storageKey);
+    expect(await storage.get(storageKey)).toBeNull();
     const row = await db.query.documents.findFirst({
       where: eq(documents.id, doc.id),
     });
@@ -61,6 +63,39 @@ describe("deleteDocumentForUser", () => {
       where: eq(users.id, userId),
     });
     expect(user?.storageUsedBytes).toBe(0);
+  });
+
+  it("does not delete blob when key prefix mismatches", async () => {
+    const { db, userId } = await setup();
+    const storage = createMemoryStorage();
+    const blobKey = "other/secret";
+    const [doc] = await db
+      .insert(documents)
+      .values({
+        userId,
+        name: "x.txt",
+        mimeType: "text/plain",
+        sizeBytes: 10,
+        sha256: "a".repeat(64),
+        storageKey: blobKey,
+        status: "draft",
+      })
+      .returning();
+    await db
+      .update(users)
+      .set({ storageUsedBytes: 10 })
+      .where(eq(users.id, userId));
+    await storage.put(blobKey, new Uint8Array([2]), "text/plain");
+    const del = vi.spyOn(storage, "delete");
+
+    await deleteDocumentForUser(db, storage, userId, doc.id);
+
+    expect(del).not.toHaveBeenCalled();
+    expect(await storage.get(blobKey)).not.toBeNull();
+    const row = await db.query.documents.findFirst({
+      where: eq(documents.id, doc.id),
+    });
+    expect(row?.deletedAt).not.toBeNull();
   });
 
   it("returns not found for other user", async () => {
@@ -74,7 +109,7 @@ describe("deleteDocumentForUser", () => {
         mimeType: "text/plain",
         sizeBytes: 1,
         sha256: "e".repeat(64),
-        storageKey: "k2",
+        storageKey: `${userId}/k2`,
         status: "draft",
       })
       .returning();
@@ -95,7 +130,7 @@ describe("deleteDocumentForUser", () => {
         mimeType: "text/plain",
         sizeBytes: 1,
         sha256: "f".repeat(64),
-        storageKey: "k3",
+        storageKey: `${userId}/k3`,
         status: "pending",
       })
       .returning();
@@ -116,7 +151,7 @@ describe("deleteDocumentForUser", () => {
         mimeType: "text/plain",
         sizeBytes: 50,
         sha256: "b".repeat(64),
-        storageKey: "k4",
+        storageKey: `${userId}/k4`,
         status: "anchored",
       })
       .returning();

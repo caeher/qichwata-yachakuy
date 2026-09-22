@@ -6,6 +6,15 @@ describe("isProtectedPath", () => {
   it("allows public stellar health and verify", () => {
     expect(isProtectedPath("/api/stellar/health")).toBe(false);
     expect(isProtectedPath("/api/verify")).toBe(false);
+    expect(isProtectedPath("/api/storage/download")).toBe(false);
+  });
+
+  it("protects document mutations and mint download", () => {
+    const id = "00000000-0000-4000-8000-000000000000";
+    expect(isProtectedPath(`/api/documents/${id}/anchor`)).toBe(true);
+    expect(isProtectedPath(`/api/documents/${id}`)).toBe(true);
+    expect(isProtectedPath(`/api/documents/${id}/download`)).toBe(true);
+    expect(isProtectedPath("/api/storage")).toBe(true);
   });
 
   it("protects documents api", () => {
