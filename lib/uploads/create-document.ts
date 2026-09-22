@@ -100,12 +100,17 @@ export async function createDraftDocument(
   };
 }
 
-export async function listDocumentsForUser(db: AuthDb, userId: string) {
+export async function listDocumentsForUser(
+  db: AuthDb,
+  userId: string,
+  limit = 100,
+) {
   const rows = await db
     .select()
     .from(documents)
     .where(and(eq(documents.userId, userId), isNull(documents.deletedAt)))
-    .orderBy(desc(documents.createdAt));
+    .orderBy(desc(documents.createdAt))
+    .limit(limit);
 
   return rows.map((doc) => ({
     id: doc.id,

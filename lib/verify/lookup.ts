@@ -50,10 +50,7 @@ export async function lookupWithClaim(
   claim: { sha256: string; claimedSha256: string | null },
   contractId: string | null,
 ): Promise<VerifyResult> {
-  if (
-    claim.claimedSha256 !== null &&
-    claim.sha256 !== claim.claimedSha256
-  ) {
+  if (claim.claimedSha256 !== null && claim.sha256 !== claim.claimedSha256) {
     return {
       status: "mismatch",
       sha256: claim.sha256,

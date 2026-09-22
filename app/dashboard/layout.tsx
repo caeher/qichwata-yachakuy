@@ -1,6 +1,11 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
+import { DashboardNav } from "@/components/dashboard-nav";
+import { DashboardUserMenu } from "@/components/dashboard-user-menu";
+import { SiteHeader } from "@/components/site-header";
+import { Toaster } from "@/components/ui/sonner";
+
 export default async function DashboardLayout({
   children,
 }: {
@@ -15,5 +20,15 @@ export default async function DashboardLayout({
     redirect("/sign-in");
   }
 
-  return children;
+  return (
+    <div className="flex min-h-svh flex-col">
+      <SiteHeader
+        trailing={<DashboardUserMenu />}
+        title="stellar-data-integrity"
+      />
+      <DashboardNav />
+      {children}
+      <Toaster />
+    </div>
+  );
 }

@@ -10,7 +10,8 @@ export type StellarEndpoints = {
 };
 
 export const TESTNET_PASSPHRASE = "Test SDF Network ; September 2015";
-export const MAINNET_PASSPHRASE = "Public Global Stellar Network ; September 2015";
+export const MAINNET_PASSPHRASE =
+  "Public Global Stellar Network ; September 2015";
 
 const PUBLIC_TESTNET_RPC = "https://soroban-testnet.stellar.org";
 const PUBLIC_TESTNET_HORIZON = "https://horizon-testnet.stellar.org";
@@ -24,7 +25,9 @@ function trimKey(raw: string | undefined): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-function resolveNetwork(env: Record<string, string | undefined>): StellarNetwork {
+function resolveNetwork(
+  env: Record<string, string | undefined>,
+): StellarNetwork {
   const raw = env.STELLAR_NETWORK?.trim();
   if (!raw || raw === "testnet") {
     return "testnet";

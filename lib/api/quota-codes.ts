@@ -1,0 +1,2 @@
+export const QUOTA_STORAGE = "QUOTA_STORAGE";
+export const QUOTA_ANCHORS = "QUOTA_ANCHORS";

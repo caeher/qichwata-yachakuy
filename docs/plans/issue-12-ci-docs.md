@@ -130,19 +130,19 @@ If a host in this list disagrees with `lib/stellar/endpoints.ts`, the TypeScript
 
 Add this table to `docs/architecture.md` and a shorter pointer in the README. "Dónde" means the only places a value may live.
 
-| Variable | Required for | Where | Notes |
-| --- | --- | --- | --- |
-| `DATABASE_URL` | Dashboard and API against Postgres | `.env.local`, host env | Not required for CI, `pnpm build`, or `pnpm test`. Pooled Neon URL uses `sslmode=require`. |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk UI | `.env.local`, host env | Public by design. Empty in CI. |
-| `CLERK_SECRET_KEY` | Auth gate | `.env.local`, host env | Server only. |
-| `CLERK_WEBHOOK_SECRET` / `CLERK_WEBHOOK_SIGNING_SECRET` | `POST /api/webhooks/clerk` | `.env.local`, host env | Server only. Both names are accepted. |
-| `STORAGE_DRIVER`, `STORAGE_LOCAL_DIR` | Blob storage | `.env.local`, host env | Default `local` and `.data/objects`. |
-| `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | Only when `STORAGE_DRIVER=s3` | `.env.local`, host env | Never commit. |
-| `STELLAR_NETWORK` | Anchor and health | `.env.local`, host env | `testnet` or `mainnet`. Not a secret. |
-| `ALCHEMY_STELLAR_API_KEY` | Hosted Soroban RPC | `.env.local`, host env | Server only. Redacted in logs. |
-| `STELLAR_HOT_WALLET_SECRET` | Submitting anchors | `.env.local`, host env | Server only. Never `NEXT_PUBLIC_`. |
-| `STELLAR_CONTRACT_ID` | Anchor and chain verify | `.env.local`, host env | Not a key, but do not treat a deployed id as something to commit if it is environment-specific. Empty in CI. |
-| `BILLING_ENABLED` | Future payments | `.env.local`, host env | Default `false`. No Stripe keys exist. |
+| Variable                                                                            | Required for                       | Where                  | Notes                                                                                                        |
+| ----------------------------------------------------------------------------------- | ---------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `DATABASE_URL`                                                                      | Dashboard and API against Postgres | `.env.local`, host env | Not required for CI, `pnpm build`, or `pnpm test`. Pooled Neon URL uses `sslmode=require`.                   |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`                                                 | Clerk UI                           | `.env.local`, host env | Public by design. Empty in CI.                                                                               |
+| `CLERK_SECRET_KEY`                                                                  | Auth gate                          | `.env.local`, host env | Server only.                                                                                                 |
+| `CLERK_WEBHOOK_SECRET` / `CLERK_WEBHOOK_SIGNING_SECRET`                             | `POST /api/webhooks/clerk`         | `.env.local`, host env | Server only. Both names are accepted.                                                                        |
+| `STORAGE_DRIVER`, `STORAGE_LOCAL_DIR`                                               | Blob storage                       | `.env.local`, host env | Default `local` and `.data/objects`.                                                                         |
+| `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | Only when `STORAGE_DRIVER=s3`      | `.env.local`, host env | Never commit.                                                                                                |
+| `STELLAR_NETWORK`                                                                   | Anchor and health                  | `.env.local`, host env | `testnet` or `mainnet`. Not a secret.                                                                        |
+| `ALCHEMY_STELLAR_API_KEY`                                                           | Hosted Soroban RPC                 | `.env.local`, host env | Server only. Redacted in logs.                                                                               |
+| `STELLAR_HOT_WALLET_SECRET`                                                         | Submitting anchors                 | `.env.local`, host env | Server only. Never `NEXT_PUBLIC_`.                                                                           |
+| `STELLAR_CONTRACT_ID`                                                               | Anchor and chain verify            | `.env.local`, host env | Not a key, but do not treat a deployed id as something to commit if it is environment-specific. Empty in CI. |
+| `BILLING_ENABLED`                                                                   | Future payments                    | `.env.local`, host env | Default `false`. No Stripe keys exist.                                                                       |
 
 Rules to state in prose:
 

@@ -23,15 +23,15 @@ Do not add Playwright, Testing Library, Stripe, or a new data table library.
 
 ## What already exists
 
-| Route | Today |
-| --- | --- |
-| `/dashboard` | Plan name, storage sentence, anchor sentence, and the upload form inline. No nav, no progress, no recent-document list. Anchor count uses the constant `FREE_MONTHLY_ANCHORS`, not the user's plan row. |
-| `/dashboard/documents` | Missing. `GET /api/documents` and `listDocumentsForUser` already return the caller's non-deleted documents, newest first, as `DocumentDto` (no `storageKey`). |
-| `/dashboard/documents/new` | Missing. Upload lives in `app/dashboard/upload-form.tsx` (`POST /api/documents` or `POST /api/documents/text`). |
-| `/dashboard/documents/[id]` | Server page: name, status sentence, hash, `DocumentAnchorPanel`. No copy, no verify link, no receipt card, no delete. |
-| `/dashboard/billing` | Missing. |
-| `/dashboard/settings` | Missing. Header shows Clerk `UserButton` via `DashboardUserMenu`. |
-| `/v/[hash]`, `/verify` | Public verify from #8. "Abrir verificación" must link to `/v/<sha256>`. |
+| Route                       | Today                                                                                                                                                                                                   |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/dashboard`                | Plan name, storage sentence, anchor sentence, and the upload form inline. No nav, no progress, no recent-document list. Anchor count uses the constant `FREE_MONTHLY_ANCHORS`, not the user's plan row. |
+| `/dashboard/documents`      | Missing. `GET /api/documents` and `listDocumentsForUser` already return the caller's non-deleted documents, newest first, as `DocumentDto` (no `storageKey`).                                           |
+| `/dashboard/documents/new`  | Missing. Upload lives in `app/dashboard/upload-form.tsx` (`POST /api/documents` or `POST /api/documents/text`).                                                                                         |
+| `/dashboard/documents/[id]` | Server page: name, status sentence, hash, `DocumentAnchorPanel`. No copy, no verify link, no receipt card, no delete.                                                                                   |
+| `/dashboard/billing`        | Missing.                                                                                                                                                                                                |
+| `/dashboard/settings`       | Missing. Header shows Clerk `UserButton` via `DashboardUserMenu`.                                                                                                                                       |
+| `/v/[hash]`, `/verify`      | Public verify from #8. "Abrir verificación" must link to `/v/<sha256>`.                                                                                                                                 |
 
 `app/dashboard/layout.tsx` only checks Clerk and redirects anonymous users to `/sign-in`. `isProtectedPath` already treats every `/dashboard` and `/dashboard/*` path as protected. New pages do not need a `proxy.ts` change.
 
@@ -69,12 +69,12 @@ Move the repeated header into the dashboard layout so every screen shares it.
 
 Nav links (Spanish), `aria-current="page"` on the active one:
 
-| Label | href |
-| --- | --- |
-| Resumen | `/dashboard` |
-| Documentos | `/dashboard/documents` |
-| Facturación | `/dashboard/billing` |
-| Ajustes | `/dashboard/settings` |
+| Label       | href                   |
+| ----------- | ---------------------- |
+| Resumen     | `/dashboard`           |
+| Documentos  | `/dashboard/documents` |
+| Facturación | `/dashboard/billing`   |
+| Ajustes     | `/dashboard/settings`  |
 
 Desktop: a horizontal row under the header, inside `max-w-5xl`. Mobile: the same row wraps; do not add a sidebar package. Hit targets stay at least the `Button` `sm` height.
 
@@ -98,22 +98,22 @@ Primary action on the page: "Nuevo documento" → `/dashboard/documents/new`.
 
 Status badge labels:
 
-| status | label |
-| --- | --- |
-| `draft` | Borrador |
-| `pending` | Pendiente |
-| `anchored` | Anclado |
-| `failed` | Fallido |
+| status     | label     |
+| ---------- | --------- |
+| `draft`    | Borrador  |
+| `pending`  | Pendiente |
+| `anchored` | Anclado   |
+| `failed`   | Fallido   |
 
 ### `/dashboard/documents`
 
 Server page. `searchParams.estado`:
 
-| value | rows |
-| --- | --- |
-| missing or `todos` | all non-deleted |
-| `borrador` | `status === "draft"` |
-| `anclado` | `status === "anchored"` |
+| value              | rows                    |
+| ------------------ | ----------------------- |
+| missing or `todos` | all non-deleted         |
+| `borrador`         | `status === "draft"`    |
+| `anclado`          | `status === "anchored"` |
 
 `pending` and `failed` stay visible under Todos. Do not add a query-string API; filter the array from `listDocumentsForUser` in the server component.
 
@@ -136,13 +136,13 @@ Move `UploadForm` here. The overview no longer renders it.
 
 Keep the current behavior: file **or** non-empty text; file wins if both are set. Same `accept` list. Same Spanish errors, but match the #10 codes:
 
-| `error` | copy |
-| --- | --- |
-| `QUOTA_STORAGE` | Superas el espacio del plan Gratis. |
-| `file_too_large` | El archivo supera el tamaño máximo del plan. |
-| `unsupported_type` | Tipo de archivo no permitido. |
-| `forbidden_file` | Este tipo de archivo no está permitido. |
-| other | No se pudo subir el contenido. |
+| `error`            | copy                                         |
+| ------------------ | -------------------------------------------- |
+| `QUOTA_STORAGE`    | Superas el espacio del plan Gratis.          |
+| `file_too_large`   | El archivo supera el tamaño máximo del plan. |
+| `unsupported_type` | Tipo de archivo no permitido.                |
+| `forbidden_file`   | Este tipo de archivo no está permitido.      |
+| other              | No se pudo subir el contenido.               |
 
 Do not hardcode "100 MB" or "25 MB" in new strings; the API remains the source of the limit. Existing strings that say "100 MB" / "25 MB" may stay only if they still match `formatBytes` of the Free constants (100.0 MB and 25.0 MB at base 1024).
 
@@ -221,13 +221,13 @@ Do not hard-delete the `anchors` row. The receipt stays for the chain record.
 
 ## Client actions
 
-| Action | Where | Implementation |
-| --- | --- | --- |
-| Subir | `/dashboard/documents/new` | Existing POST routes |
-| Anclar | Detail and the anchor panel | Existing `POST /api/documents/:id/anchor` |
-| Copiar hash | List menu and detail | `navigator.clipboard.writeText(sha256)` then toast "Hash copiado." On failure, toast "No se pudo copiar." |
-| Abrir verificación | List menu and detail | Link `/v/${sha256}` |
-| Eliminar | List menu and detail | `DELETE` above, confirm dialog |
+| Action             | Where                       | Implementation                                                                                            |
+| ------------------ | --------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Subir              | `/dashboard/documents/new`  | Existing POST routes                                                                                      |
+| Anclar             | Detail and the anchor panel | Existing `POST /api/documents/:id/anchor`                                                                 |
+| Copiar hash        | List menu and detail        | `navigator.clipboard.writeText(sha256)` then toast "Hash copiado." On failure, toast "No se pudo copiar." |
+| Abrir verificación | List menu and detail        | Link `/v/${sha256}`                                                                                       |
+| Eliminar           | List menu and detail        | `DELETE` above, confirm dialog                                                                            |
 
 Toasts go through sonner. No `alert()`.
 

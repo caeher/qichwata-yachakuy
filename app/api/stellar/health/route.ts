@@ -61,10 +61,7 @@ export async function GET() {
       fallback,
       horizon: horizonProbe(clients.horizon),
     });
-    if (
-      endpoints.provider === "alchemy" &&
-      body.provider === "public-rpc"
-    ) {
+    if (endpoints.provider === "alchemy" && body.provider === "public-rpc") {
       console.warn(
         redact(
           JSON.stringify({

@@ -22,11 +22,11 @@ The quota gate stays inside the existing transactions (`reserveStorage`, `reserv
 
 Constants in `db/constants.ts` (binary units, do not change):
 
-| Plan | Storage | Max file | Anchors / UTC month |
-| --- | --- | --- | --- |
-| Free | `104_857_600` (100 MiB) | `26_214_400` (25 MiB) | 10 |
-| Pro | 10 GiB | 100 MiB | 500 |
-| Enterprise | 1 TiB | 500 MiB | 100_000 |
+| Plan       | Storage                 | Max file              | Anchors / UTC month |
+| ---------- | ----------------------- | --------------------- | ------------------- |
+| Free       | `104_857_600` (100 MiB) | `26_214_400` (25 MiB) | 10                  |
+| Pro        | 10 GiB                  | 100 MiB               | 500                 |
+| Enterprise | 1 TiB                   | 500 MiB               | 100_000             |
 
 `db/seed.ts` upserts those three rows on `plans.slug`. `price_per_extra_anchor_cents` and `price_per_gb_cents` are `null`. Leave them `null`. Do not show Pro or Enterprise as something the user can buy.
 
@@ -52,11 +52,11 @@ Anchor path (`db/anchor-quota.ts`, `POST /api/documents/:id/anchor`):
 
 Change only the JSON `error` string the client sees. Keep HTTP statuses and the extra fields.
 
-| Situation | Status | New `error` | Keep |
-| --- | --- | --- | --- |
-| Storage pool exceeded | 409 | `QUOTA_STORAGE` | `limitBytes`, `usedBytes` |
-| Monthly anchors exceeded | 409 | `QUOTA_ANCHORS` | `included`, `used` |
-| File larger than plan max, or body above 30 MB | 413 | `file_too_large` | `maxBytes` |
+| Situation                                      | Status | New `error`      | Keep                      |
+| ---------------------------------------------- | ------ | ---------------- | ------------------------- |
+| Storage pool exceeded                          | 409    | `QUOTA_STORAGE`  | `limitBytes`, `usedBytes` |
+| Monthly anchors exceeded                       | 409    | `QUOTA_ANCHORS`  | `included`, `used`        |
+| File larger than plan max, or body above 30 MB | 413    | `file_too_large` | `maxBytes`                |
 
 Internal class names and the job union may keep `quota_exceeded` and `anchor_quota_exceeded`. The route mappers translate them. Do not rename the state machine in `lib/anchors/job.ts` unless a call site compares the public string.
 
@@ -148,9 +148,11 @@ Do not write Stripe code here. When implementing #10, open a GitHub issue that i
 Parent: #10
 
 ## Fuera de esta issue
+
 No implementar Checkout, Customer Portal, ni webhooks de Stripe hasta que el plan Free y los códigos `QUOTA_STORAGE` / `QUOTA_ANCHORS` estén en `main`.
 
 ## Cuando se active
+
 - Respetar `BILLING_ENABLED=true` como interruptor. Con `false`, ningún endpoint crea una sesión de pago.
 - Stripe Checkout y Customer Portal. El paquete `stripe` solo en un route handler o server action, nunca en el cliente con la clave secreta.
 - `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, y los price ids van en el entorno. No commitearlos. No usar el prefijo `NEXT_PUBLIC_` en secretos.
@@ -197,11 +199,11 @@ Do not point tests at a live Postgres. Do not call Friendbot or Alchemy.
 
 ## CI without keys
 
-| Command | Stripe | Clerk | DATABASE_URL |
-| --- | --- | --- | --- |
-| `pnpm build` | not installed | unset | unset |
-| `pnpm test` | not installed | unset | unset |
-| `pnpm lint` / `pnpm typecheck` | not installed | unset | unset |
+| Command                        | Stripe        | Clerk | DATABASE_URL |
+| ------------------------------ | ------------- | ----- | ------------ |
+| `pnpm build`                   | not installed | unset | unset        |
+| `pnpm test`                    | not installed | unset | unset        |
+| `pnpm lint` / `pnpm typecheck` | not installed | unset | unset        |
 
 `package.json` must not gain a `stripe` dependency. Grep the diff for `stripe` before opening the implementation PR; the only hits allowed are the word in this plan, the README sentence, and `.env.example` comments.
 

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 
+import { QUOTA_ANCHORS } from "@/lib/api/quota-codes";
 import { Button } from "@/components/ui/button";
 import type { DocumentDetail } from "@/lib/anchors/document-detail";
 
@@ -38,8 +39,8 @@ export function DocumentAnchorPanel({ detail: initial }: Props) {
         setError("El anclaje no está configurado en el servidor.");
         return;
       }
-      if (response.status === 409 && payload.error === "anchor_quota_exceeded") {
-        setError("Has usado los 10 anclajes del plan Gratis este mes.");
+      if (response.status === 409 && payload.error === QUOTA_ANCHORS) {
+        setError("Has usado los anclajes incluidos este mes.");
         return;
       }
       if (

@@ -7,10 +7,7 @@ export class VerifyInputError extends Error {
   constructor(
     message: string,
     readonly code:
-      | "invalid_input"
-      | "invalid_hash"
-      | "file_too_large"
-      | "file_and_text",
+      "invalid_input" | "invalid_hash" | "file_too_large" | "file_and_text",
   ) {
     super(message);
     this.name = "VerifyInputError";

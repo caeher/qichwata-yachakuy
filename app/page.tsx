@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { ThemeToggle } from "@/components/theme-toggle";
+import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,6 +8,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  FREE_MAX_UPLOAD_BYTES,
+  FREE_MONTHLY_ANCHORS,
+  FREE_STORAGE_LIMIT_BYTES,
+} from "@/db/constants";
+import { formatBytes } from "@/lib/format-bytes";
 
 const features = [
   {
@@ -21,27 +27,31 @@ const features = [
   },
   {
     title: "Documentos",
-    description: "Preparado para documentos que quieras verificar después.",
+    description: "Gestiona borradores y anclajes desde tu panel.",
   },
 ] as const;
 
 const steps = [
-  "Calcula el SHA-256 del contenido en el cliente o en tu flujo de trabajo.",
-  "Ancla el hash en Stellar (Soroban) como prueba inmutable.",
-  "Comprueba más tarde que el contenido no ha cambiado.",
+  "Subes un archivo o pegas un texto. El servidor calcula el SHA-256 de esos bytes.",
+  "Anclas ese hash en Stellar (Soroban). El contenido no entra en la transacción.",
+  "Cualquiera puede comprobar el hash en Verificar, sin crear una cuenta.",
 ] as const;
 
 export default function Home() {
   return (
     <div className="flex min-h-svh flex-col">
-      <header className="border-border border-b">
-        <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-          <p className="text-sm font-medium tracking-tight sm:text-base">
-            stellar-data-integrity
-          </p>
-          <ThemeToggle />
-        </div>
-      </header>
+      <SiteHeader
+        trailing={
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" render={<Link href="/verify" />}>
+              Verificar
+            </Button>
+            <Button variant="ghost" size="sm" render={<Link href="/sign-in" />}>
+              Entrar
+            </Button>
+          </div>
+        }
+      />
 
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-16 px-4 py-12 sm:px-6 sm:py-16">
         <section className="flex flex-col gap-6">
@@ -52,20 +62,15 @@ export default function Home() {
             Ancla la huella de tus datos en Stellar
           </h1>
           <p className="text-muted-foreground max-w-2xl text-lg text-pretty">
-            Calcula el SHA-256 de archivos, textos y documentos y deja una
-            prueba anclada en Stellar (Soroban).
+            El servidor calcula el SHA-256 de un archivo o texto y ancla esa
+            huella en Stellar (Soroban). El archivo en sí no se escribe en la
+            cadena.
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <Button render={<Link href="/sign-up" />}>Crear cuenta</Button>
-            <Button variant="outline" render={<Link href="/sign-in" />}>
-              Entrar
-            </Button>
-            <Link
-              href="/verify"
-              className="border-border bg-background hover:bg-muted hover:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50 inline-flex h-8 items-center justify-center rounded-lg border px-2.5 text-sm font-medium whitespace-nowrap transition-all"
-            >
+            <Button variant="outline" render={<Link href="/verify" />}>
               Verificar
-            </Link>
+            </Button>
             <Link
               href="#como-funciona"
               className="text-muted-foreground hover:text-foreground text-sm font-medium underline-offset-4 hover:underline"
@@ -110,17 +115,82 @@ export default function Home() {
             ))}
           </ol>
         </section>
+
+        <section className="flex flex-col gap-4">
+          <h2 className="text-2xl font-semibold tracking-tight">Plan Gratis</h2>
+          <Card>
+            <CardHeader>
+              <CardTitle>Gratis</CardTitle>
+              <CardDescription>
+                {formatBytes(FREE_STORAGE_LIMIT_BYTES)} de almacenamiento ·{" "}
+                {FREE_MONTHLY_ANCHORS} anclajes al mes ·{" "}
+                {formatBytes(FREE_MAX_UPLOAD_BYTES)} por archivo
+              </CardDescription>
+            </CardHeader>
+            <CardHeader className="pt-0">
+              <p className="text-muted-foreground text-sm">
+                La red de desarrollo es testnet. Mainnet es un ajuste del
+                servidor, no un plan de pago.
+              </p>
+              <Button className="mt-4 w-fit" render={<Link href="/sign-up" />}>
+                Crear cuenta
+              </Button>
+            </CardHeader>
+          </Card>
+        </section>
+
+        <section className="flex flex-col gap-4">
+          <h2 className="text-2xl font-semibold tracking-tight">
+            Qué se publica
+          </h2>
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Solo el hash</CardTitle>
+                <CardDescription>
+                  En la cadena va el hash (32 bytes) y un metadato corto. No se
+                  sube el archivo.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Fuera de la cadena</CardTitle>
+                <CardDescription>
+                  El archivo se guarda en almacenamiento privado. La clave del
+                  monedero no llega al navegador.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">
+                  Verificar sin cuenta
+                </CardTitle>
+                <CardDescription>
+                  Cualquiera puede usar /verify o un enlace /v/&lt;hash&gt; sin
+                  iniciar sesión.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        </section>
       </main>
 
       <footer className="border-border border-t">
-        <div className="text-muted-foreground mx-auto flex w-full max-w-5xl flex-col gap-1 px-4 py-8 text-sm sm:px-6">
+        <div className="text-muted-foreground mx-auto flex w-full max-w-5xl flex-col gap-2 px-4 py-8 text-sm sm:px-6">
           <p>stellar-data-integrity</p>
-          <p>
-            Verificación pública en{" "}
+          <p>Solo el hash se ancla en Stellar.</p>
+          <p className="flex flex-wrap gap-x-4 gap-y-1">
             <Link href="/verify" className="underline">
-              /verify
+              Verificar
             </Link>
-            .
+            <Link href="/sign-up" className="underline">
+              Crear cuenta
+            </Link>
+            <Link href="/sign-in" className="underline">
+              Entrar
+            </Link>
           </p>
         </div>
       </footer>

@@ -10,8 +10,7 @@ import { Keypair } from "@stellar/stellar-sdk";
 import { resolveStellarEndpoints } from "@/lib/stellar/endpoints";
 
 const TESTNET_PASSPHRASE = "Test SDF Network ; September 2015";
-const wasmPath =
-  "contracts/anchor/target/wasm32v1-none/release/anchor.wasm";
+const wasmPath = "contracts/anchor/target/wasm32v1-none/release/anchor.wasm";
 
 function main() {
   const confirmMainnet = process.argv.includes("--confirm-mainnet");

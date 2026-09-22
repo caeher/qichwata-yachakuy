@@ -32,8 +32,7 @@ export function mapPollStatus(
       ? response.resultXdr.feeCharged.toString()
       : null;
   const returnVal = response.returnValue;
-  const record =
-    returnVal !== undefined ? decodeAnchorRecord(returnVal) : null;
+  const record = returnVal !== undefined ? decodeAnchorRecord(returnVal) : null;
   return {
     txHash,
     status: "SUCCESS",

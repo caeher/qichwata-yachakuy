@@ -13,6 +13,7 @@ export type AppUserRow = {
   planName: string;
   storageLimitBytes: number;
   maxUploadBytes: number;
+  monthlyAnchorsIncluded: number;
 };
 
 async function fetchAppUser(db: AuthDb, clerkUserId: string) {
@@ -26,6 +27,7 @@ async function fetchAppUser(db: AuthDb, clerkUserId: string) {
       planName: plans.name,
       storageLimitBytes: plans.storageLimitBytes,
       maxUploadBytes: plans.maxUploadBytes,
+      monthlyAnchorsIncluded: plans.monthlyAnchorsIncluded,
       deletedAt: users.deletedAt,
     })
     .from(users)
@@ -47,6 +49,7 @@ async function fetchAppUser(db: AuthDb, clerkUserId: string) {
     planName: row.planName,
     storageLimitBytes: row.storageLimitBytes,
     maxUploadBytes: row.maxUploadBytes,
+    monthlyAnchorsIncluded: row.monthlyAnchorsIncluded,
   } satisfies AppUserRow;
 }
 
