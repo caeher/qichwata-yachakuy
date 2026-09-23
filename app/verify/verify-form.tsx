@@ -18,7 +18,12 @@ type VerifyResult =
       source: string;
     }
   | { status: "not_found"; sha256: string }
-  | { status: "mismatch"; sha256: string; claimedSha256: string };
+  | {
+      status: "pending" | "failed" | "integrity_mismatch" | "chain_unavailable";
+      publicId: string;
+      sha256: string;
+    }
+  | { status: "unknown"; certificateId: string; sha256?: string };
 
 type Props = {
   initialHash?: string;
@@ -26,7 +31,6 @@ type Props = {
 
 export function VerifyForm({ initialHash = "" }: Props) {
   const [hashField, setHashField] = useState(initialHash);
-  const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<VerifyResult | null>(null);
@@ -41,39 +45,24 @@ export function VerifyForm({ initialHash = "" }: Props) {
     setClipboardFallback(null);
     setLoading(true);
 
-    const form = event.currentTarget;
-    const fileInput = form.elements.namedItem("file") as HTMLInputElement;
-    const file = fileInput.files?.[0];
-
     try {
-      let response: Response;
-      if (file) {
-        const data = new FormData();
-        data.append("file", file);
-        if (hashField.trim()) {
-          data.append("hash", hashField.trim());
-        }
-        response = await fetch("/api/verify", { method: "POST", body: data });
-      } else if (text.length > 0) {
-        response = await fetch("/api/verify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            text,
-            ...(hashField.trim() ? { hash: hashField.trim() } : {}),
-          }),
-        });
-      } else if (hashField.trim()) {
-        response = await fetch("/api/verify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ hash: hashField.trim() }),
-        });
-      } else {
-        setError("Selecciona un archivo, pega un texto o un SHA-256.");
+      if (!hashField.trim()) {
+        setError("Pega un SHA-256 o el ID público del certificado.");
         setLoading(false);
         return;
       }
+
+      const response = await fetch("/api/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+            hashField.trim(),
+          )
+            ? { certificateId: hashField.trim() }
+            : { hash: hashField.trim() },
+        ),
+      });
 
       const payload = await response.json();
       if (response.status === 429) {
@@ -85,7 +74,7 @@ export function VerifyForm({ initialHash = "" }: Props) {
         return;
       }
       if (!response.ok) {
-        setError("No se pudo verificar el contenido.");
+        setError("No se pudo consultar el hash.");
         return;
       }
       setResult(payload as VerifyResult);
@@ -110,31 +99,8 @@ export function VerifyForm({ initialHash = "" }: Props) {
     <div className="flex flex-col gap-6">
       <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium" htmlFor="verify-file">
-            Archivo
-          </label>
-          <input
-            id="verify-file"
-            name="file"
-            type="file"
-            className="max-w-full text-sm"
-          />
-        </div>
-        <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium" htmlFor="verify-text">
-            o pega un texto
-          </label>
-          <textarea
-            id="verify-text"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            rows={5}
-            className="border-border bg-background w-full rounded-lg border px-3 py-2 text-sm"
-          />
-        </div>
-        <div className="flex flex-col gap-2">
           <label className="text-sm font-medium" htmlFor="verify-hash">
-            o pega un SHA-256
+            SHA-256 o ID público
           </label>
           <input
             id="verify-hash"
@@ -154,7 +120,13 @@ export function VerifyForm({ initialHash = "" }: Props) {
         <div className="border-border bg-card flex flex-col gap-3 rounded-xl border p-4">
           {result.status === "anchored" ? (
             <>
-              <p className="font-medium">Anclado</p>
+              <p className="font-medium">
+                {result.onChain === true
+                  ? "Confirmado actualmente en Stellar"
+                  : result.onChain === false
+                    ? "El hash no aparece actualmente en Stellar"
+                    : "Recibo local; estado actual de Stellar desconocido"}
+              </p>
               <code className="bg-muted block rounded-md p-3 text-xs break-all">
                 {result.sha256}
               </code>
@@ -200,21 +172,32 @@ export function VerifyForm({ initialHash = "" }: Props) {
               ) : null}
             </>
           ) : null}
+          {result.status === "unknown" ? (
+            <p className="text-sm">Certificado desconocido.</p>
+          ) : null}
           {result.status === "not_found" ? (
             <p className="text-sm">No hay un ancla para este hash.</p>
           ) : null}
-          {result.status === "mismatch" ? (
-            <>
-              <p className="text-sm">
-                El contenido no coincide con el hash indicado.
-              </p>
-              <p className="text-muted-foreground text-xs break-all">
-                Calculado: {result.sha256}
-              </p>
-              <p className="text-muted-foreground text-xs break-all">
-                Indicado: {result.claimedSha256}
-              </p>
-            </>
+          {result.status === "pending" ? (
+            <p className="text-sm">
+              Certificado emitido; anclaje pendiente de Stellar.
+            </p>
+          ) : null}
+          {result.status === "failed" ? (
+            <p className="text-sm">
+              El anclaje falló y está disponible para recuperación.
+            </p>
+          ) : null}
+          {result.status === "integrity_mismatch" ? (
+            <p className="text-destructive text-sm">
+              Los datos no coinciden con el hash o recibo registrado.
+            </p>
+          ) : null}
+          {result.status === "chain_unavailable" ? (
+            <p className="text-destructive text-sm">
+              Stellar no está disponible; la verificación en cadena no se pudo
+              confirmar.
+            </p>
           ) : null}
         </div>
       ) : null}

@@ -10,8 +10,6 @@ type Db = Database | TestDatabase;
 export type DocumentDetail = {
   id: string;
   name: string;
-  mimeType: string;
-  sizeBytes: number;
   sha256: string;
   status: "draft" | "pending" | "anchored" | "failed";
   createdAt: string;
@@ -67,8 +65,6 @@ export async function loadDocumentDetail(
   return {
     id: doc.id,
     name: doc.name,
-    mimeType: doc.mimeType,
-    sizeBytes: doc.sizeBytes,
     sha256: doc.sha256,
     status: doc.status as DocumentDetail["status"],
     createdAt: doc.createdAt.toISOString(),

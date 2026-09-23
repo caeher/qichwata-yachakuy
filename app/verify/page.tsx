@@ -15,11 +15,15 @@ export default async function VerifyPage() {
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-12 sm:px-6">
         <section className="flex flex-col gap-2">
           <h1 className="text-2xl font-semibold tracking-tight">
-            Verificar un documento
+            Consultar un SHA-256
           </h1>
           <p className="text-muted-foreground text-sm">
-            Comprueba si un archivo, un texto o un SHA-256 ya está anclado en
-            Stellar. No hace falta una cuenta.
+            Comprueba si una huella SHA-256 tiene un comprobante histórico en
+            PostgreSQL o Stellar. No hace falta una cuenta.
+          </p>
+          <p className="text-muted-foreground text-xs">
+            Estos comprobantes provienen de anclajes históricos; no son
+            certificados educativos.
           </p>
         </section>
         {!rate.ok ? (

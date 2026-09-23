@@ -19,8 +19,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Integridad de datos en Stellar",
-  description:
-    "SHA-256 de archivos, textos y documentos anclado en Stellar (Soroban).",
+  description: "Aprendizaje y certificados verificables con SHA-256 y Stellar.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

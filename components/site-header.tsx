@@ -13,6 +13,7 @@ export function SiteHeader({ title, trailing }: SiteHeaderProps) {
       <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
         <Link
           href="/"
+          aria-label="Inicio de stellar-data-integrity, plataforma de aprendizaje sobre integridad digital"
           className="text-sm font-medium tracking-tight sm:text-base"
         >
           {title ?? "stellar-data-integrity"}

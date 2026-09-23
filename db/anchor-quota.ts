@@ -1,5 +1,6 @@
 import { and, eq, gte, isNull, lt } from "drizzle-orm";
 
+import { LEGACY_MONTHLY_ANCHOR_LIMIT } from "@/db/constants";
 import type { Database } from "@/db/client";
 import type { TestDatabase } from "@/db/pglite";
 import { anchors, documents, plans, usageEvents, users } from "@/db/schema";
@@ -172,10 +173,10 @@ export async function reserveAnchor(
     const planRow = await tx
       .select({ included: plans.monthlyAnchorsIncluded })
       .from(users)
-      .innerJoin(plans, eq(plans.id, users.planId))
+      .leftJoin(plans, eq(plans.id, users.planId))
       .where(eq(users.id, input.userId));
 
-    const included = planRow[0]?.included ?? 0;
+    const included = planRow[0]?.included ?? LEGACY_MONTHLY_ANCHOR_LIMIT;
     const used = await countAnchorUsage(tx, input.userId, now, doc.id);
     if (used >= included) {
       throw new AnchorQuotaExceededError(included, used);
@@ -244,7 +245,6 @@ export async function settleAnchor(
       await tx.insert(usageEvents).values({
         userId: input.userId,
         type: "anchor",
-        bytesDelta: 0,
         meta: {
           documentId: input.documentId,
           txHash: input.txHash,

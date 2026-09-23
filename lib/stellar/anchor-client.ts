@@ -68,6 +68,7 @@ export function createAnchorClient(input: {
       hashHex,
       metaCid,
       owner,
+      onSubmitted,
     }): Promise<AnchorSubmitResult> {
       try {
         const account = await server.getAccount(signer.publicKey());
@@ -89,11 +90,22 @@ export function createAnchorClient(input: {
         const prepared = await server.prepareTransaction(tx);
         prepared.sign(signer);
         const sent = await server.sendTransaction(prepared);
-        const txHash = sent.hash;
-        const polled = await server.pollTransaction(txHash, {
-          attempts: 10,
-        });
-        return mapPollStatus(txHash, polled);
+        try {
+          await onSubmitted?.(sent.hash);
+        } catch {
+          // Return the hash to the caller so it can retry persistence before
+          // polling; do not hide an accepted transaction behind a generic RPC error.
+        }
+        // Return the transaction hash before polling so callers can durably
+        // persist it and recover after a process restart or RPC timeout.
+        return {
+          txHash: sent.hash,
+          status: "PENDING",
+          ledger: null,
+          feeStroops: null,
+          record: null,
+          error: null,
+        };
       } catch {
         return {
           txHash: "",

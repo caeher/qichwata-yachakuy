@@ -7,6 +7,7 @@ const ALLOWED_META_KEYS = new Set([
   "network",
   "included",
   "used",
+  "certificateId",
 ]);
 
 export type AuditAction =
@@ -16,7 +17,12 @@ export type AuditAction =
   | "anchor_quota"
   | "anchor_reconcile_missing_tx"
   | "document_delete"
-  | "account_erasure";
+  | "account_erasure"
+  | "certificate_issue"
+  | "certificate_anchor_submit"
+  | "certificate_anchor_settled"
+  | "certificate_anchor_failed"
+  | "certificate_reconcile";
 
 function sanitizeMeta(
   meta?: Record<string, string | number | null>,
@@ -39,6 +45,7 @@ export async function recordAudit(
     userId: string | null;
     action: AuditAction;
     documentId?: string | null;
+    certificateId?: string | null;
     meta?: Record<string, string | number | null>;
   },
 ): Promise<void> {
@@ -46,6 +53,7 @@ export async function recordAudit(
     userId: input.userId,
     action: input.action,
     documentId: input.documentId ?? null,
+    certificateId: input.certificateId ?? null,
     meta: sanitizeMeta(input.meta),
   });
 }

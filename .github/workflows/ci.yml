@@ -24,8 +24,6 @@ jobs:
       ALCHEMY_STELLAR_API_KEY: ""
       STELLAR_HOT_WALLET_SECRET: ""
       STELLAR_CONTRACT_ID: ""
-      BILLING_ENABLED: "false"
-      STORAGE_DRIVER: local
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

@@ -1,0 +1,1 @@
+ALTER TABLE "anchors" ADD COLUMN "owner_public_key" text;

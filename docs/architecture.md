@@ -1,128 +1,74 @@
 # Arquitectura
 
-## Qué es
+## Producto
 
-**stellar-data-integrity** calcula el SHA-256 de archivos y textos, guarda el contenido fuera de la cadena y ancla la huella en Stellar (Soroban). Cualquiera puede verificar un hash en `/verify` sin cuenta. Detalle de uso local: [README](../README.md).
+Plataforma educativa B2C para personas, con cuentas individuales y una dirección de producto centrada en aprendizaje y certificados verificables. Clerk sigue siendo la fuente de identidad. La experiencia educativa y la emisión de certificados se completarán en issues posteriores; mientras tanto, la consulta pública por hash y los comprobantes históricos de documentos/anclajes siguen disponibles.
 
 ## Stack
 
-- Next.js **16.3.5** (App Router en la raíz del repo; `proxy.ts` en lugar de `middleware.ts`)
-- React 19, TypeScript, Tailwind CSS v4, shadcn/ui (`base-nova`)
-- Drizzle ORM + PostgreSQL (Neon u otro Postgres compatible)
-- Clerk (autenticación)
-- Vitest + PGlite (tests sin servidor Postgres)
-- pnpm 10
+- Next.js 16.3.5, App Router, `proxy.ts` y React 19
+- TypeScript, Tailwind CSS v4 y shadcn/ui
+- PostgreSQL con Drizzle ORM
+- Clerk para autenticación
+- Stellar Soroban para comprobantes de integridad
+- Vitest y PGlite para pruebas sin PostgreSQL externo
 
 ## Rutas
 
-| Ruta                               | Acceso            | Descripción              |
-| ---------------------------------- | ----------------- | ------------------------ |
-| `/`                                | Pública           | Landing                  |
-| `/sign-in`, `/sign-up`             | Pública           | Clerk                    |
-| `/verify`, `/v/[hash]`             | Pública           | Verificación             |
-| `/dashboard`                       | Protegida         | Resumen y cuotas         |
-| `/dashboard/documents`             | Protegida         | Lista de documentos      |
-| `/dashboard/documents/new`         | Protegida         | Subida                   |
-| `/dashboard/documents/[id]`        | Protegida         | Detalle, anclaje, recibo |
-| `/dashboard/billing`               | Protegida         | Plan Free y límites      |
-| `/dashboard/settings`              | Protegida         | Perfil Clerk             |
-| `GET/POST /api/documents`          | Protegida         | Lista y upload           |
-| `POST /api/documents/text`         | Protegida         | Texto                    |
-| `GET/DELETE /api/documents/[id]`   | Protegida         | Detalle y borrado        |
-| `GET /api/documents/[id]/download` | Protegida         | URL firmada de descarga  |
-| `GET /api/storage/download`        | Pública (token)   | Redime token local/HMAC  |
-| `POST /api/documents/[id]/anchor`  | Protegida         | Anclaje                  |
-| `GET /api/stellar/health`          | Pública           | Salud RPC                |
-| `POST /api/verify`                 | Pública           | Lookup de hash           |
-| `POST /api/webhooks/clerk`         | Pública (firmada) | Provisionado de usuarios |
+| Ruta                          | Acceso            | Descripción                                      |
+| ----------------------------- | ----------------- | ------------------------------------------------ |
+| `/`                           | Pública           | Presentación educativa B2C                       |
+| `/sign-in`, `/sign-up`        | Pública           | Identidad Clerk                                  |
+| `/verify`, `/v/[hash]`        | Pública           | Verificación de certificados y hashes históricos |
+| `/certificates/[publicId]`    | Pública           | Vista y verificación del certificado             |
+| `/dashboard`                  | Protegida         | Espacio personal                                 |
+| `/dashboard/learn*`           | Protegida         | Catálogo, inscripción y avance                   |
+| `/dashboard/certificates`     | Protegida         | Certificados del alumno                          |
+| `/dashboard/documents*`       | Protegida         | Redirección de compatibilidad a `/dashboard`     |
+| `/dashboard/billing`          | Protegida         | Redirige a `/dashboard` por compatibilidad       |
+| `/dashboard/settings`         | Protegida         | Perfil de Clerk                                  |
+| `POST /api/webhooks/clerk`    | Pública (firmada) | Provisionado y borrado de cuentas                |
+| `POST /api/verify`            | Pública           | Consulta de hash                                 |
+| `/api/education/*`            | Protegida         | Inscripción, avance y solicitud de finalización  |
+| `POST /api/jobs/certificates` | Token de worker   | Procesamiento y reconciliación programada        |
+| `/api/documents*` y descargas | Retiradas         | Respuesta explícita `410 resource_retired`       |
 
-Fuente de verdad para rutas API públicas: `lib/auth/public-paths.ts` y `proxy.ts`.
+Las rutas protegidas se declaran en `lib/auth/public-paths.ts` y `proxy.ts`. Los endpoints internos mantienen controles de propietario. El webhook verifica la firma de Clerk antes de procesar eventos y registra IDs de evento para evitar duplicados.
 
-## Auth
+## Identidad y provisionado
 
-- Con `CLERK_SECRET_KEY`, `clerkMiddleware` protege `/dashboard` y `/api/*` excepto las rutas públicas listadas.
-- Sin clave secreta de Clerk, las rutas protegidas redirigen a `/sign-in`.
-- `ClerkProvider` solo se monta si existe `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`.
-- `provisionFreePlan` al resolver el usuario (dashboard/API) y webhook Clerk (`user.created`, `user.deleted`).
+Cada persona conserva una fila en `users` con UUID interno único y `clerk_user_id` único. `provisionUser` no requiere planes ni suscripciones, sincroniza el correo y usa la unicidad del ID de Clerk para resolver altas simultáneas y reintentos. Resolver una sesión vuelve a usar el mismo provisionado idempotente.
 
-## Datos
+El borrado de cuenta mantiene la fila y sus IDs, limpia el correo y elimina datos personales de acuerdo con el flujo de privacidad. No actualiza suscripciones. Los IDs de usuario permanecen vinculados a los registros históricos y no se recrean para simular matrículas.
 
-Tablas en `db/schema.ts`:
+## Datos y transición de esquema
 
-- **plans** — límites por slug (`free`, `pro`, `enterprise`)
-- **users** — usuario interno, `clerk_user_id`, `storage_used_bytes`
-- **documents** — borrador / pending / anchored / failed, `sha256`, `storage_key`
-- **anchors** — recibo on-chain por documento
-- **usage_events** — `upload`, `anchor`, etc.
-- **subscriptions** — fila activa por usuario (Stripe reservado)
-- **webhook_events** — idempotencia Clerk
+Las tablas incluyen `users`, `courses`, `course_units`, `enrollments`, `unit_progress`, `course_completions`, `certificates`, documentos históricos y `anchors`. Cada anclaje nuevo referencia exactamente un certificado o un documento histórico. PostgreSQL conserva SHA-256 y evidencia de transacción; no convierte ni recalcula los anclajes anteriores.
 
-Borrado de documentos: `deleted_at` + liberación de bytes; el blob se elimina del almacenamiento. Modelo de amenazas: [`docs/security.md`](security.md).
+Los planes y la referencia opcional desde `users` permanecen temporalmente solo donde el flujo de anclaje heredado los consulta. No representan una oferta comercial. La issue 04 retira las dependencias de anclaje pendientes.
 
-## Cuotas
+No se reescriben migraciones históricas. Antes del retiro final en un entorno con datos, se inventarían y respaldarán usuarios, planes y relaciones; se validarán conteos e identidades tras migrar. Los registros comerciales no se convierten en matrículas.
 
-Límites del plan Free en `db/constants.ts` (100 MiB total, 25 MiB por archivo, 10 anclajes/mes UTC).
+## Controles técnicos
 
-- **Storage:** `reserveStorage` en transacción antes de escribir el blob. Error público `QUOTA_STORAGE` (409).
-- **Anclajes:** cupo mensual UTC = eventos `anchor` + documentos `pending`. Error público `QUOTA_ANCHORS` (409).
+La protección por sesión, los límites de consulta por IP, la verificación de firmas de webhook y las comprobaciones de configuración de la hot wallet siguen activos. No hay formularios ni endpoints que reciban archivos o texto arbitrario, ni límites de carga o cuotas de bytes.
 
-`BILLING_ENABLED` por defecto `false`. No hay Stripe ni cobros.
+Los límites heredados de anclaje permanecen hasta que la issue 04 retire el anclaje manual y la cuota asociada. No hay límites ni medidores de almacenamiento.
 
-## Anclaje
+## Stellar y verificación
 
-El cliente llama `POST /api/documents/:id/anchor`. El servidor firma con `STELLAR_HOT_WALLET_SECRET`. Sin secret o `STELLAR_CONTRACT_ID` → `503 anchor_unconfigured` antes de marcar `pending`. El recibo es una fila en `anchors`.
+El servidor firma anclajes con `STELLAR_HOT_WALLET_SECRET`. La emisión educativa es independiente de la disponibilidad de Stellar: el certificado queda `pending` para que un worker programado lo procese. Sin configuración de cadena nunca se marca como confirmado. La verificación pública recalcula el snapshot canónico y consulta red/contrato; una fila de DB sola no se presenta como confirmación on-chain.
 
-## Verificación
+Los cursos comienzan en borrador y no hay contenido real precargado. `pendingCompletionPolicy` bloquea las finalizaciones productivas hasta que se aprueben reglas académicas. Los tests inyectan una política controlada.
 
-`POST /api/verify` y páginas `/verify`, `/v/[hash]`. Primero base de datos, luego cadena si hay contrato y RPC. Límite **30 peticiones/minuto por IP** en memoria (por proceso Node).
+## Entorno y CI
 
-## Almacenamiento
+`pnpm build`, `pnpm test`, `pnpm lint` y `pnpm typecheck` no requieren credenciales Clerk o Stellar ni `DATABASE_URL`. Las variables vigentes se documentan en `.env.example`. No hay configuración de facturación.
 
-- Interfaz `StorageProvider` (`put` / `get` / `delete` / `signedUrl`). Claves `{userId}/{yyyy}/{mm}/{documentId}`; `keyBelongsToUser` en borrado y mint.
-- `STORAGE_DRIVER=local` → `.data/objects`; descarga vía token HMAC en `GET /api/storage/download`.
-- `STORAGE_DRIVER=s3` → R2/AWS (variables `S3_*`); presign `GetObject` ~60 s.
-- Tests: adaptador en memoria. Ver también [`docs/security.md`](security.md) (modelo de amenazas).
+El despliegue se configura manualmente. Solo PostgreSQL requiere persistencia para identidad y pruebas históricas; no se requiere disco persistente, bucket de objetos, URL firmada ni almacenamiento de PDF. Las migraciones se ejecutan contra PostgreSQL desde un entorno controlado, no durante el build. El contrato Soroban se despliega por separado.
 
-## Entorno
+Antes de limpiar objetos existentes, exporta y respalda `legacy_object_inventory`, `documents` y `anchors`; guarda también el proveedor/bucket de origen y define la política de conservación. La migración deja claves y relaciones consultables en `legacy_object_inventory`. Ningún despliegue o migración elimina objetos automáticamente. Revertir el esquema no restaura blobs borrados físicamente.
 
-Ver `.env.example` y la tabla de secretos abajo. `pnpm build` y `pnpm test` **no** requieren `DATABASE_URL` ni claves de Clerk.
+## Documentación histórica
 
-## CI
-
-GitHub Actions: `.github/workflows/ci.yml` — `lint`, `typecheck`, `format:check`, `test`, `build` sin secretos; job aparte `cargo test` del contrato Soroban.
-
-## Despliegue en Vercel (notas)
-
-No se crea el proyecto desde este repo. Si despliegas manualmente:
-
-- Raíz del repo, framework Next.js, Node 22, `pnpm install --frozen-lockfile`, `pnpm build`.
-- No ejecutes `pnpm db:migrate` ni `pnpm db:seed` en el build de Vercel; hazlo contra tu Postgres desde una máquina de confianza.
-- Configura las mismas variables que en `.env.example` en el panel de Vercel (Preview/Production pueden diferir en `STELLAR_NETWORK` y `STELLAR_CONTRACT_ID`).
-- Webhook Clerk: `https://<host>/api/webhooks/clerk`.
-- En producción, el disco local de Vercel es efímero; usa `STORAGE_DRIVER=s3` para archivos.
-- `BILLING_ENABLED=false` hasta integrar pagos.
-- El contrato Soroban se despliega aparte (`pnpm contract:deploy`); copia `STELLAR_CONTRACT_ID` al entorno del servidor.
-
-## Secretos
-
-| Variable                                                       | Uso                         | Dónde                                     |
-| -------------------------------------------------------------- | --------------------------- | ----------------------------------------- |
-| `DATABASE_URL`                                                 | Postgres                    | `.env.local`, host                        |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`                            | UI Clerk                    | `.env.local`, host                        |
-| `CLERK_SECRET_KEY`                                             | Auth servidor               | `.env.local`, host                        |
-| `CLERK_WEBHOOK_SECRET` / `CLERK_WEBHOOK_SIGNING_SECRET`        | Webhook                     | `.env.local`, host                        |
-| `STORAGE_DRIVER`, `STORAGE_LOCAL_DIR`                          | Blobs                       | `.env.local`, host                        |
-| `S3_*`                                                         | Solo si `STORAGE_DRIVER=s3` | `.env.local`, host                        |
-| `STORAGE_SIGNED_URL_TTL_SECONDS`, `STORAGE_URL_SIGNING_SECRET` | Descargas local/HMAC        | `.env.local`, host (servidor)             |
-| `STELLAR_HOT_WALLET_MIN_XLM`                                   | Alerta saldo hot wallet     | `.env.local`, host                        |
-| `STELLAR_NETWORK`                                              | testnet/mainnet             | `.env.local`, host                        |
-| `ALCHEMY_STELLAR_API_KEY`                                      | RPC Soroban                 | `.env.local`, host (nunca `NEXT_PUBLIC_`) |
-| `STELLAR_HOT_WALLET_SECRET`                                    | Firma anclajes              | `.env.local`, host                        |
-| `STELLAR_CONTRACT_ID`                                          | Contrato desplegado         | `.env.local`, host                        |
-| `BILLING_ENABLED`                                              | Interruptor futuro pagos    | `.env.local`, host                        |
-
-Nunca commitees `.env.local` ni claves. CI de este repo no usa GitHub Secrets.
-
-## Fuera de esta versión
-
-Cobro real, Stripe, cola de trabajos aparte del request de anclaje, precios en `plans` (siguen `null`).
+Los documentos originales de `docs/plans/` describen una versión anterior orientada a almacenamiento y SaaS. Se conservan como registro histórico y no representan el producto actual. La secuencia vigente de transición está en `issues/01-transicion-b2c-eliminar-saas.md` y sus issues dependientes.

@@ -1,52 +1,41 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
 import { createTestDb } from "@/db/pglite";
-import { seedPlans } from "@/db/seed";
-import { anchors, documents, plans, users, webhookEvents } from "@/db/schema";
+import { seedApplicationData } from "@/db/seed";
 import {
-  FREE_MAX_UPLOAD_BYTES,
-  FREE_MONTHLY_ANCHORS,
-  FREE_STORAGE_LIMIT_BYTES,
-} from "@/db/constants";
+  anchors,
+  documents,
+  legacyObjectInventory,
+  plans,
+  users,
+  webhookEvents,
+} from "@/db/schema";
 
 describe("schema migrations and seed", () => {
-  it("creates tables and seeds the free plan", async () => {
+  it("does not require commercial seed data for an individual account", async () => {
     const { db } = await createTestDb();
-    await seedPlans(db);
+    await seedApplicationData();
+    const [user] = await db
+      .insert(users)
+      .values({ clerkUserId: "individual_no_plan" })
+      .returning();
 
-    const free = await db.query.plans.findFirst({
-      where: eq(plans.slug, "free"),
-    });
-    expect(free).toBeDefined();
-    expect(free?.storageLimitBytes).toBe(FREE_STORAGE_LIMIT_BYTES);
-    expect(free?.maxUploadBytes).toBe(FREE_MAX_UPLOAD_BYTES);
-    expect(free?.monthlyAnchorsIncluded).toBe(FREE_MONTHLY_ANCHORS);
-
-    await seedPlans(db);
-    const allFree = await db.select().from(plans).where(eq(plans.slug, "free"));
-    expect(allFree).toHaveLength(1);
+    expect(user?.planId).toBeNull();
+    expect(await db.select().from(plans)).toHaveLength(0);
   });
 
   it("enforces unique clerk_user_id and tx_hash", async () => {
     const { db } = await createTestDb();
-    await seedPlans(db);
-    const free = await db.query.plans.findFirst({
-      where: eq(plans.slug, "free"),
-    });
-    if (!free) throw new Error("missing free plan");
-
     await db.insert(users).values({
       clerkUserId: "user_a",
       email: "a@example.com",
-      planId: free.id,
     });
 
     await expect(
       db.insert(users).values({
         clerkUserId: "user_a",
         email: "b@example.com",
-        planId: free.id,
       }),
     ).rejects.toThrow();
 
@@ -60,10 +49,7 @@ describe("schema migrations and seed", () => {
       .values({
         userId: user.id,
         name: "x.pdf",
-        mimeType: "application/pdf",
-        sizeBytes: 10,
         sha256: "a".repeat(64),
-        storageKey: `${user.id}/2026/01/doc`,
         status: "draft",
       })
       .returning();
@@ -85,28 +71,16 @@ describe("schema migrations and seed", () => {
 
   it("stores documents with sha256 lookup", async () => {
     const { db } = await createTestDb();
-    await seedPlans(db);
-    const free = await db.query.plans.findFirst({
-      where: eq(plans.slug, "free"),
-    });
-    if (!free) throw new Error("missing free plan");
-
     const [user] = await db
       .insert(users)
-      .values({
-        clerkUserId: "user_doc",
-        planId: free.id,
-      })
+      .values({ clerkUserId: "user_doc" })
       .returning();
 
     const sha = "b".repeat(64);
     await db.insert(documents).values({
       userId: user.id,
       name: "nota.txt",
-      mimeType: "text/plain",
-      sizeBytes: 4,
       sha256: sha,
-      storageKey: `${user.id}/2026/01/x`,
       status: "draft",
     });
 
@@ -118,15 +92,9 @@ describe("schema migrations and seed", () => {
 
   it("allows pending status with pending_tx_hash column", async () => {
     const { db } = await createTestDb();
-    await seedPlans(db);
-    const free = await db.query.plans.findFirst({
-      where: eq(plans.slug, "free"),
-    });
-    if (!free) throw new Error("missing free plan");
-
     const [user] = await db
       .insert(users)
-      .values({ clerkUserId: "pending_user", planId: free.id })
+      .values({ clerkUserId: "pending_user" })
       .returning();
 
     const [doc] = await db
@@ -134,10 +102,7 @@ describe("schema migrations and seed", () => {
       .values({
         userId: user.id,
         name: "p.txt",
-        mimeType: "text/plain",
-        sizeBytes: 0,
         sha256: "c".repeat(64),
-        storageKey: `${user.id}/p`,
         status: "pending",
         pendingTxHash: null,
       })
@@ -157,5 +122,32 @@ describe("schema migrations and seed", () => {
       where: eq(webhookEvents.id, "msg_1"),
     });
     expect(row?.eventType).toBe("user.created");
+  });
+
+  it("keeps an exportable legacy object inventory without document storage columns", async () => {
+    const { db } = await createTestDb();
+    const [user] = await db
+      .insert(users)
+      .values({ clerkUserId: "inventory_user" })
+      .returning();
+    const documentId = crypto.randomUUID();
+
+    await db.insert(legacyObjectInventory).values({
+      documentId,
+      userId: user.id,
+      objectKey: "legacy/object-key",
+      originalMimeType: "application/pdf",
+      originalSizeBytes: 42,
+    });
+
+    const inventory = await db.query.legacyObjectInventory.findFirst();
+    const columns = await db.execute(sql`
+      select column_name
+      from information_schema.columns
+      where table_name = 'documents'
+        and column_name in ('storage_key', 'size_bytes', 'mime_type')
+    `);
+    expect(inventory?.objectKey).toBe("legacy/object-key");
+    expect(columns.rows).toHaveLength(0);
   });
 });

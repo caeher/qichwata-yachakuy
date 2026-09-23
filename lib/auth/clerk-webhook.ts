@@ -2,11 +2,9 @@ import type { NextRequest } from "next/server";
 import { verifyWebhook } from "@clerk/nextjs/webhooks";
 
 import type { AuthDb } from "@/lib/auth/provision-user";
-import { provisionFreePlanInner } from "@/lib/auth/provision-user";
+import { provisionUserInner } from "@/lib/auth/provision-user";
 import { webhookEvents } from "@/db/schema";
-import { createObjectStorage } from "@/lib/storage";
-import type { StorageProvider } from "@/lib/storage/types";
-import { eraseUserAccount } from "@/lib/privacy/erase-user";
+import { eraseUserAccountInner } from "@/lib/privacy/erase-user";
 
 function primaryEmail(data: {
   email_addresses: { id: string; email_address: string }[];
@@ -20,11 +18,7 @@ function primaryEmail(data: {
   );
 }
 
-export async function handleClerkWebhook(
-  db: AuthDb,
-  req: NextRequest,
-  storage: StorageProvider = createObjectStorage(),
-) {
+export async function handleClerkWebhook(db: AuthDb, req: NextRequest) {
   if (
     !process.env.CLERK_WEBHOOK_SIGNING_SECRET &&
     process.env.CLERK_WEBHOOK_SECRET
@@ -61,20 +55,18 @@ export async function handleClerkWebhook(
         if (!clerkUserId) {
           throw new Error("missing user id");
         }
-        await provisionFreePlanInner(tx, {
+        await provisionUserInner(tx, {
           clerkUserId,
           email: primaryEmail(evt.data),
         });
+      } else if (evt.type === "user.deleted") {
+        const clerkUserId = evt.data.id;
+        if (!clerkUserId) {
+          throw new Error("missing user id");
+        }
+        await eraseUserAccountInner(tx, clerkUserId);
       }
     });
-
-    if (evt.type === "user.deleted") {
-      const clerkUserId = evt.data.id;
-      if (!clerkUserId) {
-        return new Response("Webhook processing failed", { status: 500 });
-      }
-      await eraseUserAccount(db, storage, clerkUserId);
-    }
   } catch {
     return new Response("Webhook processing failed", { status: 500 });
   }

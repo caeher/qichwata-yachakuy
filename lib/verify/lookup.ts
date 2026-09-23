@@ -1,9 +1,10 @@
-import { and, asc, eq, isNull } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 
 import type { Database } from "@/db/client";
 import type { TestDatabase } from "@/db/pglite";
 import { anchors, documents } from "@/db/schema";
 import { expertTxUrl } from "@/lib/anchors/expert-url";
+import { resolveStellarEndpoints } from "@/lib/stellar/endpoints";
 
 type Db = Database | TestDatabase;
 
@@ -41,30 +42,14 @@ export type VerifyResult =
       onChain: boolean | null;
       source: "database" | "chain" | "both";
     }
-  | { status: "not_found"; sha256: string }
-  | { status: "mismatch"; sha256: string; claimedSha256: string };
-
-export async function lookupWithClaim(
-  db: Db,
-  chain: (hash: string) => Promise<ChainLookupResult>,
-  claim: { sha256: string; claimedSha256: string | null },
-  contractId: string | null,
-): Promise<VerifyResult> {
-  if (claim.claimedSha256 !== null && claim.sha256 !== claim.claimedSha256) {
-    return {
-      status: "mismatch",
-      sha256: claim.sha256,
-      claimedSha256: claim.claimedSha256,
-    };
-  }
-  return lookupAnchor(db, chain, claim.sha256, contractId);
-}
+  | { status: "not_found"; sha256: string };
 
 export async function lookupAnchor(
   db: Db,
   chain: (hash: string) => Promise<ChainLookupResult>,
   sha256: string,
   contractId: string | null,
+  expectedNetwork: "testnet" | "mainnet" = resolveStellarEndpoints().network,
 ): Promise<VerifyResult> {
   const rows = await db
     .select({
@@ -76,13 +61,7 @@ export async function lookupAnchor(
     })
     .from(anchors)
     .innerJoin(documents, eq(anchors.documentId, documents.id))
-    .where(
-      and(
-        eq(documents.sha256, sha256),
-        eq(documents.status, "anchored"),
-        isNull(documents.deletedAt),
-      ),
-    )
+    .where(and(eq(documents.sha256, sha256), eq(documents.status, "anchored")))
     .orderBy(asc(anchors.anchoredAt))
     .limit(1);
 
@@ -133,7 +112,7 @@ export async function lookupAnchor(
     return {
       status: "anchored",
       sha256,
-      network: "testnet",
+      network: expectedNetwork,
       txHash: null,
       ledger: chainResult.record.ledger,
       anchoredAt: new Date(chainResult.record.timestamp * 1000).toISOString(),

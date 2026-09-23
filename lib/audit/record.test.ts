@@ -12,12 +12,11 @@ describe("recordAudit", () => {
       action: "anchor_submit",
       meta: {
         sha256: "a".repeat(64),
-        storageKey: "secret/key",
-        email: "x@y.com",
+        privateNote: "unstructured input",
       },
     });
     const rows = await db.select().from(auditEvents);
     expect(rows[0]?.meta).toEqual({ sha256: "a".repeat(64) });
-    expect(JSON.stringify(rows[0]?.meta)).not.toContain("storageKey");
+    expect(JSON.stringify(rows[0]?.meta)).not.toContain("privateNote");
   });
 });

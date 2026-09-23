@@ -6,18 +6,15 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const links = [
-  { href: "/dashboard", label: "Resumen", exact: true },
-  { href: "/dashboard/documents", label: "Documentos", exact: false },
-  { href: "/dashboard/billing", label: "Facturación", exact: false },
-  { href: "/dashboard/settings", label: "Ajustes", exact: false },
+  { href: "/dashboard", label: "Mi espacio", exact: true },
+  { href: "/dashboard/learn", label: "Aprendizaje", exact: false },
+  { href: "/dashboard/certificates", label: "Certificados", exact: false },
+  { href: "/dashboard/settings", label: "Cuenta", exact: false },
 ] as const;
 
 function isActive(pathname: string, href: string, exact: boolean) {
   if (exact) {
     return pathname === href;
-  }
-  if (href === "/dashboard/documents") {
-    return pathname === href || pathname.startsWith("/dashboard/documents/");
   }
   return pathname === href || pathname.startsWith(`${href}/`);
 }

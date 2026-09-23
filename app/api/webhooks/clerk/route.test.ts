@@ -4,10 +4,8 @@ import { Webhook } from "svix";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { createTestDb } from "@/db/pglite";
-import { seedPlans } from "@/db/seed";
 import { documents, users, webhookEvents } from "@/db/schema";
 import { handleClerkWebhook } from "@/lib/auth/clerk-webhook";
-import { createMemoryStorage } from "@/lib/storage/memory";
 
 const TEST_SECRET =
   "whsec_" +
@@ -39,7 +37,6 @@ describe("POST /api/webhooks/clerk (handleClerkWebhook)", () => {
 
   it("returns 400 without Svix headers", async () => {
     const { db } = await createTestDb();
-    await seedPlans(db);
     process.env.CLERK_WEBHOOK_SIGNING_SECRET = TEST_SECRET;
 
     const req = new NextRequest("http://localhost/api/webhooks/clerk", {
@@ -53,9 +50,8 @@ describe("POST /api/webhooks/clerk (handleClerkWebhook)", () => {
     expect(allUsers).toHaveLength(0);
   });
 
-  it("provisions free user on user.created", async () => {
+  it("creates an individual account without plans on user.created", async () => {
     const { db } = await createTestDb();
-    await seedPlans(db);
     process.env.CLERK_WEBHOOK_SIGNING_SECRET = TEST_SECRET;
 
     const req = signedRequest({
@@ -79,7 +75,6 @@ describe("POST /api/webhooks/clerk (handleClerkWebhook)", () => {
 
   it("dedupes replayed svix-id", async () => {
     const { db } = await createTestDb();
-    await seedPlans(db);
     process.env.CLERK_WEBHOOK_SIGNING_SECRET = TEST_SECRET;
 
     const msgId = "msg_replay_1";
@@ -112,9 +107,7 @@ describe("POST /api/webhooks/clerk (handleClerkWebhook)", () => {
 
   it("marks user deleted on user.deleted", async () => {
     const { db } = await createTestDb();
-    await seedPlans(db);
     process.env.CLERK_WEBHOOK_SIGNING_SECRET = TEST_SECRET;
-    const storage = createMemoryStorage();
 
     await handleClerkWebhook(
       db,
@@ -126,39 +119,47 @@ describe("POST /api/webhooks/clerk (handleClerkWebhook)", () => {
           primary_email_address_id: null,
         },
       }),
-      storage,
     );
 
     const user = await db.query.users.findFirst({
       where: eq(users.clerkUserId, "user_del_wh"),
     });
-    const storageKey = `${user!.id}/blob`;
     await db.insert(documents).values({
       userId: user!.id,
       name: "f.txt",
-      mimeType: "text/plain",
-      sizeBytes: 1,
       sha256: "d".repeat(64),
-      storageKey,
       status: "draft",
     });
-    await storage.put(storageKey, new Uint8Array([1]), "text/plain");
 
+    const deletion = {
+      type: "user.deleted",
+      data: { id: "user_del_wh" },
+    };
+    const deletionId = "msg_user_del_wh";
     const delRes = await handleClerkWebhook(
       db,
-      signedRequest({
-        type: "user.deleted",
-        data: { id: "user_del_wh" },
-      }),
-      storage,
+      signedRequest(deletion, deletionId),
+    );
+    const replayRes = await handleClerkWebhook(
+      db,
+      signedRequest(deletion, deletionId),
     );
     expect(delRes.status).toBe(200);
+    expect(replayRes.status).toBe(200);
 
     const userAfter = await db.query.users.findFirst({
       where: eq(users.clerkUserId, "user_del_wh"),
     });
     expect(userAfter?.deletedAt).not.toBeNull();
     expect(userAfter?.email).toBeNull();
-    expect(await storage.get(storageKey)).toBeNull();
+    const redacted = await db.query.documents.findFirst({
+      where: eq(documents.userId, user!.id),
+    });
+    expect(redacted?.name).toBe("deleted");
+    expect(redacted?.sha256).toBe("d".repeat(64));
+    const deletionEvent = await db.query.webhookEvents.findFirst({
+      where: eq(webhookEvents.id, deletionId),
+    });
+    expect(deletionEvent).toBeDefined();
   });
 });

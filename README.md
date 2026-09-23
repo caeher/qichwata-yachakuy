@@ -1,115 +1,72 @@
 # stellar-data-integrity
 
-SaaS de integridad de datos: SHA-256 de archivos, textos y documentos anclado en Stellar (Soroban).
+Plataforma educativa B2C con cuentas individuales, scaffolding de aprendizaje y certificados verificables mediante SHA-256 y Stellar/Soroban. Los cursos y criterios académicos siguen sin publicarse; la política de finalización bloquea emisiones reales hasta su aprobación.
 
-Stack actual: Next.js 16.3.5, TypeScript, Tailwind CSS v4, shadcn/ui, Drizzle ORM + PostgreSQL, Clerk para autenticación, almacenamiento local de objetos (S3 opcional).
+## Stack
 
-## Requisitos
+- Next.js 16.3.5, React 19, TypeScript, Tailwind CSS v4 y shadcn/ui
+- PostgreSQL con Drizzle ORM
+- Clerk para identidad y autenticación
+- Stellar Soroban para comprobantes de integridad
+- Vitest y PGlite para pruebas sin un servidor PostgreSQL
+
+## Requisitos y configuración local
 
 - Node.js `>=20.9.0` (se recomienda Node 22)
-- [pnpm](https://pnpm.io/) 10
-
-## Configuración local
+- pnpm 10
 
 ```bash
 pnpm install
 cp .env.example .env.local
-```
-
-Opcional para desarrollo completo:
-
-- **Clerk:** `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` y `CLERK_SECRET_KEY` en `.env.local` (sin ellas, la app compila y la landing funciona; `/dashboard` redirige a `/sign-in`).
-- **Base de datos:** `DATABASE_URL` (Postgres local o Neon). Sin URL, `pnpm build` y `pnpm test` siguen funcionando; las rutas API que usan DB responden 503.
-- **Webhook Clerk:** `CLERK_WEBHOOK_SIGNING_SECRET` (o `CLERK_WEBHOOK_SECRET`) y endpoint `https://<tu-host>/api/webhooks/clerk` con eventos `user.created` y `user.deleted`. El panel también provisiona el plan Gratis al entrar al dashboard.
-
-Migrar y sembrar planes (solo con `DATABASE_URL`):
-
-```bash
 pnpm db:migrate
-pnpm db:seed
-```
-
-```bash
 pnpm dev
 ```
 
-Abre [http://localhost:3000](http://localhost:3000).
+La cuenta se provisiona al entrar por primera vez o recibir `user.created` de Clerk. No hace falta ejecutar un seed para registrar o iniciar sesión; `pnpm db:seed` no crea planes ni suscripciones. Configura `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `DATABASE_URL` y el secreto de firma del webhook para un entorno completo. Sin credenciales externas, `pnpm build` y `pnpm test` usan sus rutas de respaldo y fakes.
 
-## Almacenamiento y límites (plan Gratis)
+El webhook de Clerk vive en `/api/webhooks/clerk` y debe validar `user.created` y `user.deleted`. Los reintentos conservan un solo usuario interno y sincronizan el correo. El identificador interno y el ID de Clerk se mantienen al eliminar la cuenta; el contenido de Stellar permanece verificable.
 
-- `STORAGE_DRIVER=local` (por defecto) guarda blobs en `STORAGE_LOCAL_DIR` (`.data/objects`).
-- Tests usan almacenamiento en memoria; **no** hace falta S3/R2 en CI.
-- Con `STORAGE_DRIVER=s3`, rellena las variables `S3_*` en `.env.local` (Cloudflare R2 o AWS). Las descargas usan URLs firmadas de ~60 s (`GET /api/documents/:id/download`).
-- Plan Gratis: **100 MiB** de almacenamiento total, **25 MiB** por archivo, **10** anclajes/mes (cuota en servidor; anclajes exitosos + documentos `pending` en el mes UTC).
+## Funciones actuales
 
-## Stellar (RPC, anclaje, contrato)
+- `/sign-up` y `/sign-in` conservan la identidad individual de Clerk.
+- `/verify` y `/v/<hash>` permiten comprobar huellas de forma pública.
+- `/dashboard/learn` permite consultar cursos publicados, inscribirse y persistir avance. No hay cursos publicados por defecto.
+- `/dashboard/certificates` muestra emisiones del usuario; `/certificates/[publicId]` verifica públicamente la evidencia.
+- No se cargan ni guardan archivos o textos arbitrarios. `/api/documents*` y las rutas de descarga responden `410 resource_retired`.
+- `/verify`, `POST /api/verify` y `/v/<hash>` verifican certificados y conservan la consulta histórica de documentos. No calculan hashes desde archivos o textos.
+- Los límites por IP, la protección de rutas y las comprobaciones de configuración de la hot wallet son controles técnicos, no funciones de un plan.
 
-- `@stellar/stellar-sdk@17.1.0`. RPC: Alchemy (`ALCHEMY_STELLAR_API_KEY`) o `https://soroban-testnet.stellar.org` en testnet.
-- Salud pública: `GET /api/stellar/health` (la clave de API no aparece en JSON ni logs).
-- Anclaje Soroban: `STELLAR_HOT_WALLET_SECRET`, `STELLAR_CONTRACT_ID`, `STELLAR_NETWORK`. Sin ellas, `POST /api/documents/:id/anchor` responde **503** `anchor_unconfigured`.
-- Contrato Rust en `contracts/anchor/` (`soroban-sdk` 28). Tests: `pnpm contract:test` (requiere Rust reciente, p. ej. stable ≥ 1.98). Build WASM: `pnpm contract:build`. Despliegue: `pnpm contract:deploy`.
-- `pnpm build` y `pnpm test` pasan sin Alchemy, hot wallet ni `CONTRACT_ID` (clientes perezosos y fakes en Vitest).
+PostgreSQL conserva usuarios, progreso educativo, snapshots canónicos y comprobantes Stellar históricos. La aplicación no requiere disco persistente, bucket, URL firmada ni PDFs. Stellar usa `STELLAR_NETWORK`, `STELLAR_CONTRACT_ID`, `STELLAR_HOT_WALLET_SECRET` y, opcionalmente, `ALCHEMY_STELLAR_API_KEY`. Para operar el procesador programado se configura `CERTIFICATE_WORKER_TOKEN`.
 
-## Verificación pública
+## Comandos
 
-- [`/verify`](http://localhost:3000/verify) y enlaces compartibles `/v/<64 hex>` (sin cuenta Clerk).
-- `POST /api/verify` con archivo, texto o hash; límite **30 peticiones/minuto por IP** (memoria por proceso Node).
-- Sin `STELLAR_CONTRACT_ID`, la respuesta puede salir solo de la base de datos; los tests no llaman a RPC.
+| Comando                | Descripción                                        |
+| ---------------------- | -------------------------------------------------- |
+| `pnpm dev`             | Servidor local                                     |
+| `pnpm build`           | Build de producción sin credenciales externas      |
+| `pnpm test`            | Vitest con PGlite en memoria                       |
+| `pnpm lint`            | ESLint                                             |
+| `pnpm typecheck`       | TypeScript                                         |
+| `pnpm db:migrate`      | Aplicar migraciones a `DATABASE_URL`               |
+| `pnpm db:seed`         | Inicializar datos requeridos (actualmente ninguno) |
+| `pnpm contract:test`   | Tests del contrato Soroban                         |
+| `pnpm contract:build`  | Compilar el contrato Soroban                       |
+| `pnpm contract:deploy` | Desplegar el contrato Soroban                      |
 
-## Scripts
+`pnpm build` y `pnpm test` no requieren Clerk, PostgreSQL, Alchemy ni claves de la hot wallet.
 
-| Comando                | Descripción                                   |
-| ---------------------- | --------------------------------------------- |
-| `pnpm dev`             | Servidor de desarrollo                        |
-| `pnpm build`           | Build de producción (sin credenciales)        |
-| `pnpm start`           | Sirve el build                                |
-| `pnpm test`            | Vitest (PGlite en memoria)                    |
-| `pnpm contract:test`   | Tests del contrato Soroban (Rust)             |
-| `pnpm contract:build`  | Compilar WASM del contrato                    |
-| `pnpm contract:deploy` | Desplegar contrato (CLI Stellar v28)          |
-| `pnpm db:generate`     | Generar migraciones Drizzle                   |
-| `pnpm db:migrate`      | Aplicar migraciones (requiere `DATABASE_URL`) |
-| `pnpm db:seed`         | Sembrar planes Free/Pro/Enterprise            |
-| `pnpm lint`            | ESLint                                        |
-| `pnpm typecheck`       | `tsc --noEmit`                                |
-| `pnpm format`          | Prettier (escribe)                            |
-| `pnpm format:check`    | Prettier (solo comprueba)                     |
+## Migraciones y conservación histórica
 
-`next` está fijado en **16.3.5**. No actualices a `latest` sin acordarlo en el proyecto.
+Las migraciones nuevas eliminan columnas de almacenamiento y añaden cursos, progreso, finalizaciones, certificados y vínculos de anclaje. Los comprobantes históricos continúan asociados a documentos; no se renombran ni recalculan.
 
-## Auth (Clerk)
-
-- Inicio de sesión y registro en `/sign-in` y `/sign-up`.
-- Rutas protegidas: `/dashboard` y `/api/*` excepto `/api/webhooks/clerk`, `/api/stellar/health` y `/api/verify`. `/verify` y `/v/*` son públicas.
-- Proxy en `proxy.ts` con `clerkMiddleware()` cuando hay `CLERK_SECRET_KEY`.
-- `ClerkProvider` solo se monta si existe `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (build sin claves).
-- Cierre de sesión redirige a `/` (`afterSignOutUrl` en `ClerkProvider`).
-
-CI y `pnpm build` **no** requieren claves de Clerk ni base de datos.
-
-`BILLING_ENABLED` queda en `false` por defecto; no hay integración con Stripe ni cobros reales.
+La migración copia la relación de cada objeto existente a `legacy_object_inventory` antes de quitar las columnas de almacenamiento. Antes de una limpieza física futura, respalda/exporta esa tabla y los comprobantes históricos, registra fuera de la aplicación el proveedor y bucket de origen, y define una política de conservación. Ninguna migración borra buckets ni archivos locales. Un rollback de esquema no recuperaría blobs eliminados manualmente. No recrees cuentas Clerk ni conviertas registros históricos en matrículas o certificados.
 
 ## Documentación
 
-- [`docs/architecture.md`](docs/architecture.md) — rutas, datos, cuotas, CI y notas de Vercel
-- [`docs/stellar.md`](docs/stellar.md) — Alchemy, RPC y contrato Soroban
-- [`docs/security.md`](docs/security.md) — Modelo de amenazas y controles
+- [`docs/architecture.md`](docs/architecture.md): arquitectura vigente y orden de migración
+- [`docs/stellar.md`](docs/stellar.md): RPC y contrato Soroban
+- [`docs/security.md`](docs/security.md): controles y modelo de amenazas
+- [`docs/certificates.md`](docs/certificates.md): hash canónico, estados, recuperación y privacidad
+- [`docs/plans/README.md`](docs/plans/README.md): planes anteriores conservados como referencia histórica
 
-CI: [`.github/workflows/ci.yml`](.github/workflows/ci.yml) (sin secretos en GitHub Actions).
-
-## Planes de implementación
-
-- [`docs/plans/issue-01-scaffold.md`](docs/plans/issue-01-scaffold.md)
-- [`docs/plans/issue-02-clerk-auth.md`](docs/plans/issue-02-clerk-auth.md)
-- [`docs/plans/issue-03-data-model.md`](docs/plans/issue-03-data-model.md)
-- [`docs/plans/issue-04-upload-sha256.md`](docs/plans/issue-04-upload-sha256.md)
-- [`docs/plans/issue-05-stellar-rpc.md`](docs/plans/issue-05-stellar-rpc.md)
-- [`docs/plans/issue-06-soroban-contract.md`](docs/plans/issue-06-soroban-contract.md)
-- [`docs/plans/issue-07-anchor-job.md`](docs/plans/issue-07-anchor-job.md)
-- [`docs/plans/issue-08-public-verify.md`](docs/plans/issue-08-public-verify.md)
-- [`docs/plans/issue-09-dashboard-ui.md`](docs/plans/issue-09-dashboard-ui.md)
-- [`docs/plans/issue-10-billing-quotas.md`](docs/plans/issue-10-billing-quotas.md)
-- [`docs/plans/issue-11-landing.md`](docs/plans/issue-11-landing.md)
-- [`docs/plans/issue-12-ci-docs.md`](docs/plans/issue-12-ci-docs.md)
-- [`docs/plans/issue-13-object-storage.md`](docs/plans/issue-13-object-storage.md)
-- [`docs/plans/issue-14-security.md`](docs/plans/issue-14-security.md)
+La integración de cobros, Stripe, suscripciones, planes comerciales y upselling no forma parte del producto.

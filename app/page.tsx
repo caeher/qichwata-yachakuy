@@ -8,33 +8,28 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  FREE_MAX_UPLOAD_BYTES,
-  FREE_MONTHLY_ANCHORS,
-  FREE_STORAGE_LIMIT_BYTES,
-} from "@/db/constants";
-import { formatBytes } from "@/lib/format-bytes";
-
 const features = [
   {
-    title: "Archivos",
+    title: "Aprendizaje personal",
     description:
-      "Huella SHA-256 de un archivo. El contenido no se publica en la cadena.",
+      "Una cuenta individual para acercarte a la integridad de datos y avanzar a tu ritmo.",
   },
   {
-    title: "Texto",
-    description: "La misma prueba para un fragmento de texto.",
+    title: "Pruebas verificables",
+    description:
+      "Explora cómo una huella SHA-256 permite comprobar que un contenido no cambió.",
   },
   {
-    title: "Documentos",
-    description: "Gestiona borradores y anclajes desde tu panel.",
+    title: "Certificados",
+    description:
+      "La plataforma se prepara para acompañar el aprendizaje con certificados verificables.",
   },
 ] as const;
 
 const steps = [
-  "Subes un archivo o pegas un texto. El servidor calcula el SHA-256 de esos bytes.",
-  "Anclas ese hash en Stellar (Soroban). El contenido no entra en la transacción.",
-  "Cualquiera puede comprobar el hash en Verificar, sin crear una cuenta.",
+  "Aprende cómo SHA-256 representa datos con una huella verificable.",
+  "Los certificados educativos futuros se vincularán con comprobantes en Stellar.",
+  "Consulta por SHA-256 los comprobantes históricos disponibles, sin crear una cuenta.",
 ] as const;
 
 export default function Home() {
@@ -56,15 +51,15 @@ export default function Home() {
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-16 px-4 py-12 sm:px-6 sm:py-16">
         <section className="flex flex-col gap-6">
           <p className="text-muted-foreground text-sm font-medium">
-            Integridad verificable
+            Aprendizaje e integridad digital
           </p>
           <h1 className="max-w-2xl text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-            Ancla la huella de tus datos en Stellar
+            Aprende a comprender y verificar la integridad de los datos
           </h1>
           <p className="text-muted-foreground max-w-2xl text-lg text-pretty">
-            El servidor calcula el SHA-256 de un archivo o texto y ancla esa
-            huella en Stellar (Soroban). El archivo en sí no se escribe en la
-            cadena.
+            Una cuenta individual para aprender sobre SHA-256 y pruebas
+            verificables en Stellar. Puedes explorar la verificación pública
+            mientras preparamos la experiencia educativa.
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <Button render={<Link href="/sign-up" />}>Crear cuenta</Button>
@@ -117,23 +112,27 @@ export default function Home() {
         </section>
 
         <section className="flex flex-col gap-4">
-          <h2 className="text-2xl font-semibold tracking-tight">Plan Gratis</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">
+            Consulta de comprobantes históricos
+          </h2>
           <Card>
             <CardHeader>
-              <CardTitle>Gratis</CardTitle>
+              <CardTitle>Consulta por SHA-256</CardTitle>
               <CardDescription>
-                {formatBytes(FREE_STORAGE_LIMIT_BYTES)} de almacenamiento ·{" "}
-                {FREE_MONTHLY_ANCHORS} anclajes al mes ·{" "}
-                {formatBytes(FREE_MAX_UPLOAD_BYTES)} por archivo
+                La plataforma no recibe ni guarda archivos o textos. Puedes
+                consultar huellas existentes y sus referencias de Stellar.
               </CardDescription>
             </CardHeader>
             <CardHeader className="pt-0">
               <p className="text-muted-foreground text-sm">
-                La red de desarrollo es testnet. Mainnet es un ajuste del
-                servidor, no un plan de pago.
+                La verificación pública está disponible sin iniciar sesión.
               </p>
-              <Button className="mt-4 w-fit" render={<Link href="/sign-up" />}>
-                Crear cuenta
+              <Button
+                variant="outline"
+                className="mt-4 w-fit"
+                render={<Link href="/verify" />}
+              >
+                Consultar un hash
               </Button>
             </CardHeader>
           </Card>
@@ -148,17 +147,18 @@ export default function Home() {
               <CardHeader>
                 <CardTitle className="text-base">Solo el hash</CardTitle>
                 <CardDescription>
-                  En la cadena va el hash (32 bytes) y un metadato corto. No se
-                  sube el archivo.
+                  Los comprobantes históricos contienen huellas y referencias de
+                  transacción, no los contenidos originales.
                 </CardDescription>
               </CardHeader>
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Fuera de la cadena</CardTitle>
+                <CardTitle className="text-base">
+                  Sin almacenamiento de objetos
+                </CardTitle>
                 <CardDescription>
-                  El archivo se guarda en almacenamiento privado. La clave del
-                  monedero no llega al navegador.
+                  La aplicación no carga, custodia ni descarga archivos o PDFs.
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -180,7 +180,7 @@ export default function Home() {
       <footer className="border-border border-t">
         <div className="text-muted-foreground mx-auto flex w-full max-w-5xl flex-col gap-2 px-4 py-8 text-sm sm:px-6">
           <p>stellar-data-integrity</p>
-          <p>Solo el hash se ancla en Stellar.</p>
+          <p>Las huellas históricas se pueden consultar por SHA-256.</p>
           <p className="flex flex-wrap gap-x-4 gap-y-1">
             <Link href="/verify" className="underline">
               Verificar

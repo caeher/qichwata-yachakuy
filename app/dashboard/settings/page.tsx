@@ -1,8 +1,6 @@
 import { currentUser } from "@clerk/nextjs/server";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getDb } from "@/db/client";
-import { loadUsageSummary } from "@/lib/billing/usage";
 import { loadDashboardUser } from "@/lib/dashboard/load-dashboard-user";
 
 export default async function SettingsPage() {
@@ -18,9 +16,6 @@ export default async function SettingsPage() {
       </main>
     );
   }
-
-  const db = getDb();
-  const usage = await loadUsageSummary(db, ctx.appUser.id);
 
   const name = [clerkUser?.firstName, clerkUser?.lastName]
     .filter(Boolean)
@@ -43,11 +38,10 @@ export default async function SettingsPage() {
         <CardContent className="flex flex-col gap-2 text-sm">
           {name ? <p>Nombre: {name}</p> : null}
           <p>Correo: {email ?? "Sin correo"}</p>
-          <p>Plan: {usage?.planName ?? "—"}</p>
           <p className="text-muted-foreground pt-2">
             La cuenta la gestiona Clerk. Si eliminas la cuenta en Clerk,
-            borramos el archivo y tus datos de perfil. El anclaje en Stellar, si
-            existe, no se puede borrar.
+            redactamos el perfil y los nombres de registros históricos. Sus
+            huellas y comprobantes en Stellar se conservan para verificación.
           </p>
         </CardContent>
       </Card>

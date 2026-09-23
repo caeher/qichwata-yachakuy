@@ -1,17 +1,11 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { createTestDb } from "@/db/pglite";
-import { seedPlans } from "@/db/seed";
 import { anchors, documents } from "@/db/schema";
-import { provisionFreePlan } from "@/lib/auth/provision-user";
-import {
-  ChainUnavailableError,
-  lookupAnchor,
-  lookupWithClaim,
-} from "@/lib/verify/lookup";
+import { provisionLegacyFreeUser } from "@/db/test-fixtures";
+import { ChainUnavailableError, lookupAnchor } from "@/lib/verify/lookup";
 
 const SHA_A = "a".repeat(64);
-const SHA_B = "b".repeat(64);
 
 async function seedAnchored(
   sha256: string,
@@ -19,8 +13,7 @@ async function seedAnchored(
   deletedAt: Date | null = null,
 ) {
   const { db } = await createTestDb();
-  await seedPlans(db);
-  const { userId } = await provisionFreePlan(db, {
+  const { userId } = await provisionLegacyFreeUser(db, {
     clerkUserId: `clerk_${sha256.slice(0, 4)}`,
     email: "u@example.com",
   });
@@ -29,10 +22,7 @@ async function seedAnchored(
     .values({
       userId,
       name: "x.txt",
-      mimeType: "text/plain",
-      sizeBytes: 1,
       sha256,
-      storageKey: `${userId}/k`,
       status: "anchored",
       deletedAt,
     })
@@ -107,24 +97,7 @@ describe("lookupAnchor", () => {
     }
   });
 
-  it("mismatch skips chain", async () => {
-    const { db } = await seedAnchored(SHA_A, new Date());
-    const chain = vi.fn(async () => ({ configured: false as const }));
-    const result = await lookupWithClaim(
-      db,
-      chain,
-      { sha256: SHA_A, claimedSha256: SHA_B },
-      null,
-    );
-    expect(result).toEqual({
-      status: "mismatch",
-      sha256: SHA_A,
-      claimedSha256: SHA_B,
-    });
-    expect(chain).not.toHaveBeenCalled();
-  });
-
-  it("ignores soft-deleted documents", async () => {
+  it("keeps soft-deleted hashes queryable for historical anchors", async () => {
     const { db } = await seedAnchored(SHA_A, new Date(), new Date());
     const result = await lookupAnchor(
       db,
@@ -132,7 +105,7 @@ describe("lookupAnchor", () => {
       SHA_A,
       null,
     );
-    expect(result.status).toBe("not_found");
+    expect(result.status).toBe("anchored");
   });
 
   it("picks earliest anchor", async () => {
