@@ -7,5 +7,9 @@ export function ThemeProvider({
   children,
   ...props
 }: ComponentProps<typeof NextThemesProvider>) {
-  return <NextThemesProvider {...props}>{children}</NextThemesProvider>;
+  return (
+    <NextThemesProvider {...props} defaultTheme={props.defaultTheme ?? "light"}>
+      {children}
+    </NextThemesProvider>
+  );
 }

@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SectionHeading, StatCard, StatusBadge } from "@/components/yachay/components";
 import { loadDashboardUser } from "@/lib/dashboard/load-dashboard-user";
 
 export default async function DashboardPage() {
@@ -27,14 +28,20 @@ export default async function DashboardPage() {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6">
       <section>
-        <h1 className="text-2xl font-semibold tracking-tight">Mi espacio</h1>
+        <SectionHeading level="h1" size="compact" eyebrow="Yachay · Mi espacio" title="Mi recorrido de aprendizaje" />
         <p className="text-muted-foreground text-sm">
           Sesión de {ctx.email ?? ctx.appUser.clerkUserId}
         </p>
       </section>
 
+      <section className="grid gap-4 sm:grid-cols-3" aria-label="Resumen de aprendizaje">
+        <StatCard label="Cursos" value="Por definir" />
+        <StatCard label="Lecciones" value="Por definir" surface="leaf" />
+        <StatCard label="Certificados" value="Por definir" surface="ink" />
+      </section>
+
       <section className="grid gap-4 sm:grid-cols-2">
-        <Card>
+        <Card variant="learning" accent="leaf">
           <CardHeader>
             <CardTitle>Aprendizaje</CardTitle>
           </CardHeader>
@@ -42,9 +49,9 @@ export default async function DashboardPage() {
             El contenido educativo estará disponible próximamente.
           </CardContent>
         </Card>
-        <Card>
+        <Card variant="learning" accent="gold">
           <CardHeader>
-            <CardTitle>Certificados</CardTitle>
+            <CardTitle className="flex items-center gap-2">Certificados <StatusBadge tone="pending">En preparación</StatusBadge></CardTitle>
           </CardHeader>
           <CardContent className="text-muted-foreground text-sm">
             Aquí aparecerán tus certificados verificables.

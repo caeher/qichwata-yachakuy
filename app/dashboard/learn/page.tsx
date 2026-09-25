@@ -2,6 +2,7 @@ import Link from "next/link";
 import { eq } from "drizzle-orm";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ModuleCard } from "@/components/yachay/components";
 import { getDb } from "@/db/client";
 import { courses } from "@/db/schema";
 import { loadDashboardUser } from "@/lib/dashboard/load-dashboard-user";
@@ -22,7 +23,7 @@ export default async function LearnPage() {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-12 sm:px-6">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Aprendizaje</h1>
+        <h1 className="font-heading text-3xl font-medium tracking-tight">Aprendizaje</h1>
         <p className="text-muted-foreground mt-2 text-sm">
           La oferta de Quechua se publicará cuando el contenido y los criterios
           académicos estén validados.
@@ -44,21 +45,13 @@ export default async function LearnPage() {
         <ul className="grid gap-4 sm:grid-cols-2">
           {catalog.map((course) => (
             <li key={course.id}>
-              <Card>
-                <CardHeader>
-                  <CardTitle>
-                    <Link
-                      href={`/dashboard/learn/${course.id}`}
-                      className="hover:underline"
-                    >
-                      {course.title}
-                    </Link>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="text-muted-foreground text-sm">
-                  {course.description}
-                </CardContent>
-              </Card>
+              <ModuleCard
+                title={course.title}
+                description={course.description}
+                href={`/dashboard/learn/${course.id}`}
+                accent="leaf"
+                status="available"
+              />
             </li>
           ))}
         </ul>

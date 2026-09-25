@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { LessonRow } from "@/components/yachay/components";
+
 export function CourseActions({
   courseId,
   enrollmentId,
@@ -84,43 +87,27 @@ export function CourseActions({
   return (
     <div className="flex flex-col gap-4">
       {!activeEnrollment ? (
-        <button
-          disabled={busy}
-          onClick={enroll}
-          className="bg-primary text-primary-foreground w-fit rounded-lg px-4 py-2 text-sm font-medium"
-        >
-          {busy ? "Guardando…" : "Inscribirme"}
-        </button>
+        <Button variant="primary" loading={busy} onClick={enroll} className="w-fit">
+          Inscribirme
+        </Button>
       ) : (
         <>
           <ul className="flex flex-col gap-3">
             {units.map((unit) => (
-              <li
-                key={unit.id}
-                className="flex items-center justify-between gap-4 rounded-lg border p-3 text-sm"
-              >
-                <span>{unit.title}</span>
-                {completedUnitIds.includes(unit.id) ? (
-                  <span className="text-muted-foreground">Completada</span>
-                ) : (
-                  <button
-                    disabled={busy}
-                    onClick={() => markUnit(unit.id)}
-                    className="font-medium underline"
-                  >
-                    Marcar avance
-                  </button>
-                )}
+              <li key={unit.id}>
+                <LessonRow
+                  title={unit.title}
+                  status={completedUnitIds.includes(unit.id) ? "completed" : "pending"}
+                  actionLabel={completedUnitIds.includes(unit.id) ? undefined : "Marcar avance"}
+                  onAction={() => markUnit(unit.id)}
+                  disabled={busy}
+                />
               </li>
             ))}
           </ul>
-          <button
-            disabled={busy}
-            onClick={finalize}
-            className="border-border w-fit rounded-lg border px-4 py-2 text-sm font-medium"
-          >
+          <Button variant="outline" disabled={busy} onClick={finalize} className="w-fit">
             Solicitar finalización
-          </button>
+          </Button>
         </>
       )}
       {message ? (

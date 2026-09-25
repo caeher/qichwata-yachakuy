@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDb } from "@/db/client";
 import { certificates } from "@/db/schema";
 import { loadDashboardUser } from "@/lib/dashboard/load-dashboard-user";
+import { StatusBadge } from "@/components/yachay/components";
 
 export default async function CertificatesPage() {
   const ctx = await loadDashboardUser();
@@ -24,7 +25,7 @@ export default async function CertificatesPage() {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-12 sm:px-6">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className="font-heading text-3xl font-medium tracking-tight">
           Mis certificados
         </h1>
         <p className="text-muted-foreground mt-2 text-sm">
@@ -58,13 +59,15 @@ export default async function CertificatesPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="flex flex-col gap-3 text-sm">
-                    <p>
-                      Estado:{" "}
-                      {row.status === "anchored"
-                        ? "Anclaje registrado; consulta pública para estado actual"
-                        : row.status === "failed"
-                          ? "Falló; se puede recuperar"
-                          : "Pendiente"}
+                    <p className="flex flex-wrap items-center gap-2">
+                      Estado:
+                      <StatusBadge tone={row.status === "anchored" ? "success" : row.status === "failed" ? "error" : "pending"}>
+                        {row.status === "anchored"
+                          ? "Anclaje registrado"
+                          : row.status === "failed"
+                            ? "Falló; se puede recuperar"
+                            : "Pendiente"}
+                      </StatusBadge>
                     </p>
                     <p className="text-muted-foreground">
                       Emisión:{" "}

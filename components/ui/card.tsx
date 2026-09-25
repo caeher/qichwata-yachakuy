@@ -1,17 +1,53 @@
 import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "cn";
+
+const cardVariants = cva(
+  "group/card text-card-foreground ring-foreground/10 flex flex-col gap-(--card-spacing) overflow-hidden rounded-[1.25rem] py-(--card-spacing) text-sm ring-1 shadow-[0_12px_32px_rgb(35_49_39_/_0.06)] transition-shadow has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 *:[img:first-child]:rounded-t-[1.25rem] *:[img:last-child]:rounded-b-[1.25rem]",
+  {
+    variants: {
+      variant: {
+        default: "bg-card",
+        marketing: "bg-paper",
+        learning: "bg-paper hover:shadow-[0_18px_40px_rgb(35_49_39_/_0.1)]",
+      },
+      accent: {
+        none: "",
+        leaf: "border-t-2 border-t-leaf",
+        clay: "border-t-2 border-t-clay",
+        gold: "border-t-2 border-t-gold",
+      },
+      status: {
+        available: "",
+        "in-progress": "ring-leaf/25",
+        completed: "ring-leaf/40",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      accent: "none",
+      status: "available",
+    },
+  },
+);
 
 function Card({
   className,
   size = "default",
+  variant,
+  accent,
+  status,
   ...props
-}: React.ComponentProps<"div"> & { size?: "default" | "sm" }) {
+}: React.ComponentProps<"div"> &
+  VariantProps<typeof cardVariants> & { size?: "default" | "sm" }) {
   return (
     <div
       data-slot="card"
       data-size={size}
+      data-status={status}
       className={cn(
-        "group/card bg-card text-card-foreground ring-foreground/10 flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl py-(--card-spacing) text-sm ring-1 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
+        cardVariants({ variant, accent, status }),
+        "[--card-spacing:--spacing(4)] data-[size=sm]:[--card-spacing:--spacing(3)]",
         className,
       )}
       {...props}
