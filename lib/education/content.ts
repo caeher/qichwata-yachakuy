@@ -29,6 +29,7 @@ export type CourseUnitContent = {
     status: ReviewStatus;
     reviewedBy: string | null;
     reviewedAt: string | null;
+    /** Record unresolved editorial checks; never imply review while status is draft. */
     notes: string[];
   };
   sources: {
@@ -42,6 +43,7 @@ export type CourseUnitContent = {
     requirements: string[];
   };
   regionalVariant: {
+    /** `specified` records an editorial choice; it does not certify linguistic review. */
     status: "undetermined" | "specified";
     name: string | null;
     notes: string;

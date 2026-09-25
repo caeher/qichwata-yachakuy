@@ -43,30 +43,29 @@ export const INITIAL_COURSES: CourseSeed[] = [
     units: [
       {
         lessonId: "hola",
-        title: "Allin p'unchay",
-        description: "Saludos para distintos momentos del día.",
+        title: "Saludos en contexto",
+        description:
+          "Reconoce que una traducción palabra por palabra no siempre cumple la misma función social.",
         kind: "vocabulary",
         durationMinutes: 6,
         objectives: [
-          "Reconocer saludos incluidos como candidatos de vocabulario.",
-          "Relacionar un saludo con el contexto descrito en español.",
+          "Identificar a quién se dirige un saludo y qué relación expresa.",
+          "Distinguir una glosa literal de un saludo validado para la variedad de trabajo.",
         ],
         reading: [
-          "Un saludo abre una conversación y puede variar según la hora, la localidad y la relación entre las personas.",
-          "La forma del título procede del prototipo. Su escritura, pronunciación, traducción y uso todavía requieren una fuente identificable y revisión de hablantes de la variedad que se decida enseñar.",
+          "Un saludo depende de la persona destinataria, la relación y la situación. La traducción palabra por palabra no demuestra que una frase tenga la misma función social en español.",
+          "El borrador anterior proponía una frase para decir «buen día». Se retira como vocabulario y respuesta aceptada: el libro de referencia advierte que una forma muy cercana no equivale al saludo castellano «buen día» (Pacheco Condori, PDF 33). Un reemplazo requiere revisión en la variedad seleccionada.",
         ],
-        vocabulary: [
-          ["Allin p'unchay", "Candidato del prototipo para saludo diurno."],
-        ],
+        vocabulary: [],
         examplePrompt:
-          "¿Qué información falta antes de enseñar el saludo como forma validada?",
+          "¿Qué evidencia hace falta antes de aceptar una expresión como saludo equivalente?",
         exampleResponse:
-          "Fuente lingüística, variedad regional y revisión humana documentadas.",
-        activityTitle: "Relaciona contexto y revisión",
+          "Una fuente localizada y revisión humana de su uso en la variedad elegida.",
+        activityTitle: "Revisa la función de un saludo",
         activityPrompt:
-          "El material incluye un saludo candidato, pero no señala localidad. ¿Puede presentarse como forma universal?",
+          "Una traducción literal sugiere «buen día», pero la fuente cuestiona esa equivalencia. ¿Se conserva como respuesta aceptada?",
         activityAnswer:
-          "No; la variedad regional y su revisión están pendientes.",
+          "No. Se retira del vocabulario hasta documentar una forma y función aprobadas para la variedad.",
       },
       {
         lessonId: "presentarse",
@@ -368,7 +367,9 @@ export function buildUnitContent(
       reviewedBy: null,
       reviewedAt: null,
       notes: [
-        "Revisión humana pendiente.",
+        "Revisión humana pendiente; no hay una persona revisora asignada todavía.",
+        "La revisión requerida corresponde a una persona hablante o especialista en quechua sureño Cusco-Collao, subvariante Cusco, con experiencia en su escritura pentavocálica.",
+        "No aprobar variantes de respuesta por conversión automática entre las grafías de Pacheco y Calvo; consultar el registro editorial QCH-02.",
         "No es material validado ni certificable.",
       ],
     },
@@ -381,10 +382,10 @@ export function buildUnitContent(
       ],
     },
     regionalVariant: {
-      status: "undetermined",
-      name: null,
+      status: "specified",
+      name: "Quechua sureño Cusco-Collao, subvariante Cusco; convención didáctica pentavocálica",
       notes:
-        "Definir y documentar la variedad regional con revisión de hablantes antes de publicar.",
+        "Variedad de trabajo seleccionada para saludos-y-presencia, familia-y-comunidad y territorio-y-tiempo por ser la variedad declarada en el libro curricular de Pacheco (PDF 8). Referencia comunitaria: hablantes de la subvariante Cusco representada en esa fuente; no se ha nombrado ni consultado una comunidad concreta. Convención de presentación inicial: conservar la escritura pentavocálica del libro. El diccionario de Calvo mantiene una política gráfica distinta; registrar su forma original y decidir cada correspondencia individualmente, sin sustitución global. Esta decisión editorial no equivale a revisión lingüística ni a aprobación comunitaria.",
     },
     authorship: { status: "pending", author: null, license: null },
     source: {
