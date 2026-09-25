@@ -5,6 +5,7 @@ Este directorio guarda metadatos, trazabilidad, condiciones de uso e instruccion
 - [Manifiesto de fuentes y sumas](./manifest.md)
 - [Registro editorial de cobertura y decisiones](./editorial-register-2026-09-25.md)
 - [Decisión de variedad y criterios de escritura QCH-02](./qch-02-variety-decision-v1.0.md)
+- [Diseño del glosario trazable QCH-05](./qch-05-glossary-v1.0.md)
 - [Mapa de contenido Familia y comunidad QCH-04](./qch-04-familia-content-map-v1.0.md)
 
 Para descargar los dos PDF de QCH-01 y comprobar sus SHA-256, ejecutar desde la raíz del repositorio:
