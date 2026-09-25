@@ -6,7 +6,9 @@ import {
   VerificationStatus,
   type CertificateStatus,
 } from "@/components/yachay/certificates";
-import { getDb } from "@/db/client";
+import { legacyDb } from "@/lib/db/legacy-db";
+import { api, convexConfigured, convexQuery } from "@/lib/convex/server";
+import { getClerkConvexToken } from "@/lib/convex/clerk-token";
 import { certificates } from "@/db/schema";
 import { loadDashboardUser } from "@/lib/dashboard/load-dashboard-user";
 import { verifyCertificateByHash } from "@/lib/certificates/verify";
@@ -30,11 +32,40 @@ export default async function CertificatesPage() {
       </main>
     );
   }
-  const db = getDb();
-  const rows = await db.query.certificates.findMany({
-    where: eq(certificates.userId, ctx.appUser.id),
-    orderBy: [desc(certificates.createdAt)],
-  });
+  let rows: Array<{
+    id: string;
+    publicId: string;
+    sha256: string;
+    status: string;
+    snapshot: unknown;
+    createdAt: Date;
+  }>;
+
+  if (convexConfigured()) {
+    const token = await getClerkConvexToken();
+    const convexRows = await convexQuery(
+      api.certificates.listForUser,
+      { userId: ctx.appUser.id as never },
+      token,
+    );
+    rows = convexRows.map((row) => ({
+      id: row._id,
+      publicId: row.publicId,
+      sha256: row.sha256,
+      status: row.status,
+      snapshot: row.snapshot,
+      createdAt: new Date(row.createdAt),
+    }));
+  } else {
+    const db = legacyDb();
+    const drizzleRows = await db.query.certificates.findMany({
+      where: eq(certificates.userId, ctx.appUser.id),
+      orderBy: [desc(certificates.createdAt)],
+    });
+    rows = drizzleRows;
+  }
+
+  const db = convexConfigured() ? (null as never) : legacyDb();
   const endpoints = resolveStellarEndpoints();
   const contractId = process.env.STELLAR_CONTRACT_ID?.trim() || null;
   const chain = createChainLookup();

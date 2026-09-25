@@ -1,8 +1,12 @@
+import type { InferSelectModel } from "drizzle-orm";
 import { and, asc, eq } from "drizzle-orm";
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { Id } from "@/convex/_generated/dataModel";
+import { api, convexConfigured, convexQuery } from "@/lib/convex/server";
+import { getClerkConvexToken } from "@/lib/convex/clerk-token";
 import { getDb } from "@/db/client";
 import { courseUnits, courses, enrollments, unitProgress } from "@/db/schema";
 import { loadDashboardUser } from "@/lib/dashboard/load-dashboard-user";
@@ -11,6 +15,8 @@ import {
   isCourseUnitContent,
 } from "@/lib/education/content";
 import { CourseActions } from "@/app/dashboard/learn/course-actions";
+
+type CourseRow = InferSelectModel<typeof courses>;
 
 function LessonContent({ content }: { content: unknown }) {
   if (!isCourseUnitContent(content)) {
@@ -157,39 +163,84 @@ export default async function CoursePage({
       </main>
     );
 
-  const db = getDb();
-  const course = await db.query.courses.findFirst({
-    where: eq(courses.id, courseId),
-  });
-  if (!course || course.status === "archived")
+  const db = convexConfigured() ? (null as never) : getDb();
+
+  let course: CourseRow | undefined;
+  let units: Array<{ id: string; position: number; title: string; content: unknown }>;
+  let enrollment:
+    | { id: string; courseVersion: string }
+    | undefined;
+  let progress: Array<{ unitId: string }>;
+
+  if (convexConfigured()) {
+    const token = await getClerkConvexToken();
+    const detail = await convexQuery(
+      api.education.getCourseDetail,
+      { courseId: courseId as Id<"courses"> },
+      token,
+    );
+    if (!detail || detail.course.status === "archived") {
+      return (
+        <main className="mx-auto max-w-5xl px-4 py-12">
+          <h1 className="text-2xl font-semibold">Curso no disponible</h1>
+        </main>
+      );
+    }
+    course = { ...detail.course, id: detail.course._id } as unknown as CourseRow;
+    units = detail.units.map((unit) => ({ ...unit, id: unit._id }));
+    enrollment = detail.enrollment
+      ? { id: detail.enrollment._id, courseVersion: detail.enrollment.courseVersion }
+      : undefined;
+    progress = detail.progressUnitIds.map((unitId) => ({ unitId }));
+  } else {
+    const row = await db.query.courses.findFirst({
+      where: eq(courses.id, courseId),
+    });
+    if (!row || row.status === "archived")
+      return (
+        <main className="mx-auto max-w-5xl px-4 py-12">
+          <h1 className="text-2xl font-semibold">Curso no disponible</h1>
+        </main>
+      );
+    course = row;
+    units = await db.query.courseUnits.findMany({
+      where: eq(courseUnits.courseId, course.id),
+      orderBy: [asc(courseUnits.position)],
+    });
+    const canEnrollLocal = isCourseEligibleForEnrollment({
+      course,
+      contents: units.map((unit) => unit.content),
+    });
+    enrollment = canEnrollLocal
+      ? (await db.query.enrollments.findFirst({
+          where: and(
+            eq(enrollments.courseId, course.id),
+            eq(enrollments.userId, ctx.appUser.id),
+            eq(enrollments.courseVersion, course.version),
+          ),
+        })) ?? undefined
+      : undefined;
+    progress = enrollment
+      ? await db.query.unitProgress.findMany({
+          where: eq(unitProgress.enrollmentId, enrollment.id),
+        })
+      : [];
+  }
+
+  if (!course)
     return (
       <main className="mx-auto max-w-5xl px-4 py-12">
         <h1 className="text-2xl font-semibold">Curso no disponible</h1>
       </main>
     );
 
-  const units = await db.query.courseUnits.findMany({
-    where: eq(courseUnits.courseId, course.id),
-    orderBy: [asc(courseUnits.position)],
-  });
   const canEnroll = isCourseEligibleForEnrollment({
     course,
     contents: units.map((unit) => unit.content),
   });
-  const enrollment = canEnroll
-    ? await db.query.enrollments.findFirst({
-        where: and(
-          eq(enrollments.courseId, course.id),
-          eq(enrollments.userId, ctx.appUser.id),
-          eq(enrollments.courseVersion, course.version),
-        ),
-      })
-    : undefined;
-  const progress = enrollment
-    ? await db.query.unitProgress.findMany({
-        where: eq(unitProgress.enrollmentId, enrollment.id),
-      })
-    : [];
+  if (convexConfigured() && canEnroll && !enrollment) {
+    enrollment = undefined;
+  }
   const statusLabel = course.demo
     ? "Demostración"
     : canEnroll

@@ -144,7 +144,7 @@ describe("education completion and certificate intent", () => {
         now: new Date(),
       }),
     ]);
-    expect(first.completion.id).toBe(second.completion.id);
+    expect(first.completion!.id).toBe(second.completion!.id);
     expect(first.certificate?.id).toBe(second.certificate?.id);
     expect(first.certificate?.sha256).toMatch(/^[a-f0-9]{64}$/);
     expect(first.certificate?.snapshot).toMatchObject({

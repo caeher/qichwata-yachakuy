@@ -1,13 +1,15 @@
 import Link from "next/link";
-import { asc } from "drizzle-orm";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ModuleCard } from "@/components/yachay/components";
+import { asc } from "drizzle-orm";
 import { getDb } from "@/db/client";
 import { courses } from "@/db/schema";
 import { loadDashboardUser } from "@/lib/dashboard/load-dashboard-user";
 import { INITIAL_COURSES } from "@/lib/education/initial-catalog";
 import { isCourseEligibleForEnrollment } from "@/lib/education/content";
+import { api, convexConfigured, convexQuery } from "@/lib/convex/server";
+import { getClerkConvexToken } from "@/lib/convex/clerk-token";
 
 export default async function LearnPage() {
   const ctx = await loadDashboardUser();
@@ -19,14 +21,42 @@ export default async function LearnPage() {
         </p>
       </main>
     );
-  const db = getDb();
-  const catalog = await db.query.courses.findMany({
-    orderBy: [asc(courses.createdAt)],
-  });
-  const visibleCatalog = catalog.filter(
-    (course) => course.status !== "archived",
-  );
-  const units = await db.query.courseUnits.findMany();
+
+  let visibleCatalog: Array<{
+    id: string;
+    slug: string;
+    title: string;
+    description: string;
+    accent: string;
+    level: string;
+    version: string;
+    demo: boolean;
+    estimatedDurationMinutes: number;
+    status: string;
+    enrollmentEnabled: boolean;
+  }>;
+  let units: Array<{ courseId: string; content: unknown }>;
+
+  if (convexConfigured()) {
+    const token = await getClerkConvexToken();
+    const catalog = await convexQuery(api.education.listCatalog, {}, token);
+    visibleCatalog = catalog.courses.map((course) => ({
+      ...course,
+      id: course._id,
+    }));
+    units = catalog.units.map((unit) => ({
+      courseId: unit.courseId,
+      content: unit.content,
+    }));
+  } else {
+    const db = getDb();
+    const catalog = await db.query.courses.findMany({
+      orderBy: [asc(courses.createdAt)],
+    });
+    visibleCatalog = catalog.filter((course) => course.status !== "archived");
+    units = await db.query.courseUnits.findMany();
+  }
+
   const initialOrder = new Map(
     INITIAL_COURSES.map((course, index) => [course.slug, index]),
   );

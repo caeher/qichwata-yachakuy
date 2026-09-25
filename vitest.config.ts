@@ -7,6 +7,7 @@ export default defineConfig({
     environment: "node",
     include: ["**/*.test.ts"],
     testTimeout: 15_000,
+    setupFiles: ["./vitest.setup.ts"],
   },
   resolve: { alias: { "@": path.resolve(__dirname, ".") } },
 });

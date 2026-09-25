@@ -3,6 +3,8 @@ import { eq } from "drizzle-orm";
 import type { AuthDb } from "@/lib/auth/provision-user";
 import { provisionUser } from "@/lib/auth/provision-user";
 import { users } from "@/db/schema";
+import { api, convexConfigured, convexMutation } from "@/lib/convex/server";
+import { getClerkConvexToken } from "@/lib/convex/clerk-token";
 
 export type AppUserRow = {
   id: string;
@@ -39,6 +41,15 @@ export async function resolveAppUser(
   clerkUserId: string,
   email: string | null,
 ): Promise<AppUserRow | null> {
+  if (convexConfigured()) {
+    const token = await getClerkConvexToken();
+    return await convexMutation(
+      api.users.resolveAppUser,
+      { clerkUserId, email },
+      token,
+    );
+  }
+
   await provisionUser(db, { clerkUserId, email });
   return fetchAppUser(db, clerkUserId);
 }

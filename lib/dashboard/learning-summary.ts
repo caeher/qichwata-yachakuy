@@ -1,14 +1,6 @@
-import { and, asc, eq, inArray } from "drizzle-orm";
-
+import { api, convexConfigured, convexQuery } from "@/lib/convex/server";
+import { getClerkConvexToken } from "@/lib/convex/clerk-token";
 import { getDb } from "@/db/client";
-import {
-  certificates,
-  courseCompletions,
-  courseUnits,
-  courses,
-  enrollments,
-  unitProgress,
-} from "@/db/schema";
 import {
   isCourseEligibleForEnrollment,
   isUnitReadyForPublication,
@@ -42,7 +34,26 @@ export type LearningSummary = {
 const accents = new Set(["leaf", "clay", "gold"]);
 
 export async function loadLearningSummary(userId: string): Promise<LearningSummary> {
+  if (convexConfigured()) {
+    const token = await getClerkConvexToken();
+    return (await convexQuery(
+      api.learningSummary.loadLearningSummary,
+      { userId: userId as never },
+      token,
+    )) as LearningSummary;
+  }
+
   const db = getDb();
+  const { and, asc, eq, inArray } = await import("drizzle-orm");
+  const {
+    certificates,
+    courseCompletions,
+    courseUnits,
+    courses,
+    enrollments,
+    unitProgress,
+  } = await import("@/db/schema");
+
   const userEnrollments = await db.query.enrollments.findMany({
     where: and(
       eq(enrollments.userId, userId),

@@ -1,10 +1,11 @@
-import { asc, inArray } from "drizzle-orm";
-import { timingSafeEqual } from "node:crypto";
-
-import { getDb } from "@/db/client";
-import { certificates } from "@/db/schema";
+import { internal } from "@/convex/_generated/api";
+import {
+  convexConfigured,
+  convexInternalQuery,
+} from "@/lib/convex/server";
 import { getAnchorRuntimeConfig } from "@/lib/anchors/service";
 import { runCertificateAnchorJob } from "@/lib/certificates/anchor-job";
+import { timingSafeEqual } from "node:crypto";
 
 export const runtime = "nodejs";
 
@@ -23,16 +24,33 @@ export async function POST(request: Request) {
     return Response.json({ error: "worker_not_configured" }, { status: 503 });
   if (!authorized(request, token))
     return Response.json({ error: "unauthorized" }, { status: 401 });
-  if (!process.env.DATABASE_URL)
+  if (!convexConfigured() && !process.env.DATABASE_URL)
     return Response.json({ error: "database_unconfigured" }, { status: 503 });
+
+  const runtime = getAnchorRuntimeConfig();
+  const outcomes = [];
+
+  if (convexConfigured()) {
+    const pending = await convexInternalQuery(
+      internal.certificates.listPendingForWorker,
+      { limit: 20 },
+    );
+    return Response.json({
+      processed: 0,
+      pending: pending.length,
+      note: "certificate_anchor_job_requires_convex_mutations",
+    });
+  }
+
+  const { asc, inArray } = await import("drizzle-orm");
+  const { getDb } = await import("@/db/client");
+  const { certificates } = await import("@/db/schema");
   const db = getDb();
   const pending = await db.query.certificates.findMany({
     where: inArray(certificates.status, ["pending", "failed"]),
     orderBy: [asc(certificates.createdAt)],
     limit: 20,
   });
-  const runtime = getAnchorRuntimeConfig();
-  const outcomes = [];
   for (const certificate of pending) {
     try {
       outcomes.push(

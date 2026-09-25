@@ -3,7 +3,8 @@ import { headers } from "next/headers";
 
 import { SiteHeader } from "@/components/site-header";
 import { VerifyForm } from "@/app/verify/verify-form";
-import { getDb } from "@/db/client";
+import { legacyDb } from "@/lib/db/legacy-db";
+import { convexConfigured } from "@/lib/convex/server";
 import { createChainLookup } from "@/lib/verify/chain";
 import { normalizeHashHex } from "@/lib/verify/hash-input";
 import { ChainUnavailableError, lookupAnchor } from "@/lib/verify/lookup";
@@ -95,9 +96,9 @@ export default async function VerifyHashPage({ params }: Props) {
     ReturnType<typeof verifyCertificateByHash>
   > | null = null;
 
-  if (rate.ok && process.env.DATABASE_URL) {
+  if (rate.ok && (convexConfigured() || process.env.DATABASE_URL)) {
     try {
-      const db = getDb();
+      const db = convexConfigured() ? (null as never) : legacyDb();
       const contractId = process.env.STELLAR_CONTRACT_ID?.trim() || null;
       lookupResult = await lookupAnchor(
         db,

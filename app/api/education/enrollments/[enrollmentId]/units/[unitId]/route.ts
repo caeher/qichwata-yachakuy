@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { getDb } from "@/db/client";
+import { legacyDb } from "@/lib/db/legacy-db";
 import { loadDashboardUser } from "@/lib/dashboard/load-dashboard-user";
 import { completeUnit, EducationError } from "@/lib/education/service";
 
@@ -30,15 +30,29 @@ export async function POST(
   )
     return NextResponse.json({ error: "invalid_input" }, { status: 400 });
   try {
-    const progress = await completeUnit(getDb(), {
+    const progress = await completeUnit(legacyDb(), {
       userId: ctx.appUser.id,
       enrollmentId,
       unitId,
       answers: (body as { answers: string[] }).answers,
     });
     return NextResponse.json({
-      progressId: progress.progress?.id ?? null,
-      completedAt: progress.progress?.completedAt ?? null,
+      progressId:
+        progress.progress &&
+        ("id" in progress.progress
+          ? progress.progress.id
+          : "_id" in progress.progress
+            ? (progress.progress as { _id: string })._id
+            : null),
+      completedAt:
+        progress.progress &&
+        ("completedAt" in progress.progress
+          ? progress.progress.completedAt instanceof Date
+            ? progress.progress.completedAt.toISOString()
+            : new Date(
+                progress.progress.completedAt as number,
+              ).toISOString()
+          : null),
       feedback: progress.feedback,
     });
   } catch (error) {

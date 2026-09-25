@@ -1,7 +1,9 @@
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
-import { getDb } from "@/db/client";
+import { api, convexConfigured, convexQuery } from "@/lib/convex/server";
+import { getClerkConvexToken } from "@/lib/convex/clerk-token";
+import { legacyDb } from "@/lib/db/legacy-db";
 import { courseUnits, courses, enrollments } from "@/db/schema";
 import { loadDashboardUser } from "@/lib/dashboard/load-dashboard-user";
 import {
@@ -14,6 +16,7 @@ import {
   CoachServiceError,
   generateCoachReply,
   isCoachConfigured,
+  type CoachContext,
   isCoachContextWithinLimit,
   MAX_COACH_HISTORY_MESSAGES,
   MAX_COACH_MESSAGE_LENGTH,
@@ -145,46 +148,74 @@ export async function POST(request: Request) {
     | { sessionId: string; turns: number; inFlight: boolean; expiresAt: number }
     | undefined;
   try {
-    const db = getDb();
-    const enrollment = await db.query.enrollments.findFirst({
-      where: and(
-        eq(enrollments.id, input.enrollmentId),
-        eq(enrollments.userId, user.appUser.id),
-        eq(enrollments.status, "active"),
-      ),
-    });
-    if (!enrollment) return errorResponse("session_expired", 401);
-    const [course, unit] = await Promise.all([
-      db.query.courses.findFirst({
+    let coachContext: CoachContext | null = null;
+
+    if (convexConfigured()) {
+      const token = await getClerkConvexToken();
+      const loaded = await convexQuery(
+        api.education.getCoachContext,
+        {
+          enrollmentId: input.enrollmentId as never,
+          unitId: input.unitId as never,
+        },
+        token,
+      );
+      if (!loaded) return errorResponse("unit_unavailable", 404);
+      const content = isCourseUnitContent(loaded.unitContent)
+        ? loaded.unitContent
+        : null;
+      if (!content || !isUnitReadyForPublication(content)) {
+        return errorResponse("unit_unavailable", 404);
+      }
+      coachContext = {
+        courseTitle: loaded.courseTitle,
+        unitTitle: loaded.unitTitle,
+        content,
+      };
+    } else {
+      const db = legacyDb();
+      const enrollment = await db.query.enrollments.findFirst({
         where: and(
-          eq(courses.id, enrollment.courseId),
-          eq(courses.version, enrollment.courseVersion),
-          eq(courses.status, "published"),
-          eq(courses.enrollmentEnabled, true),
-          eq(courses.demo, false),
+          eq(enrollments.id, input.enrollmentId),
+          eq(enrollments.userId, user.appUser.id),
+          eq(enrollments.status, "active"),
         ),
-      }),
-      db.query.courseUnits.findFirst({
-        where: and(
-          eq(courseUnits.id, input.unitId),
-          eq(courseUnits.courseId, enrollment.courseId),
-        ),
-      }),
-    ]);
-    if (!course || !unit) return errorResponse("unit_unavailable", 404);
-    const content = isCourseUnitContent(unit.content) ? unit.content : null;
-    if (!content || !isUnitReadyForPublication(content)) {
-      return errorResponse("unit_unavailable", 404);
+      });
+      if (!enrollment) return errorResponse("session_expired", 401);
+      const [course, unit] = await Promise.all([
+        db.query.courses.findFirst({
+          where: and(
+            eq(courses.id, enrollment.courseId),
+            eq(courses.version, enrollment.courseVersion),
+            eq(courses.status, "published"),
+            eq(courses.enrollmentEnabled, true),
+            eq(courses.demo, false),
+          ),
+        }),
+        db.query.courseUnits.findFirst({
+          where: and(
+            eq(courseUnits.id, input.unitId),
+            eq(courseUnits.courseId, enrollment.courseId),
+          ),
+        }),
+      ]);
+      if (!course || !unit) return errorResponse("unit_unavailable", 404);
+      const content = isCourseUnitContent(unit.content) ? unit.content : null;
+      if (!content || !isUnitReadyForPublication(content)) {
+        return errorResponse("unit_unavailable", 404);
+      }
+      coachContext = {
+        courseTitle: course.title,
+        unitTitle: unit.title,
+        content,
+      };
     }
-    const coachContext = {
-      courseTitle: course.title,
-      unitTitle: unit.title,
-      content,
-    };
+
+    if (!coachContext) return errorResponse("unit_unavailable", 404);
     if (!isCoachContextWithinLimit(coachContext))
       return errorResponse("context_too_large", 422);
 
-    const sessionKey = `${user.appUser.id}:${enrollment.id}:${unit.id}`;
+    const sessionKey = `${user.appUser.id}:${input.enrollmentId}:${input.unitId}`;
     const activeSession = sessionTurns.get(sessionKey);
     if (activeSession && activeSession.expiresAt > now) {
       if (activeSession.turns >= MAX_COACH_SESSION_TURNS)

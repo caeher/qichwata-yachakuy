@@ -3,6 +3,7 @@ import { and, asc, eq } from "drizzle-orm";
 import type { Database } from "@/db/client";
 import type { TestDatabase } from "@/db/pglite";
 import { anchors, documents } from "@/db/schema";
+import { api, convexConfigured, convexQuery } from "@/lib/convex/server";
 import { expertTxUrl } from "@/lib/anchors/expert-url";
 import { resolveStellarEndpoints } from "@/lib/stellar/endpoints";
 
@@ -51,6 +52,93 @@ export async function lookupAnchor(
   contractId: string | null,
   expectedNetwork: "testnet" | "mainnet" = resolveStellarEndpoints().network,
 ): Promise<VerifyResult> {
+  if (convexConfigured()) {
+    const dbRow = await convexQuery(api.verify.lookupDocumentAnchor, { sha256 });
+    let chainResult: ChainLookupResult;
+    try {
+      chainResult = await chain(sha256);
+    } catch {
+      if (dbRow) {
+        return buildDatabaseResult(
+          sha256,
+          {
+            network: dbRow.network,
+            txHash: dbRow.txHash,
+            ledger: dbRow.ledger,
+            contractId: dbRow.contractId,
+            anchoredAt: new Date(dbRow.anchoredAt),
+          },
+          null,
+        );
+      }
+      throw new ChainUnavailableError();
+    }
+    if (!chainResult.configured) {
+      if (dbRow) {
+        return buildDatabaseResult(
+          sha256,
+          {
+            network: dbRow.network,
+            txHash: dbRow.txHash,
+            ledger: dbRow.ledger,
+            contractId: dbRow.contractId,
+            anchoredAt: new Date(dbRow.anchoredAt),
+          },
+          null,
+        );
+      }
+      return { status: "not_found", sha256 };
+    }
+    if (chainResult.record && dbRow) {
+      const expert = expertTxUrl(
+        dbRow.network as "testnet" | "mainnet",
+        dbRow.txHash,
+      );
+      return {
+        status: "anchored",
+        sha256,
+        network: dbRow.network as "testnet" | "mainnet",
+        txHash: dbRow.txHash,
+        ledger: dbRow.ledger ?? chainResult.record.ledger,
+        anchoredAt: new Date(dbRow.anchoredAt).toISOString(),
+        contractId: dbRow.contractId ?? contractId,
+        owner: chainResult.record.owner,
+        expertUrl: expert,
+        onChain: true,
+        source: "both",
+      };
+    }
+    if (dbRow) {
+      return buildDatabaseResult(
+        sha256,
+        {
+          network: dbRow.network,
+          txHash: dbRow.txHash,
+          ledger: dbRow.ledger,
+          contractId: dbRow.contractId,
+          anchoredAt: new Date(dbRow.anchoredAt),
+        },
+        false,
+      );
+    }
+    if (chainResult.record) {
+      return {
+        status: "anchored",
+        sha256,
+        network: expectedNetwork,
+        txHash: null,
+        ledger: chainResult.record.ledger,
+        anchoredAt: new Date(chainResult.record.timestamp * 1000).toISOString(),
+        contractId,
+        owner: chainResult.record.owner,
+        expertUrl: null,
+        onChain: true,
+        source: "chain",
+      };
+    }
+    return { status: "not_found", sha256 };
+  }
+
   const rows = await db
     .select({
       network: anchors.network,

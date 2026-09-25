@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import type { Database } from "@/db/client";
 import type { TestDatabase } from "@/db/pglite";
 import { anchors, certificates } from "@/db/schema";
+import { api, convexConfigured, convexQuery } from "@/lib/convex/server";
 import {
   canonicalCertificateJson,
   hashCertificatePayload,
@@ -88,10 +89,45 @@ export async function verifyCertificateByHash(
     contractId: string | null;
   },
 ): Promise<CertificateVerification> {
+  if (convexConfigured()) {
+    const cert = await convexQuery(api.certificates.getBySha256, { sha256 });
+    if (!cert) return { status: "unknown", sha256 };
+    const certRow = {
+      ...cert,
+      id: cert._id,
+      publicId: cert.publicId,
+      sha256: cert.sha256,
+      snapshot: cert.snapshot,
+      schemaVersion: cert.schemaVersion,
+      status: cert.status,
+    };
+    return verifyCertificateRow(certRow, db, chain, sha256, expected);
+  }
+
   const cert = await db.query.certificates.findFirst({
     where: eq(certificates.sha256, sha256),
   });
   if (!cert) return { status: "unknown", sha256 };
+  return verifyCertificateRow(cert, db, chain, sha256, expected);
+}
+
+async function verifyCertificateRow(
+  cert: {
+    id: string;
+    publicId: string;
+    sha256: string;
+    snapshot: unknown;
+    schemaVersion: number;
+    status: string;
+  },
+  db: Db,
+  chain: (hash: string) => Promise<ChainLookupResult>,
+  sha256: string,
+  expected: {
+    network: "testnet" | "mainnet";
+    contractId: string | null;
+  },
+): Promise<CertificateVerification> {
   const normalized = canonicalFromSnapshot(cert.snapshot);
   if (
     !normalized ||
@@ -109,9 +145,35 @@ export async function verifyCertificateByHash(
   if (cert.status !== "anchored")
     return { status: "pending", publicId: cert.publicId, sha256: cert.sha256 };
 
-  const receipt = await db.query.anchors.findFirst({
-    where: eq(anchors.certificateId, cert.id),
-  });
+  let receipt:
+    | {
+        network: string;
+        txHash: string;
+        ledger: number | null;
+        contractId: string | null;
+        ownerPublicKey?: string | null;
+      }
+    | null
+    | undefined;
+
+  if (convexConfigured()) {
+    const anchor = await convexQuery(api.certificates.getAnchorForCertificate, {
+      certificateId: cert.id as never,
+    });
+    receipt = anchor
+      ? {
+          network: anchor.network,
+          txHash: anchor.txHash,
+          ledger: anchor.ledger ?? null,
+          contractId: anchor.contractId ?? null,
+          ownerPublicKey: anchor.ownerPublicKey ?? null,
+        }
+      : null;
+  } else {
+    receipt = await db.query.anchors.findFirst({
+      where: eq(anchors.certificateId, cert.id),
+    });
+  }
   if (!receipt)
     return {
       status: "integrity_mismatch",
@@ -170,6 +232,10 @@ export async function verifyCertificateByHash(
 }
 
 export async function getPublicCertificate(db: Db, publicId: string) {
+  if (convexConfigured()) {
+    return await convexQuery(api.certificates.getByPublicId, { publicId });
+  }
+
   const cert = await db.query.certificates.findFirst({
     where: eq(certificates.publicId, publicId),
   });

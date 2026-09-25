@@ -5,7 +5,8 @@ Plataforma educativa B2C con cuentas individuales, scaffolding de aprendizaje y 
 ## Stack
 
 - Next.js 16.3.5, React 19, TypeScript, Tailwind CSS v4 y shadcn/ui
-- PostgreSQL con Drizzle ORM
+- PostgreSQL con Drizzle ORM (tests y rutas legacy)
+- **Convex** como base de datos en desarrollo/producción cuando `NEXT_PUBLIC_CONVEX_URL` está configurado
 - Clerk para identidad y autenticación
 - Stellar Soroban para comprobantes de integridad
 - Vitest y PGlite para pruebas sin un servidor PostgreSQL
@@ -18,7 +19,9 @@ Plataforma educativa B2C con cuentas individuales, scaffolding de aprendizaje y 
 ```bash
 pnpm install
 cp .env.example .env.local
-pnpm db:migrate
+# Ver docs/LOCAL_SETUP.md (Clerk, Convex, Alchemy, Stellar, OpenAI)
+pnpm convex:dev   # terminal aparte
+pnpm convex:seed
 pnpm dev
 ```
 

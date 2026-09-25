@@ -1,6 +1,9 @@
 import { and, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 
+import type { Id } from "@/convex/_generated/dataModel";
+import { api, convexConfigured, convexMutation } from "@/lib/convex/server";
+import { getClerkConvexToken } from "@/lib/convex/clerk-token";
 import type { AuthDb } from "@/lib/auth/provision-user";
 import {
   certificates,
@@ -54,6 +57,24 @@ export async function enrollInCourse(
   db: AuthDb,
   input: { userId: string; courseId: string },
 ) {
+  if (convexConfigured()) {
+    const token = await getClerkConvexToken();
+    const enrollment = await convexMutation(
+      api.education.enroll,
+      { courseId: input.courseId as Id<"courses"> },
+      token,
+    );
+    if (!enrollment) throw new Error("enrollment_persist_failed");
+    return {
+      id: enrollment._id,
+      userId: enrollment.userId,
+      courseId: enrollment.courseId,
+      courseVersion: enrollment.courseVersion,
+      status: enrollment.status,
+      enrolledAt: new Date(enrollment.enrolledAt),
+    };
+  }
+
   const course = await db.query.courses.findFirst({
     where: eq(courses.id, input.courseId),
   });
@@ -104,6 +125,34 @@ export async function completeUnit(
     answers: string[];
   },
 ) {
+  if (convexConfigured()) {
+    const token = await getClerkConvexToken();
+    try {
+      return await convexMutation(
+        api.education.completeUnit,
+        {
+          enrollmentId: input.enrollmentId as Id<"enrollments">,
+          unitId: input.unitId as Id<"courseUnits">,
+          answers: input.answers,
+        },
+        token,
+      );
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message.includes("not_found")) {
+          throw new EducationError("not_found");
+        }
+        if (error.message.includes("evidence_required")) {
+          throw new EducationError("evidence_required");
+        }
+        if (error.message.includes("evidence_incorrect")) {
+          throw new EducationError("evidence_incorrect");
+        }
+      }
+      throw error;
+    }
+  }
+
   const enrollment = await db.query.enrollments.findFirst({
     where: and(
       eq(enrollments.id, input.enrollmentId),
@@ -165,6 +214,62 @@ export async function finalizeEnrollment(
     now?: Date;
   },
 ) {
+  if (convexConfigured()) {
+    const token = await getClerkConvexToken();
+    try {
+      const outcome = await convexMutation(
+        api.education.finalizeEnrollment,
+        {
+          enrollmentId: input.enrollmentId as Id<"enrollments">,
+          issuer: input.issuer,
+        },
+        token,
+      );
+      return {
+        completion: outcome.completion
+          ? {
+              id: outcome.completion._id,
+              enrollmentId: outcome.completion.enrollmentId,
+              courseVersion: outcome.completion.courseVersion,
+              policyVersion: outcome.completion.policyVersion,
+              validatedAt: new Date(outcome.completion.validatedAt),
+              eligible: outcome.completion.eligible,
+            }
+          : null,
+        certificate: outcome.certificate
+          ? {
+              id: outcome.certificate._id,
+              publicId: outcome.certificate.publicId,
+              userId: outcome.certificate.userId,
+              completionId: outcome.certificate.completionId,
+              snapshot: outcome.certificate.snapshot,
+              schemaVersion: outcome.certificate.schemaVersion,
+              sha256: outcome.certificate.sha256,
+              status: outcome.certificate.status,
+              pendingTxHash: outcome.certificate.pendingTxHash ?? null,
+              pendingAt: outcome.certificate.pendingAt
+                ? new Date(outcome.certificate.pendingAt)
+                : null,
+              createdAt: new Date(outcome.certificate.createdAt),
+            }
+          : null,
+      };
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message.includes("criteria_pending")) {
+          throw new EducationError("criteria_pending");
+        }
+        if (error.message.includes("not_found")) {
+          throw new EducationError("not_found");
+        }
+        if (error.message.includes("course_unavailable")) {
+          throw new EducationError("course_unavailable");
+        }
+      }
+      throw error;
+    }
+  }
+
   const policy = input.policy ?? pendingCompletionPolicy;
   const now = input.now ?? new Date();
   return db.transaction(async (tx) => {

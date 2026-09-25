@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { loadDashboardUser } from "@/lib/dashboard/load-dashboard-user";
 import { enrollInCourse, EducationError } from "@/lib/education/service";
-import { getDb } from "@/db/client";
+import { legacyDb } from "@/lib/db/legacy-db";
 
 export const runtime = "nodejs";
 
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid_input" }, { status: 400 });
   }
   try {
-    const enrollment = await enrollInCourse(getDb(), {
+    const enrollment = await enrollInCourse(legacyDb(), {
       userId: ctx.appUser.id,
       courseId: (body as { courseId: string }).courseId,
     });

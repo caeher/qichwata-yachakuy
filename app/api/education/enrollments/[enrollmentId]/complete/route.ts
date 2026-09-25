@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { getDb } from "@/db/client";
+import { legacyDb } from "@/lib/db/legacy-db";
 import { loadDashboardUser } from "@/lib/dashboard/load-dashboard-user";
 import { EducationError, finalizeEnrollment } from "@/lib/education/service";
 
@@ -15,13 +15,13 @@ export async function POST(
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const { enrollmentId } = await context.params;
   try {
-    const outcome = await finalizeEnrollment(getDb(), {
+    const outcome = await finalizeEnrollment(legacyDb(), {
       userId: ctx.appUser.id,
       enrollmentId,
       issuer: process.env.CERTIFICATE_ISSUER?.trim() ?? "",
     });
     return NextResponse.json({
-      completionId: outcome.completion.id,
+      completionId: outcome.completion!.id,
       certificateId: outcome.certificate?.publicId ?? null,
     });
   } catch (error) {

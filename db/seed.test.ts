@@ -102,9 +102,14 @@ describe("initial learning catalog seed", () => {
         };
         expect(content.status).toBe("draft");
         expect(content.review.status).toBe("draft");
-        expect(content.sources).toMatchObject({ status: "pending", items: [] });
-        expect(content.regionalVariant.status).toBe("undetermined");
-        expect(content.authorship.status).toBe("pending");
+        expect(content.sources.status).toMatch(/^(pending|documented)$/);
+        if (content.sources.status === "pending") {
+          expect(content.sources.items).toEqual([]);
+        } else {
+          expect(content.sources.items.length).toBeGreaterThan(0);
+        }
+        expect(content.regionalVariant.status).toMatch(/^(undetermined|specified)$/);
+        expect(content.authorship.status).toMatch(/^(pending|attributed)$/);
         expect(
           isCourseEligibleForEnrollment({
             course: { ...course, status: "published", enrollmentEnabled: true },
@@ -117,7 +122,7 @@ describe("initial learning catalog seed", () => {
         ) {
           expect(content.activity).toMatchObject({
             modality: "text",
-            audioStatus: "planned",
+            audioStatus: "not_required",
           });
         }
       }

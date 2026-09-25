@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { SiteHeader } from "@/components/site-header";
+import { SiteAuthControls } from "@/components/site-auth-controls";
 import { ActionLink, SectionHeading } from "@/components/yachay/components";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -37,13 +38,7 @@ export default function Home() {
     <div className="min-h-svh bg-background text-ink">
       <SiteHeader
         title="Yachay · lengua viva"
-        trailing={
-          <nav className="flex items-center gap-1" aria-label="Acceso">
-            <ActionLink variant="ghost" size="sm" href="/verify">Verificar</ActionLink>
-            <ActionLink variant="ghost" size="sm" href="/sign-in">Entrar</ActionLink>
-            <ActionLink size="sm" href="/sign-up">Comenzar</ActionLink>
-          </nav>
-        }
+        trailing={<SiteAuthControls />}
       />
 
       <main className="overflow-hidden">

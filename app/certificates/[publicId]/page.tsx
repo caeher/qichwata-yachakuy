@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 
 import {
@@ -8,9 +7,9 @@ import {
   VerificationStatus,
   type CertificateStatus,
 } from "@/components/yachay/certificates";
-import { getDb } from "@/db/client";
-import { certificates } from "@/db/schema";
-import { verifyCertificateByHash } from "@/lib/certificates/verify";
+import { legacyDb } from "@/lib/db/legacy-db";
+import { convexConfigured } from "@/lib/convex/server";
+import { getPublicCertificate, verifyCertificateByHash } from "@/lib/certificates/verify";
 import { createChainLookup } from "@/lib/verify/chain";
 import { resolveStellarEndpoints } from "@/lib/stellar/endpoints";
 import { clientIp } from "@/lib/verify/rate-limit";
@@ -46,7 +45,7 @@ export default async function PublicCertificatePage({ params }: Props) {
       </main>
     );
   }
-  if (!process.env.DATABASE_URL) {
+  if (!convexConfigured() && !process.env.DATABASE_URL) {
     return (
       <main className="mx-auto max-w-2xl px-4 py-12">
         <VerificationStatus status="unavailable">
@@ -55,11 +54,9 @@ export default async function PublicCertificatePage({ params }: Props) {
       </main>
     );
   }
-  const db = getDb();
-  const cert = await db.query.certificates.findFirst({
-    where: eq(certificates.publicId, publicId),
-  });
-  if (!cert) {
+  const db = legacyDb();
+  const loaded = await getPublicCertificate(db, publicId);
+  if (!loaded) {
     return (
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-12 sm:px-6">
         <CertificateCard title="Certificado desconocido" status="unknown">
@@ -72,6 +69,21 @@ export default async function PublicCertificatePage({ params }: Props) {
       </main>
     );
   }
+
+  const cert = {
+    publicId: loaded.publicId,
+    sha256: loaded.sha256,
+    snapshot:
+      "issuer" in loaded
+        ? {
+            issuer: loaded.issuer,
+            course: { title: loaded.courseTitle },
+            issuedAt: loaded.issuedAt,
+          }
+        : {},
+    createdAt: new Date(loaded.issuedAt ?? Date.now()),
+    status: loaded.state,
+  };
 
   const endpoints = resolveStellarEndpoints();
   const contractId = process.env.STELLAR_CONTRACT_ID?.trim() || null;
