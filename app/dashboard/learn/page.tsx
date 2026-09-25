@@ -1,11 +1,13 @@
 import Link from "next/link";
-import { eq } from "drizzle-orm";
+import { asc } from "drizzle-orm";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ModuleCard } from "@/components/yachay/components";
 import { getDb } from "@/db/client";
 import { courses } from "@/db/schema";
 import { loadDashboardUser } from "@/lib/dashboard/load-dashboard-user";
+import { INITIAL_COURSES } from "@/lib/education/initial-catalog";
+import { isCourseEligibleForEnrollment } from "@/lib/education/content";
 
 export default async function LearnPage() {
   const ctx = await loadDashboardUser();
@@ -17,40 +19,80 @@ export default async function LearnPage() {
         </p>
       </main>
     );
-  const catalog = await getDb().query.courses.findMany({
-    where: eq(courses.status, "published"),
+  const db = getDb();
+  const catalog = await db.query.courses.findMany({
+    orderBy: [asc(courses.createdAt)],
   });
+  const visibleCatalog = catalog.filter(
+    (course) => course.status !== "archived",
+  );
+  const units = await db.query.courseUnits.findMany();
+  const initialOrder = new Map(
+    INITIAL_COURSES.map((course, index) => [course.slug, index]),
+  );
+  visibleCatalog.sort(
+    (left, right) =>
+      (initialOrder.get(left.slug) ?? Number.MAX_SAFE_INTEGER) -
+      (initialOrder.get(right.slug) ?? Number.MAX_SAFE_INTEGER),
+  );
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-12 sm:px-6">
       <header>
-        <h1 className="font-heading text-3xl font-medium tracking-tight">Aprendizaje</h1>
+        <h1 className="font-heading text-3xl font-medium tracking-tight">
+          Aprendizaje
+        </h1>
         <p className="text-muted-foreground mt-2 text-sm">
-          La oferta de Quechua se publicará cuando el contenido y los criterios
-          académicos estén validados.
+          Catálogo inicial en preparación. Cada curso y versión muestra su
+          estado de publicación.
         </p>
       </header>
-      {catalog.length === 0 ? (
+      {visibleCatalog.length === 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle>No hay cursos publicados</CardTitle>
+            <CardTitle>Catálogo vacío</CardTitle>
           </CardHeader>
           <CardContent className="text-muted-foreground text-sm">
-            El curso de introducción, vocabulario y práctica todavía está en
-            preparación. El tutor y los ejercicios de IA esperan una base de
-            contenido validada. No se emiten certificados desde cursos de
-            demostración.
+            Todavía no hay cursos en el catálogo.
           </CardContent>
         </Card>
       ) : (
         <ul className="grid gap-4 sm:grid-cols-2">
-          {catalog.map((course) => (
+          {visibleCatalog.map((course) => (
             <li key={course.id}>
               <ModuleCard
                 title={course.title}
                 description={course.description}
                 href={`/dashboard/learn/${course.id}`}
-                accent="leaf"
-                status="available"
+                accent={course.accent as "leaf" | "clay" | "gold"}
+                status={
+                  course.demo
+                    ? "demo"
+                    : isCourseEligibleForEnrollment({
+                          course,
+                          contents: units
+                            .filter((unit) => unit.courseId === course.id)
+                            .map((unit) => unit.content),
+                        })
+                      ? "available"
+                      : "preparation"
+                }
+                level={course.level === "beginner" ? "Inicial" : course.level}
+                durationMinutes={course.estimatedDurationMinutes}
+                unitCount={
+                  units.filter((unit) => unit.courseId === course.id).length
+                }
+                statusLabel={
+                  course.demo
+                    ? `Demostración · v${course.version}`
+                    : isCourseEligibleForEnrollment({
+                          course,
+                          contents: units
+                            .filter((unit) => unit.courseId === course.id)
+                            .map((unit) => unit.content),
+                        })
+                      ? `Disponible · v${course.version}`
+                      : `En preparación · v${course.version}`
+                }
               />
             </li>
           ))}

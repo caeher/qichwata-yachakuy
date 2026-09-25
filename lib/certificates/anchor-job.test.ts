@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { describe, expect, it, vi } from "vitest";
 
 import { createTestDb } from "@/db/pglite";
+import { publishedUnitContent } from "@/db/test-fixtures";
 import { anchors, certificates, courseUnits, courses } from "@/db/schema";
 import { provisionUser } from "@/lib/auth/provision-user";
 import { runCertificateAnchorJob } from "@/lib/certificates/anchor-job";
@@ -28,11 +29,17 @@ async function pendingCertificate() {
       title: "Curso controlado",
       version: "1",
       status: "published",
+      enrollmentEnabled: true,
     })
     .returning();
   const [unit] = await db
     .insert(courseUnits)
-    .values({ courseId: course.id, position: 1, title: "Unidad" })
+    .values({
+      courseId: course.id,
+      position: 1,
+      title: "Unidad",
+      content: publishedUnitContent(),
+    })
     .returning();
   const enrollment = await enrollInCourse(db, { userId, courseId: course.id });
   await completeUnit(db, {

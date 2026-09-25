@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
 import { createTestDb } from "@/db/pglite";
+import { publishedUnitContent } from "@/db/test-fixtures";
 import {
   certificates,
   courseCompletions,
@@ -31,13 +32,31 @@ async function educationFixture() {
       title: "Introducción al Quechua",
       version: "1.0",
       status: "published",
+      enrollmentEnabled: true,
     })
     .returning();
   const [unit1, unit2] = await db
     .insert(courseUnits)
     .values([
-      { courseId: course.id, position: 1, title: "Saludos" },
-      { courseId: course.id, position: 2, title: "Presentación" },
+      {
+        courseId: course.id,
+        position: 1,
+        title: "Saludos",
+        content: publishedUnitContent(),
+      },
+      {
+        courseId: course.id,
+        position: 2,
+        title: "Presentación",
+        content: {
+          ...publishedUnitContent(),
+          source: {
+            system: "test-fixture",
+            moduleSlug: "test",
+            lessonId: "fixture-2",
+          },
+        },
+      },
     ])
     .returning();
   return { db, userId, course, units: [unit1, unit2] };
@@ -150,8 +169,15 @@ describe("education completion and certificate intent", () => {
         title: "Otro",
         version: "1",
         status: "published",
+        enrollmentEnabled: true,
       })
       .returning();
+    await db.insert(courseUnits).values({
+      courseId: other.id,
+      position: 1,
+      title: "Otra unidad",
+      content: publishedUnitContent(),
+    });
     const enrollment = await enrollInCourse(db, { userId, courseId: other.id });
     await expect(
       completeUnit(db, {

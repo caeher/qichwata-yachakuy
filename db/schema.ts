@@ -78,6 +78,18 @@ export const courses = pgTable(
     version: text("version").notNull(),
     status: text("status").notNull().default("draft"),
     demo: boolean("demo").notNull().default(false),
+    level: text("level").notNull().default("beginner"),
+    accent: text("accent").notNull().default("leaf"),
+    estimatedDurationMinutes: integer("estimated_duration_minutes")
+      .notNull()
+      .default(0),
+    enrollmentEnabled: boolean("enrollment_enabled").notNull().default(false),
+    completionPolicyVersion: text("completion_policy_version")
+      .notNull()
+      .default("pending-v1"),
+    completionPolicyStatus: text("completion_policy_status")
+      .notNull()
+      .default("pending"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -87,6 +99,22 @@ export const courses = pgTable(
     check(
       "courses_status_check",
       sql`${table.status} in ('draft', 'published', 'archived')`,
+    ),
+    check(
+      "courses_accent_check",
+      sql`${table.accent} in ('leaf', 'clay', 'gold')`,
+    ),
+    check(
+      "courses_level_check",
+      sql`${table.level} in ('beginner', 'intermediate', 'advanced')`,
+    ),
+    check(
+      "courses_estimated_duration_check",
+      sql`${table.estimatedDurationMinutes} >= 0`,
+    ),
+    check(
+      "courses_completion_policy_status_check",
+      sql`${table.completionPolicyStatus} in ('pending', 'approved')`,
     ),
     index("courses_status_idx").on(table.status),
   ],

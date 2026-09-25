@@ -11,6 +11,7 @@ import {
   enrollments,
   unitProgress,
 } from "@/db/schema";
+import { isCourseEligibleForEnrollment } from "@/lib/education/content";
 import {
   canonicalCertificateJson,
   hashCertificatePayload,
@@ -46,9 +47,19 @@ export async function enrollInCourse(
   input: { userId: string; courseId: string },
 ) {
   const course = await db.query.courses.findFirst({
-    where: and(eq(courses.id, input.courseId), eq(courses.status, "published")),
+    where: eq(courses.id, input.courseId),
   });
-  if (!course || course.demo) throw new EducationError("course_unavailable");
+  if (!course) throw new EducationError("course_unavailable");
+  const content = await db.query.courseUnits.findMany({
+    where: eq(courseUnits.courseId, course.id),
+  });
+  if (
+    !isCourseEligibleForEnrollment({
+      course,
+      contents: content.map((unit) => unit.content),
+    })
+  )
+    throw new EducationError("course_unavailable");
   const [row] = await db
     .insert(enrollments)
     .values({
@@ -144,15 +155,21 @@ export async function finalizeEnrollment(
     const course = await tx.query.courses.findFirst({
       where: and(
         eq(courses.id, enrollment.courseId),
-        eq(courses.status, "published"),
         eq(courses.version, enrollment.courseVersion),
       ),
     });
-    if (!course || course.demo) throw new EducationError("course_unavailable");
+    if (!course) throw new EducationError("course_unavailable");
     const units = await tx
-      .select({ id: courseUnits.id })
+      .select({ id: courseUnits.id, content: courseUnits.content })
       .from(courseUnits)
       .where(eq(courseUnits.courseId, course.id));
+    if (
+      !isCourseEligibleForEnrollment({
+        course,
+        contents: units.map((unit) => unit.content),
+      })
+    )
+      throw new EducationError("course_unavailable");
     const progress = await tx
       .select({ id: unitProgress.id })
       .from(unitProgress)
