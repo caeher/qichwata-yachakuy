@@ -12,6 +12,8 @@ Se revisaron el índice del libro (PDF 3–7), los inicios reales de sus unidade
 - [QCH-06: Completar Territorio y tiempo con léxico documentado y detectar vacíos de cobertura](./QCH-06.md)
 - [QCH-07: Revisar las nuevas lecciones, sus evaluaciones y el material de consulta del tutor](./QCH-07.md)
 
+La matriz editorial de Territorio y tiempo está en [`qch-06-territorio-content-map-v1.0.md`](../../quechua-sources/qch-06-territorio-content-map-v1.0.md). El volumen 2 de Calvo ya está adquirido en la copia privada, pero la revisión de sus lemas sigue pendiente.
+
 Orden: QCH-01 → QCH-02 → QCH-05 → QCH-03/QCH-04/QCH-06 → QCH-07. Los códigos QCH son referencias locales y deben reemplazarse por números/enlaces reales cuando se publiquen las issues.
 
-Las dos fuentes de QCH-01 se descargaron y verificaron el 2026-09-25. Sus copias locales están en `.private-sources/qch-01/` (ruta ignorada por Git); los hashes, metadatos, condiciones de uso y matriz reproducible están en [`docs/quechua-sources/`](../../quechua-sources/). El volumen 2 quechua→español ya está localizado, pero su descarga y revisión siguen pendientes.
+Las dos fuentes iniciales de QCH-01 se descargaron y verificaron el 2026-09-25. Sus copias locales están en `.private-sources/qch-01/` (ruta ignorada por Git); los hashes, metadatos, condiciones de uso y matrices editoriales están en [`docs/quechua-sources/`](../../quechua-sources/). El volumen 2 quechua→español también se descargó en privado; su revisión de artículos y paginación sigue pendiente.

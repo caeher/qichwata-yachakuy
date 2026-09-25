@@ -637,97 +637,312 @@ export const INITIAL_COURSES: CourseSeed[] = [
     slug: "territorio-y-tiempo",
     title: "Territorio y tiempo",
     description:
-      "Explora lugares, orientación y referencias al día en que ocurre algo.",
+      "Interpreta referencias espaciales y temporales con atención al contexto y a las fuentes.",
     level: "beginner",
     accent: "gold",
-    estimatedDurationMinutes: 23,
-    version: "1.0.0",
+    estimatedDurationMinutes: 27,
+    version: "1.1.0",
     completionPolicyVersion: "pending-v1",
     units: [
       {
         lessonId: "lugares",
-        title: "Pacha",
-        description: "Territorio, lugares y orientación.",
+        title: "Orientarse con referencias",
+        description: "Distingue sentidos espaciales antes de describir un recorrido.",
         kind: "vocabulary",
-        durationMinutes: 8,
+        durationMinutes: 9,
         objectives: [
-          "Describir relaciones espaciales con vocabulario candidato.",
-          "Reconocer que una palabra puede tener varios usos según el contexto.",
+          "Reconocer que una referencia espacial puede variar según la relación y el contexto.",
+          "Seleccionar conceptos de orientación para describir un recorrido y señalar qué formas aún requieren revisión.",
         ],
         reading: [
-          "Orientarse requiere relacionar lugares, referencias y perspectiva de quien habla.",
-          "Pacha se conserva como título del prototipo. No se fija una equivalencia única: su significado y ejemplos necesitan fuentes y revisión en una variedad documentada.",
+          "Para explicar cómo llegar a un lugar conocido, registra el punto de partida, el destino y desde qué referencia se describe la posición. Una palabra de orientación puede tener sentidos distintos según indique altura, ubicación o movimiento.",
+          "El diccionario de Calvo, en la entrada española ARRIBA, separa varios sentidos locativos y de movimiento y ofrece más de una forma. Esta evidencia sirve para reconocer polisemia; no autoriza a escoger una forma del curso ni a redactar una ruta en quechua sin cotejo y revisión Cusco.",
+          "Pacha permanece como candidato editorial, no como equivalencia de ‘territorio’. El volumen 1 consultado va de español a quechua y no verifica el lema quechua ni sus sentidos. El volumen 2 se descargó para revisión privada, pero la entrada y su página aún no se cotejaron visualmente.",
         ],
         vocabulary: [
           [
-            "Pacha",
-            "Entrada candidata del prototipo; sentidos y contexto regional pendientes.",
+            "arriba / abajo (conceptos en español)",
+            "Punto de partida para contrastar relaciones espaciales. Las formas quechuas, su contexto y su variedad quedan pendientes de revisión.",
           ],
         ],
         examplePrompt:
-          "¿Qué información evita reducir un término territorial a una sola traducción?",
+          "Al describir un recorrido, ¿qué datos ayudan a interpretar una referencia de orientación?",
         exampleResponse:
-          "Sus sentidos en contexto y la variedad lingüística con fuente documentada.",
+          "El punto de referencia, la relación espacial, la situación y la perspectiva de quien habla.",
         activityTitle: "Ubica la referencia",
         activityPrompt:
-          "Una persona explica cómo llegar a un lugar. ¿Qué información contextual conviene registrar para revisar su vocabulario?",
+          "Lee la situación del mapa de palabras y elige qué información contextual y lexicográfica debe acompañar cada concepto de orientación.",
         activityAnswer:
-          "Lugar, perspectiva, situación de uso, variedad y fuente de las expresiones.",
+          "Punto de partida y destino, perspectiva, situación, acepción consultada, página y variedad pendiente de revisión.",
+        activityItems: [
+          {
+            prompt:
+              "Dos personas describen el mismo punto como ‘arriba’ desde referencias distintas. ¿Qué debe anotarse antes de elegir una forma quechua?",
+            options: [
+              "La referencia espacial y el sentido concreto que expresa cada persona.",
+              "Una traducción única de ‘arriba’ para todos los recorridos.",
+              "Solo el nombre del destino.",
+            ],
+            answer:
+              "La referencia espacial y el sentido concreto que expresa cada persona.",
+            feedback:
+              "La entrada española ARRIBA distingue sentidos según relación y movimiento. El contexto determina qué acepción se está buscando; aún hace falta revisión para seleccionar una forma del curso.",
+          },
+          {
+            prompt:
+              "¿Qué dato convierte una forma de diccionario en una referencia editorial comprobable?",
+            options: [
+              "Lema, acepción, marca pertinente y página PDF.",
+              "Solo una traducción memorizada.",
+              "Una oración creada al unir dos entradas.",
+            ],
+            answer: "Lema, acepción, marca pertinente y página PDF.",
+            feedback:
+              "La ficha debe conservar la acepción y el localizador. Las entradas aisladas no validan frases compuestas.",
+          },
+        ],
+        sourceItems: [
+          {
+            sourceId: "calvo-2022-v1",
+            citation:
+              "Calvo Pérez, Julio. Nuevo diccionario español-quechua, quechua-español, vol. 1. Segunda edición digital, 2022, entrada española ‘ARRIBA’, impresa 147 / PDF 243.",
+            url: "https://apl.org.pe/wp-content/uploads/2022/07/DICCIONARIO-Quechua-espanol-VOL_1.pdf",
+            license:
+              "Derechos reservados. Consulta editorial privada según QCH-01; sin autorización para reproducir entradas o exportar extractos al producto.",
+            usedFor:
+              "Comprobar que el lema español reúne sentidos locativos y de movimiento y orientar la selección conceptual. No se reproducen las formas ni la definición del diccionario.",
+            supportType: "direct",
+            locator: {
+              pdfPage: 243,
+              printedPage: 147,
+              heading: "ARRIBA (adv.), sentidos locativos y de movimiento",
+              headword: "ARRIBA",
+              sense: "sentidos locativos diferenciados por relación espacial y movimiento",
+            },
+          },
+          {
+            sourceId: "pacheco-2021-i",
+            citation:
+              "Pacheco Condori, Alipio. Lengua y Cultura Quechuas I (Autopreparación). Ediciones Madrigal, 2021, ejercicio de la Unidad 1, PDF 41.",
+            url: "https://www.pueblosoriginarios.gob.cl/sites/www.pueblosoriginarios.gob.cl/files/2022-02/Lengua%20y%20Cultura%20Quechuas_Alipio%20Pacheco.pdf",
+            license:
+              "Derechos reservados. Consulta editorial privada según QCH-01; sin autorización para reproducir texto.",
+            usedFor:
+              "Constatar que kunan aparece aislado en un ejercicio; no se usa como respaldo de la frase Kunan p'unchay.",
+            supportType: "direct",
+            locator: {
+              pdfPage: 41,
+              printedPage: null,
+              heading: "Ejercicio de la Unidad 1; forma aislada kunan",
+              headword: "kunan",
+              sense: "forma aislada en un ejercicio; no valida una frase",
+            },
+          },
+          {
+            sourceId: "cahuana-2007-manual",
+            citation:
+              "Cahuana Q., Ricardo. Manual de gramática quechua Cusco-Collao. Edición revisada, Sicuani, 2007, sección ‘Adverbios’, referencias de lugar, PDF 30 / impresa 29.",
+            url: "https://lengamer.org/admin/language_folders/quechuadecusco/user_uploaded_files/links/File/MANUAL_GRAMATICA_QUECHUA.pdf",
+            license:
+              "No se encontró aviso de licencia en el PDF. Consulta editorial privada solamente hasta confirmar titularidad y autorización de reutilización.",
+            usedFor:
+              "Respaldar la selección de conceptos de procedencia, dirección, posición, orientación y cercanía en una lista organizada por sentido. No se generalizan formas del manual como respuestas aprobadas del curso.",
+            supportType: "direct",
+            locator: {
+              pdfPage: 30,
+              printedPage: 29,
+              heading: "Adverbios, referencias de lugar",
+            },
+          },
+        ],
       },
       {
         lessonId: "tiempo",
-        title: "Kunan p'unchay",
-        description: "Frase candidata para hablar del día de hoy.",
+        title: "Referencias temporales por verificar",
+        description: "Distingue tiempo presente y pasado sin inferir una frase.",
         kind: "phrases",
         durationMinutes: 8,
         objectives: [
-          "Reconocer una referencia temporal en un contexto guiado.",
-          "Comprobar traducción y uso antes de publicar una frase.",
+          "Distinguir conceptos de momento actual y tiempo pasado en una situación comunicativa.",
+          "Reconocer una frase temporal documentada y señalar qué revisión falta antes de enseñarla como forma Cusco aprobada.",
         ],
         reading: [
-          "Las expresiones de tiempo sitúan acciones y relatos. Su escritura y uso deben comprobarse en la variedad que se enseñe.",
-          "Kunan p'unchay se conserva del prototipo como candidata asociada al día de hoy; la asociación y su traducción aún no están revisadas.",
+          "Para ordenar un relato, primero decide si necesitas ubicar una acción en el momento actual o en un tiempo anterior. El diccionario español→quechua documenta acepciones temporales distintas y no intercambiables para estos conceptos.",
+          "El Manual de gramática quechua Cusco-Collao registra la expresión compuesta kunan p’unchay con el sentido «hoy día» (Cahuana, impresa 29 / PDF 30). Es respaldo explícito para la frase del candidato, no una composición inferida de dos entradas. Pacheco presenta kunan aislado en un ejercicio (PDF 41), que por sí solo no la respalda. Antes de calificarla, una persona revisora debe confirmar grafía, variedad y uso para la subvariante Cusco elegida.",
+          "La entrada española ACTUALMENTE de Calvo vol. 1 asocia el momento actual con una forma, y AYER diferencia el día anterior de otros sentidos de tiempo pasado. Son consultas español→quechua; las grafías del diccionario no se convierten automáticamente a la convención pentavocálica del curso.",
+        ],
+        vocabulary: [
+          [
+            "momento actual / tiempo anterior (conceptos en español)",
+            "Conceptos distintos que se sitúan en contexto. Las formas del curso requieren revisión lingüística.",
+          ],
         ],
         phrases: [
           [
-            "Kunan p'unchay",
-            "Frase candidata del prototipo asociada al día de hoy.",
-            "Referencia temporal; forma pendiente de validación",
+            "kunan p’unchay",
+            "hoy día",
+            "La fuente complementaria registra la frase compuesta en su lista temporal (Cahuana, impresa 29 / PDF 30); grafía y uso para la variedad del curso pendientes de revisión.",
           ],
         ],
         examplePrompt:
-          "¿Cuál es el primer paso antes de usarla en una conversación evaluada?",
+          "¿Qué evidencia documenta la frase candidata y qué revisión falta antes de usarla en un diálogo del curso?",
         exampleResponse:
-          "Validar forma, traducción y contexto con fuentes y revisión humana.",
+          "Cahuana registra la expresión y su sentido en PDF 30; aún hacen falta revisión humana de la grafía y el uso en la variedad Cusco del curso.",
         activityTitle: "Ubica el tiempo",
         activityPrompt:
-          "En un relato se indica cuándo ocurre algo. ¿Qué función cumple esa pista?",
+          "Clasifica las referencias temporales y distingue el respaldo documental de la aprobación lingüística para el curso.",
         activityAnswer:
-          "Sitúa temporalmente la acción; no valida por sí sola una expresión quechua.",
+          "La pista temporal sitúa la acción. Cahuana documenta kunan p’unchay como «hoy día» (PDF 30), pero la forma todavía requiere revisión Cusco antes de ser una respuesta aceptada.",
+        activityItems: [
+          {
+            prompt:
+              "En un relato, una nota de calendario indica el día anterior al momento en que se habla. ¿Qué función cumple esa nota?",
+            options: [
+              "Ubica la acción en un tiempo pasado respecto del momento de habla.",
+              "Indica por sí sola una forma quechua para cualquier variedad.",
+              "Convierte una palabra aislada en una frase validada.",
+            ],
+            answer:
+              "Ubica la acción en un tiempo pasado respecto del momento de habla.",
+            feedback:
+              "La situación temporal puede comprenderse en español. La elección y producción de la forma quechua sigue sujeta a fuente y revisión.",
+          },
+          {
+            prompt:
+              "¿Qué registra el Manual de gramática quechua Cusco-Collao en su sección de expresiones temporales compuestas?",
+            options: [
+              "Kunan p’unchay con el sentido «hoy día», en PDF 30 / impresa 29.",
+              "Que pacha siempre equivale a territorio.",
+              "Que cualquier combinación de kunan con un nombre expresa hoy.",
+            ],
+            answer: "Kunan p’unchay con el sentido «hoy día», en PDF 30 / impresa 29.",
+            feedback:
+              "La sección del manual registra la expresión completa; no se deriva de entradas sueltas. Su uso en la subvariante Cusco del curso todavía requiere revisión humana.",
+          },
+          {
+            prompt:
+              "¿Qué estado editorial corresponde antes de recibir esa revisión humana?",
+            options: [
+              "Candidata documentada, pendiente de revisión Cusco; no respuesta aceptada todavía.",
+              "Publicada para todas las variedades quechuas.",
+              "Descartada porque no aparece en Pacheco.",
+            ],
+            answer:
+              "Candidata documentada, pendiente de revisión Cusco; no respuesta aceptada todavía.",
+            feedback:
+              "La evidencia contextual de Cahuana resuelve el vacío de localizador para esta frase, pero no sustituye la revisión de variedad ni el permiso editorial pendiente.",
+          },
+        ],
+        sourceItems: [
+          {
+            sourceId: "calvo-2022-v1",
+            citation:
+              "Calvo Pérez, Julio. Nuevo diccionario español-quechua, quechua-español, vol. 1. Segunda edición digital, 2022, entrada ‘ACTUALMENTE’, impresa 24 / PDF 120.",
+            url: "https://apl.org.pe/wp-content/uploads/2022/07/DICCIONARIO-Quechua-espanol-VOL_1.pdf",
+            license:
+              "Derechos reservados. Consulta editorial privada según QCH-01; sin autorización para reproducir entradas o extractos.",
+            usedFor:
+              "Referencia lexicográfica del concepto de momento actual. No respalda por sí sola Kunan p'unchay ni un diálogo.",
+            supportType: "direct",
+            locator: {
+              pdfPage: 120,
+              printedPage: 24,
+              heading: "ACTUALMENTE, acepción de momento actual",
+              headword: "ACTUALMENTE",
+              sense: "momento actual, uso deíctico",
+            },
+          },
+          {
+            sourceId: "calvo-2022-v1",
+            citation:
+              "Calvo Pérez, Julio. Nuevo diccionario español-quechua, quechua-español, vol. 1. Segunda edición digital, 2022, entrada ‘AYER’, impresa 178 / PDF 274.",
+            url: "https://apl.org.pe/wp-content/uploads/2022/07/DICCIONARIO-Quechua-espanol-VOL_1.pdf",
+            license:
+              "Derechos reservados. Consulta editorial privada según QCH-01; sin autorización para reproducir entradas o extractos.",
+            usedFor:
+              "Distinguir la acepción de día anterior de otros sentidos de tiempo pasado y de las marcas de uso que el diccionario consigna.",
+            supportType: "direct",
+            locator: {
+              pdfPage: 274,
+              printedPage: 178,
+              heading: "AYER, acepciones temporales",
+              headword: "AYER",
+              sense: "día anterior; otros sentidos de tiempo pasado diferenciados",
+            },
+          },
+          {
+            sourceId: "cahuana-2007-manual",
+            citation:
+              "Cahuana Q., Ricardo. Manual de gramática quechua Cusco-Collao. Edición revisada, Sicuani, 2007, sección ‘Adverbios’, impresa 29 / PDF 30.",
+            url: "https://lengamer.org/admin/language_folders/quechuadecusco/user_uploaded_files/links/File/MANUAL_GRAMATICA_QUECHUA.pdf",
+            license:
+              "No se encontró aviso de licencia en el PDF. Consulta editorial privada solamente hasta confirmar titularidad y autorización de reutilización.",
+            usedFor:
+              "Respaldo contextual directo de la expresión temporal completa y su glosa en la lista de expresiones compuestas. No demuestra aprobación para respuestas del curso.",
+            supportType: "direct",
+            locator: {
+              pdfPage: 30,
+              printedPage: 29,
+              heading: "Adverbios, expresiones compuestas y referencias temporales",
+              headword: "kunan p’unchay",
+              sense: "expresión compuesta con sentido de ‘hoy día’",
+            },
+          },
+        ],
       },
       {
         lessonId: "practica-03",
-        title: "Mapa de palabras",
+        title: "Mapa contextual de lugar y tiempo",
         description:
-          "Conecta descripciones de tu entorno con referencias espaciales y temporales.",
+          "Comprende un mapa, produce una descripción contextual y registra qué requiere revisión.",
         kind: "practice",
-        durationMinutes: 7,
+        durationMinutes: 10,
         objectives: [
-          "Organizar referencias de lugar y tiempo en un mapa personal.",
-          "Separar observaciones propias de traducciones que necesitan revisión.",
+          "Comprender una descripción original de recorrido y localizar sus referencias espaciales y temporales.",
+          "Producir un mapa o descripción breve y separar información personal libre de criterios evaluables.",
+          "Registrar una fuente, acepción y página para cada forma quechua propuesta, o etiquetarla como pendiente.",
         ],
         reading: [
-          "Un mapa puede reunir lugares importantes y momentos asociados a ellos. Esta actividad permite anotar primero en español y reservar las formas quechuas hasta contar con revisión regional.",
+          "Una ruta de ejemplo puede describirse primero en español: se parte de la plaza, se localiza la biblioteca respecto de un punto de referencia y se anota cuándo se realiza el recorrido. La descripción de este material es original; no ofrece frases quechuas traducidas por concatenación.",
+          "Después puedes dibujar una ruta propia en la lengua que prefieras. Los nombres de lugares y las experiencias personales son información libre y no se califican. Sí se califican la identificación de referencias espaciales y temporales, la claridad del mapa y el registro de respaldo; toda forma quechua sin fuente y revisión se etiqueta como pendiente.",
         ],
         examplePrompt:
-          "¿Cómo registrar una palabra que todavía no está validada?",
+          "¿Cómo presentar una forma quechua sin respaldo completo?",
         exampleResponse:
-          "Como candidata pendiente, con la fuente, variedad y revisión aún requeridas.",
+          "Como candidata pendiente, con entrada, acepción y página si se comprobaron, además de la variedad y revisión requeridas.",
         activityTitle: "Crea un mapa de palabras",
         activityPrompt:
-          "Anota un lugar, cuándo lo visitas y una palabra candidata del módulo. ¿Qué etiqueta debe llevar esta última?",
+          "Dibuja o describe una ruta personal con un punto de partida, un destino, una relación espacial y un momento. Luego completa el registro de respaldo para cualquier forma quechua que quieras proponer.",
         activityAnswer:
-          "Borrador pendiente de fuente y revisión en una variedad regional definida.",
+          "La ruta personal es libre. Para obtener puntaje, identifica las relaciones y referencias del escenario común, cita la fuente y el localizador de cada forma revisable y marca como pendiente cualquier forma sin respaldo o revisión.",
+        activityItems: [
+          {
+            prompt:
+              "Comprensión: en el mapa común, la biblioteca queda por encima de la plaza y la visita ocurre el día anterior al momento narrado. ¿Qué dos relaciones reconoces?",
+            options: [
+              "Una relación espacial de posición y una referencia temporal pasada.",
+              "Dos traducciones quechuas validadas.",
+              "Una relación de parentesco y una de posesión.",
+            ],
+            answer:
+              "Una relación espacial de posición y una referencia temporal pasada.",
+            feedback:
+              "El escenario permite comprender espacio y tiempo en español. No proporciona una traducción ni valida por sí mismo formas quechuas.",
+          },
+          {
+            prompt:
+              "Producción: ¿qué debe incluir el registro evaluable de una forma quechua propuesta?",
+            options: [
+              "Lema, acepción, página PDF, contexto y estado de revisión; o una marca explícita de pendiente.",
+              "Una traducción creada a partir de palabras separadas.",
+              "El nombre personal del lugar, que se califica como correcto o incorrecto.",
+            ],
+            answer:
+              "Lema, acepción, página PDF, contexto y estado de revisión; o una marca explícita de pendiente.",
+            feedback:
+              "El respaldo debe ser trazable. La información personal del mapa puede variar libremente; se califican los criterios comunes y no el contenido autobiográfico.",
+          },
+        ],
       },
     ],
   },

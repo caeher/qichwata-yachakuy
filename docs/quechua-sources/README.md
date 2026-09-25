@@ -7,6 +7,7 @@ Este directorio guarda metadatos, trazabilidad, condiciones de uso e instruccion
 - [Decisión de variedad y criterios de escritura QCH-02](./qch-02-variety-decision-v1.0.md)
 - [Diseño del glosario trazable QCH-05](./qch-05-glossary-v1.0.md)
 - [Mapa de contenido Familia y comunidad QCH-04](./qch-04-familia-content-map-v1.0.md)
+- [Matriz de cobertura Territorio y tiempo QCH-06](./qch-06-territorio-content-map-v1.0.md)
 
 Para descargar los dos PDF de QCH-01 y comprobar sus SHA-256, ejecutar desde la raíz del repositorio:
 
@@ -14,4 +15,4 @@ Para descargar los dos PDF de QCH-01 y comprobar sus SHA-256, ejecutar desde la 
 scripts/download-qch-01-sources.sh
 ```
 
-El tomo 2 requiere una descarga separada y aún no se ha archivado localmente. Su URL y comando están documentados en el manifiesto; la cobertura quechua→español permanece pendiente hasta revisar ese archivo.
+El tomo 2 de Calvo está archivado en la misma carpeta privada con hash y páginas recibidas en el manifiesto. La cobertura quechua→español permanece pendiente hasta revisar visualmente sus entradas y paginación.
