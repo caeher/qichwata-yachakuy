@@ -79,7 +79,7 @@ export default async function VerifyHashPage({ params }: Props) {
   } catch {
     return (
       <div className="flex min-h-svh flex-col">
-        <SiteHeader title="stellar-data-integrity" />
+        <SiteHeader title="Yachay · lengua viva" />
         <main className="mx-auto w-full max-w-2xl px-4 py-12 sm:px-6">
           <p className="text-destructive text-sm">Hash no válido.</p>
         </main>
@@ -128,7 +128,7 @@ export default async function VerifyHashPage({ params }: Props) {
 
   return (
     <div className="flex min-h-svh flex-col">
-      <SiteHeader title="stellar-data-integrity" />
+      <SiteHeader title="Yachay · lengua viva" />
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6">
         <p className="text-muted-foreground text-xs">
           Verificación de comprobante o certificado por SHA-256.

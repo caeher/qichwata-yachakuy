@@ -1,4 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { DashboardNav } from "@/components/dashboard-nav";
@@ -17,14 +18,24 @@ export default async function DashboardLayout({
 
   const { userId } = await auth();
   if (!userId) {
-    redirect("/sign-in");
+    redirect("/sign-in?redirect_url=%2Fdashboard");
   }
 
   return (
     <div className="flex min-h-svh flex-col">
       <SiteHeader
-        trailing={<DashboardUserMenu />}
-        title="stellar-data-integrity"
+        trailing={
+          <div className="flex items-center gap-3">
+            <Link
+              href="/dashboard/settings"
+              className="text-muted-foreground hover:text-foreground text-sm"
+            >
+              Configuración
+            </Link>
+            <DashboardUserMenu />
+          </div>
+        }
+        title="Yachay · lengua viva"
       />
       <DashboardNav />
       {children}
