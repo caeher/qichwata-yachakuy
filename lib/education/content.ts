@@ -20,6 +20,7 @@ export type CourseUnitContent = {
       prompt: string;
       options?: string[];
       answer: string;
+      acceptedAnswers?: string[];
       feedback: string;
     }[];
     modality: "text" | "audio";
@@ -35,10 +36,20 @@ export type CourseUnitContent = {
   sources: {
     status: "pending" | "documented";
     items: {
+      sourceId?: string;
       citation: string;
       url?: string;
       license: string;
       usedFor: string;
+      supportType?: "direct" | "pedagogical-proposal";
+      locator?: {
+        pdfPage: number;
+        printedPage: number | null;
+        heading: string;
+        headword?: string;
+        sense?: string;
+        usageMark?: string;
+      };
     }[];
     requirements: string[];
   };
@@ -69,7 +80,20 @@ export function isCourseUnitContent(
     Array.isArray(content.vocabulary) &&
     Array.isArray(content.phrases) &&
     Array.isArray(content.examples) &&
+    content.activity !== null &&
     typeof content.activity === "object" &&
+    Array.isArray(content.activity.items) &&
+    content.activity.items.every(
+      (item) =>
+        item &&
+        typeof item.prompt === "string" &&
+        typeof item.answer === "string" &&
+        (item.acceptedAnswers === undefined ||
+          (Array.isArray(item.acceptedAnswers) &&
+            item.acceptedAnswers.every(
+              (answer) => typeof answer === "string",
+            ))),
+    ) &&
     typeof content.review === "object" &&
     typeof content.sources === "object" &&
     typeof content.regionalVariant === "object" &&
