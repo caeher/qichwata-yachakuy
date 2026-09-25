@@ -11,7 +11,10 @@ import {
   enrollments,
   unitProgress,
 } from "@/db/schema";
-import { isCourseEligibleForEnrollment } from "@/lib/education/content";
+import {
+  isCourseEligibleForEnrollment,
+  isCourseUnitContent,
+} from "@/lib/education/content";
 import {
   canonicalCertificateJson,
   hashCertificatePayload,
@@ -35,7 +38,12 @@ export const pendingCompletionPolicy: CompletionPolicy = () => ({
 
 export class EducationError extends Error {
   constructor(
-    readonly code: "not_found" | "course_unavailable" | "criteria_pending",
+    readonly code:
+      | "not_found"
+      | "course_unavailable"
+      | "criteria_pending"
+      | "evidence_required"
+      | "evidence_incorrect",
   ) {
     super(code);
     this.name = "EducationError";
@@ -89,7 +97,12 @@ export async function enrollInCourse(
 
 export async function completeUnit(
   db: AuthDb,
-  input: { userId: string; enrollmentId: string; unitId: string },
+  input: {
+    userId: string;
+    enrollmentId: string;
+    unitId: string;
+    answers: string[];
+  },
 ) {
   const enrollment = await db.query.enrollments.findFirst({
     where: and(
@@ -106,6 +119,20 @@ export async function completeUnit(
     ),
   });
   if (!unit) throw new EducationError("not_found");
+  const content = isCourseUnitContent(unit.content) ? unit.content : null;
+  const items = content?.activity.items;
+  if (!items?.length || input.answers.length !== items.length)
+    throw new EducationError("evidence_required");
+  const normalize = (value: string) =>
+    value.normalize("NFC").trim().replace(/\s+/g, " ").toLocaleLowerCase("es");
+  const answersAreCorrect = items.every((item, index) => {
+    const provided = normalize(input.answers[index] ?? "");
+    const accepted = [item.answer, ...(item.acceptedAnswers ?? [])].map(
+      normalize,
+    );
+    return provided.length > 0 && accepted.includes(provided);
+  });
+  if (!answersAreCorrect) throw new EducationError("evidence_incorrect");
   const [row] = await db
     .insert(unitProgress)
     .values({ enrollmentId: enrollment.id, unitId: unit.id })
@@ -113,15 +140,15 @@ export async function completeUnit(
       target: [unitProgress.enrollmentId, unitProgress.unitId],
     })
     .returning();
-  return (
+  const progress =
     row ??
     (await db.query.unitProgress.findFirst({
       where: and(
         eq(unitProgress.enrollmentId, enrollment.id),
         eq(unitProgress.unitId, unit.id),
       ),
-    }))
-  );
+    }));
+  return { progress, feedback: items.map((item) => item.feedback) };
 }
 
 /**

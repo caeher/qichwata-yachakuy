@@ -115,14 +115,10 @@ function LessonContent({ content }: { content: unknown }) {
             Actividad textual; no incluye audio.
           </p>
         ) : null}
-        {content.activity.items.map((item) => (
-          <div key={item.prompt} className="text-muted-foreground mt-3 text-sm">
-            <p>
-              <strong>Solución propuesta:</strong> {item.answer}
-            </p>
-            <p className="mt-1">{item.feedback}</p>
-          </div>
-        ))}
+        <p className="text-muted-foreground mt-3 text-sm">
+          {content.activity.items.length} actividad(es) textual(es). Las
+          soluciones se muestran después de responder.
+        </p>
       </section>
       <div className="border-t pt-4 text-xs">
         <p>
@@ -142,10 +138,15 @@ function LessonContent({ content }: { content: unknown }) {
 
 export default async function CoursePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ courseId: string }>;
+  searchParams: Promise<{ unitId?: string | string[] }>;
 }) {
-  const { courseId } = await params;
+  const [{ courseId }, query] = await Promise.all([params, searchParams]);
+  const requestedUnitId = Array.isArray(query.unitId)
+    ? query.unitId[0]
+    : query.unitId;
   const ctx = await loadDashboardUser();
   if (ctx.kind !== "ready")
     return (
@@ -230,8 +231,36 @@ export default async function CoursePage({
         <CourseActions
           courseId={course.id}
           enrollmentId={enrollment?.id ?? null}
-          units={units.map(({ id, title }) => ({ id, title }))}
+          ownerKey={ctx.appUser.id}
+          tutorEnabled={Boolean(
+            process.env.OPENAI_COACH_ENABLED === "true" &&
+            process.env.OPENAI_API_KEY?.trim() &&
+            process.env.OPENAI_MODEL?.trim(),
+          )}
+          requestedUnitId={requestedUnitId ?? null}
+          units={units.flatMap((unit) => {
+            if (!isCourseUnitContent(unit.content)) return [];
+            const { activity, ...content } = unit.content;
+            return [
+              {
+                id: unit.id,
+                position: unit.position,
+                title: unit.title,
+                content: {
+                  ...content,
+                  activity: {
+                    ...activity,
+                    items: activity.items.map(({ prompt, options }) => ({
+                      prompt,
+                      options,
+                    })),
+                  },
+                },
+              },
+            ];
+          })}
           completedUnitIds={progress.map(({ unitId }) => unitId)}
+          completionPolicyStatus={course.completionPolicyStatus}
         />
       ) : (
         <Card>
@@ -249,18 +278,20 @@ export default async function CoursePage({
           </CardContent>
         </Card>
       )}
-      {units.map((unit) => (
-        <Card key={unit.id}>
-          <CardHeader>
-            <CardTitle>
-              {unit.position}. {unit.title}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <LessonContent content={unit.content} />
-          </CardContent>
-        </Card>
-      ))}
+      {!canEnroll
+        ? units.map((unit) => (
+            <Card key={unit.id}>
+              <CardHeader>
+                <CardTitle>
+                  {unit.position}. {unit.title}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <LessonContent content={unit.content} />
+              </CardContent>
+            </Card>
+          ))
+        : null}
       <p className="text-muted-foreground text-xs">
         La finalización y emisión de certificados siguen bloqueadas mientras la
         política académica esté pendiente.

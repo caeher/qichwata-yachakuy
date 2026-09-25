@@ -46,6 +46,7 @@ async function pendingCertificate() {
     userId,
     enrollmentId: enrollment.id,
     unitId: unit.id,
+    answers: ["fixture response"],
   });
   const { certificate } = await finalizeEnrollment(db, {
     userId,

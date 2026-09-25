@@ -20,7 +20,14 @@ export function publishedUnitContent() {
     activity: {
       title: "Fixture",
       instructions: ["Complete the fixture."],
-      items: [],
+      items: [
+        {
+          prompt: "What is the reviewed fixture answer?",
+          answer: "fixture response",
+          acceptedAnswers: ["another accepted response"],
+          feedback: "Correct fixture response.",
+        },
+      ],
       modality: "text",
       audioStatus: "not_required",
     },

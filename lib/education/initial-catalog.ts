@@ -45,87 +45,472 @@ export const INITIAL_COURSES: CourseSeed[] = [
       "Explora saludos, presentaciones y un primer diálogo en comunidad.",
     level: "beginner",
     accent: "leaf",
-    estimatedDurationMinutes: 19,
+    estimatedDurationMinutes: 26,
     version: "1.0.0",
     completionPolicyVersion: "pending-v1",
     units: [
       {
         lessonId: "hola",
-        title: "Saludos en contexto",
+        title: "Un saludo dirigido a alguien",
         description:
-          "Reconoce que una traducción palabra por palabra no siempre cumple la misma función social.",
+          "Lee un saludo con destinatario y distingue su función de una traducción literal.",
         kind: "vocabulary",
-        durationMinutes: 6,
+        durationMinutes: 7,
         objectives: [
-          "Identificar a quién se dirige un saludo y qué relación expresa.",
-          "Distinguir una glosa literal de un saludo validado para la variedad de trabajo.",
+          "Reconocer que el ejemplo de saludo se dirige a una segunda persona concreta.",
+          "Interpretar -y como posesivo de primera persona en Mamay y Tatay.",
+          "Explicar por qué una traducción literal no basta para elegir un saludo equivalente.",
         ],
         reading: [
-          "Un saludo depende de la persona destinataria, la relación y la situación. La traducción palabra por palabra no demuestra que una frase tenga la misma función social en español.",
-          "El borrador anterior proponía una frase para decir «buen día». Se retira como vocabulario y respuesta aceptada: el libro de referencia advierte que una forma muy cercana no equivale al saludo castellano «buen día» (Pacheco Condori, PDF 33). Un reemplazo requiere revisión en la variedad seleccionada.",
+          "En la primera escena de la Unidad 2, el saludo se dirige a una persona concreta. El texto presenta Mamay y Tatay como formas de tratamiento que significan «madre mía» y «padre mío», seguidas de napaykuyki, «te saludo». Aprende estas expresiones en ese contexto del libro; una persona hablante debe revisar antes de generalizarlas a otras relaciones o situaciones.",
+          "Observa la construcción: mama + -y → Mamay; tata + -y → Tatay. En este paso, -y expresa «mi». La secuencia -yki forma parte del verbo napaykuyki en el ejemplo y se interpreta allí como «te saludo»; no se separará ni generalizará sin una lección gramatical revisada.",
+          "Una expresión parecida a «día bueno» no funciona necesariamente como el saludo castellano «buen día». Por eso se retira Allin p'unchay del vocabulario y no se reemplaza por una frase traducida palabra por palabra. El objetivo aquí es comprender el destinatario y la estructura del ejemplo, no memorizar un saludo universal.",
         ],
-        vocabulary: [],
-        examplePrompt:
-          "¿Qué evidencia hace falta antes de aceptar una expresión como saludo equivalente?",
-        exampleResponse:
-          "Una fuente localizada y revisión humana de su uso en la variedad elegida.",
-        activityTitle: "Revisa la función de un saludo",
-        activityPrompt:
-          "Una traducción literal sugiere «buen día», pero la fuente cuestiona esa equivalencia. ¿Se conserva como respuesta aceptada?",
-        activityAnswer:
-          "No. Se retira del vocabulario hasta documentar una forma y función aprobadas para la variedad.",
-      },
-      {
-        lessonId: "presentarse",
-        title: "Imaynallataq kanki",
-        description:
-          "Una conversación inicial para preguntar y responder cómo está alguien.",
-        kind: "phrases",
-        durationMinutes: 8,
-        objectives: [
-          "Identificar el propósito comunicativo de una pregunta de presentación.",
-          "Distinguir una frase candidata de una frase revisada.",
-        ],
-        reading: [
-          "Presentarse puede incluir un saludo, una pregunta sobre el bienestar y una respuesta. La forma lingüística depende de la variedad y del contexto interpersonal.",
-          "El título reproduce la frase del prototipo; aquí no se ofrece como traducción certificada ni como modelo pronunciable.",
+        vocabulary: [
+          ["Mamay", "madre mía; forma de tratamiento del ejemplo de saludo."],
+          ["Tatay", "padre mío; forma de tratamiento del ejemplo de saludo."],
+          [
+            "napaykuyki",
+            "te saludo; verbo de saludo dirigido a un tú en el pasaje.",
+          ],
+          ["-y", "mi; sufijo posesivo que aparece en Mamay y Tatay."],
         ],
         phrases: [
           [
-            "Imaynallataq kanki",
-            "Frase candidata asociada en el prototipo a preguntar cómo está alguien.",
-            "Presentación inicial; forma pendiente de validación",
+            "Mamay, napaykuyki.",
+            "Madre mía, te saludo.",
+            "Ejemplo dirigido a una persona concreta; el contexto interpersonal requiere revisión.",
+          ],
+          [
+            "Tatay, napaykuyki.",
+            "Padre mío, te saludo.",
+            "Ejemplo dirigido a una persona concreta; el contexto interpersonal requiere revisión.",
           ],
         ],
         examplePrompt:
-          "¿Qué debe acompañar a una frase que se publique como modelo?",
+          "En Mamay, napaykuyki, ¿quién recibe el saludo y qué aporta -y en Mamay?",
         exampleResponse:
-          "Fuente, variedad, traducción revisada y autoría/licencia aplicable.",
-        activityTitle: "Revisa una presentación",
+          "Lo recibe un tú concreto; -y significa «mi», por eso Mamay se glosa «madre mía».",
+        activityTitle: "Lee el saludo en contexto",
         activityPrompt:
-          "Marca el estado correcto de la frase del título mientras no tenga revisión documentada.",
-        activityAnswer: "Borrador: no validada ni certificable.",
+          "Elige la lectura que corresponde al ejemplo Mamay, napaykuyki.",
+        activityAnswer:
+          "Es un saludo dirigido a una persona concreta: «Madre mía, te saludo»; -y expresa «mi» en Mamay.",
+        activityItems: [
+          {
+            prompt:
+              "Elige la lectura que corresponde al ejemplo Mamay, napaykuyki.",
+            options: [
+              "Un saludo dirigido a una persona: «Madre mía, te saludo».",
+              "Un saludo general equivalente a «buen día».",
+              "Una pregunta sobre el nombre de la madre.",
+            ],
+            answer: "Un saludo dirigido a una persona: «Madre mía, te saludo».",
+            feedback:
+              "Correcto: el pasaje identifica un destinatario en segunda persona y glosa la expresión así. La traducción literal no convierte la frase en un saludo general.",
+          },
+          {
+            prompt:
+              "¿Qué significa -y en Mamay y Tatay según la explicación del pasaje?",
+            options: ["mi", "te", "y (conjunción)"],
+            answer: "mi",
+            feedback:
+              "En estos dos sustantivos, -y es el posesivo de primera persona «mi». No confundas este sufijo con -ri, que aparecerá como pregunta de seguimiento.",
+          },
+          {
+            prompt:
+              "¿Cuál expresión del prototipo se retira como equivalente de «buen día»?",
+            options: [
+              "Allin p'unchay",
+              "Mamay, napaykuyki",
+              "Tatay, napaykuyki",
+            ],
+            answer: "Allin p'unchay",
+            feedback:
+              "Se retira porque una traducción cercana a «día bueno» no confirma la función social de «buen día». No la uses como respuesta aceptada.",
+          },
+        ],
+        sourceItems: [
+          {
+            sourceId: "pacheco-2021-i",
+            citation:
+              "Pacheco Condori, Alipio. Lengua y Cultura Quechuas I (Autopreparación). Ediciones Madrigal, 2021, Unidad 2, ‘Saludar y presentarse’, PDF 32–33.",
+            url: "https://www.pueblosoriginarios.gob.cl/sites/www.pueblosoriginarios.gob.cl/files/2022-02/Lengua%20y%20Cultura%20Quechuas_Alipio%20Pacheco.pdf",
+            license:
+              "Derechos reservados. PDF 2 prohíbe reproducción parcial o total. Consulta editorial privada según QCH-01; no implica permiso para redistribuir texto. El contenido explicativo de esta unidad es una propuesta original.",
+            usedFor:
+              "Respaldo temático y localización de los ejemplos de saludo, el destinatario de segunda persona y la advertencia contra traducir literalmente ‘buen día’. Las explicaciones y actividades son originales.",
+            supportType: "direct",
+            locator: {
+              pdfPage: 32,
+              printedPage: null,
+              heading: "Unidad 2, 1. Saludar y presentarse",
+            },
+          },
+          {
+            sourceId: "pacheco-2021-i",
+            citation:
+              "Pacheco Condori, Alipio. Lengua y Cultura Quechuas I (Autopreparación). Ediciones Madrigal, 2021, Unidad 2, ‘Saludar y presentarse’, PDF 33.",
+            url: "https://www.pueblosoriginarios.gob.cl/sites/www.pueblosoriginarios.gob.cl/files/2022-02/Lengua%20y%20Cultura%20Quechuas_Alipio%20Pacheco.pdf",
+            license:
+              "Derechos reservados. PDF 2 prohíbe reproducción parcial o total. Consulta editorial privada según QCH-01; no implica permiso para redistribuir texto.",
+            usedFor:
+              "Referencia directa para la decisión de retirar Allin p'unchay como equivalente de ‘buen día’; no se enseña como vocabulario.",
+            supportType: "direct",
+            locator: {
+              pdfPage: 33,
+              printedPage: null,
+              heading: "Unidad 2, 1. Saludar y presentarse",
+            },
+          },
+          {
+            sourceId: "pacheco-2021-i",
+            citation:
+              "Pacheco Condori, Alipio. Lengua y Cultura Quechuas I (Autopreparación). Ediciones Madrigal, 2021, Unidad 2, ‘Saludar y presentarse’, PDF 32–33.",
+            url: "https://www.pueblosoriginarios.gob.cl/sites/www.pueblosoriginarios.gob.cl/files/2022-02/Lengua%20y%20Cultura%20Quechuas_Alipio%20Pacheco.pdf",
+            license:
+              "Derechos reservados. PDF 2 prohíbe reproducción parcial o total. Consulta editorial privada según QCH-01; no implica permiso para redistribuir texto.",
+            usedFor:
+              "Pasaje que motivó la explicación original y las actividades de comprensión del destinatario, -y y la diferencia entre glosa y función. No se reproduce la actividad de la fuente.",
+            supportType: "pedagogical-proposal",
+            locator: {
+              pdfPage: 32,
+              printedPage: null,
+              heading: "Unidad 2, 1. Saludar y presentarse",
+            },
+          },
+        ],
+      },
+      {
+        lessonId: "presentarse",
+        title: "Decir quién soy y preguntar por ti",
+        description:
+          "Presenta un nombre y practica una pregunta de seguimiento con -ri y una pregunta con -chu.",
+        kind: "phrases",
+        durationMinutes: 9,
+        objectives: [
+          "Construir una presentación nominal con Ñoqa ... kani y Qam ... kanki.",
+          "Reconocer -chu como marca interrogativa en un elemento focalizado.",
+          "Usar Qamri? como pregunta de seguimiento equivalente a «¿y tú?» en el patrón estudiado.",
+        ],
+        reading: [
+          "La presentación de esta lección trata de nombres, no de preguntar por el bienestar. Usa exactamente la grafía Ñoqa que aparece en el libro: Ñoqa Pedro kani se traduce «Yo soy Pedro» y Qam Rosa kanki, «Tú eres Rosa». La forma Imaynallataq kanki del prototipo no se localizó en estos pasajes y queda retirada como modelo.",
+          "Paso 1: observa sujeto + nombre + forma de kay (ser): Ñoqa + nombre + kani para «yo soy»; Qam + nombre + kanki para «tú eres». Paso 2: agrega -chu al elemento que se pregunta: Qamchu ...? pregunta si la persona interlocutora es quien se nombra. La respuesta afirmativa comienza con Ari y no repite -chu.",
+          "Paso 3: para devolver la pregunta de manera breve, el diálogo usa Qamri? («¿y tú?»). En esta secuencia -ri enlaza el turno con la otra persona. Esta explicación se limita al patrón de presentación de la Unidad 2; no es una regla para todas las preguntas.",
+        ],
+        vocabulary: [
+          [
+            "Ñoqa",
+            "yo; sujeto de primera persona en los ejemplos del libro. Se conserva su grafía original.",
+          ],
+          ["Qam", "tú; sujeto de segunda persona en los ejemplos del libro."],
+          [
+            "kani / kanki",
+            "formas de kay usadas con Ñoqa / Qam en los ejemplos: «soy» / «eres».",
+          ],
+          [
+            "Ari",
+            "sí; inicio de la respuesta afirmativa en el patrón del libro.",
+          ],
+          [
+            "-chu",
+            "sufijo interrogativo agregado al elemento por el que se pregunta.",
+          ],
+          [
+            "-ri",
+            "marca usada en Qamri? para continuar la pregunta: «¿y tú?» en este intercambio.",
+          ],
+        ],
+        phrases: [
+          [
+            "Ñoqa Ana kani.",
+            "Yo soy Ana.",
+            "Presentación del nombre con la primera persona; composición didáctica original basada en el patrón citado.",
+          ],
+          [
+            "Qamchu Ana kanki?",
+            "¿Tú eres Ana?",
+            "-chu se coloca en el elemento focalizado en esta pregunta.",
+          ],
+          [
+            "Ari, ñoqa Ana kani.",
+            "Sí, yo soy Ana.",
+            "Respuesta afirmativa; no conserva -chu.",
+          ],
+          [
+            "Qamri?",
+            "¿Y tú?",
+            "Pregunta de seguimiento breve en un intercambio de presentación.",
+          ],
+          [
+            "Ñoqa Luis kani.",
+            "Yo soy Luis.",
+            "Presentación del nombre con la primera persona.",
+          ],
+        ],
+        examplePrompt:
+          "En Qamchu Ana kanki?, ¿qué elemento se pregunta y qué cambia en la respuesta afirmativa?",
+        exampleResponse:
+          "Se pregunta si la otra persona es Ana; la respuesta afirmativa empieza con Ari y omite -chu: Ari, ñoqa Ana kani.",
+        activityTitle: "Comprende las preguntas de presentación",
+        activityPrompt:
+          "Lee el intercambio y selecciona la explicación correcta: Qamchu Ana kanki? — Ari, ñoqa Ana kani. — Qamri? — Ñoqa Luis kani.",
+        activityAnswer:
+          "Se pregunta a la otra persona si es Ana, luego se responde afirmativamente y se devuelve el turno con «¿y tú?».",
+        activityItems: [
+          {
+            prompt:
+              "Lee: Qamchu Ana kanki? — Ari, ñoqa Ana kani. ¿Qué indica -chu aquí?",
+            options: [
+              "Que se pregunta si la otra persona es Ana.",
+              "Que Ana saluda por la mañana.",
+              "Que la respuesta debe repetir -chu.",
+            ],
+            answer: "Que se pregunta si la otra persona es Ana.",
+            feedback:
+              "-chu marca la pregunta sobre el elemento señalado. En la respuesta afirmativa del ejemplo se usa Ari y desaparece -chu.",
+          },
+          {
+            prompt:
+              "Completa la respuesta afirmativa: Qamchu Ana kanki? — ___, ñoqa Ana kani.",
+            options: ["Ari", "Qamri", "-chu"],
+            answer: "Ari",
+            feedback:
+              "Ari introduce la respuesta afirmativa. La forma interrogativa -chu no se copia en la respuesta.",
+          },
+          {
+            prompt: "¿Qué función tiene Qamri? en el intercambio?",
+            options: [
+              "Devolver el turno con «¿y tú?».",
+              "Cerrar la conversación con agradecimiento.",
+              "Negar la identidad de la persona.",
+            ],
+            answer: "Devolver el turno con «¿y tú?».",
+            feedback:
+              "En este patrón, Qamri? invita a la otra persona a presentarse. La unidad limita la explicación a este uso dialogal.",
+          },
+          {
+            prompt:
+              "¿Cuál frase actual del prototipo se retira porque no se localizó en los pasajes cotejados?",
+            options: [
+              "Imaynallataq kanki",
+              "Ñoqa Ana kani",
+              "Ari, ñoqa Ana kani",
+            ],
+            answer: "Imaynallataq kanki",
+            feedback:
+              "La frase queda en el registro histórico de candidatos, no como pregunta enseñada ni respuesta aceptada. Se requiere una fuente y revisión antes de recuperarla.",
+          },
+        ],
+        sourceItems: [
+          {
+            sourceId: "pacheco-2021-i",
+            citation:
+              "Pacheco Condori, Alipio. Lengua y Cultura Quechuas I (Autopreparación). Ediciones Madrigal, 2021, Unidad 2, diálogo y formas afirmativa/interrogativa, PDF 35–37.",
+            url: "https://www.pueblosoriginarios.gob.cl/sites/www.pueblosoriginarios.gob.cl/files/2022-02/Lengua%20y%20Cultura%20Quechuas_Alipio%20Pacheco.pdf",
+            license:
+              "Derechos reservados. PDF 2 prohíbe reproducción parcial o total. Consulta editorial privada según QCH-01; no implica permiso para redistribuir texto. Los ejemplos con nombres son composición pedagógica original y requieren revisión.",
+            usedFor:
+              "Respaldo directo para el patrón de presentación nominal, las formas interrogativas -chu/-ri y la respuesta afirmativa. Las explicaciones simplificadas y los ejemplos con Ana/Luis son propuestas pedagógicas originales.",
+            supportType: "direct",
+            locator: {
+              pdfPage: 35,
+              printedPage: null,
+              heading: "Unidad 2, Rimanakuy, forma afirmativa e interrogativa",
+            },
+          },
+          {
+            sourceId: "pacheco-2021-i",
+            citation:
+              "Pacheco Condori, Alipio. Lengua y Cultura Quechuas I (Autopreparación). Ediciones Madrigal, 2021, Unidad 2, sufijos -chu y -ri, PDF 36–37; conjugación, PDF 35.",
+            url: "https://www.pueblosoriginarios.gob.cl/sites/www.pueblosoriginarios.gob.cl/files/2022-02/Lengua%20y%20Cultura%20Quechuas_Alipio%20Pacheco.pdf",
+            license:
+              "Derechos reservados. PDF 2 prohíbe reproducción parcial o total. Consulta editorial privada según QCH-01; no implica permiso para redistribuir texto.",
+            usedFor:
+              "Localizador de -ri como pregunta de seguimiento y de los patrones Ñoqa ... kani / Qam ... kanki usados en los ejemplos originales de la unidad.",
+            supportType: "direct",
+            locator: {
+              pdfPage: 37,
+              printedPage: null,
+              heading: "Unidad 2, forma interrogativa con -chu y -ri",
+            },
+          },
+          {
+            sourceId: "pacheco-2021-i",
+            citation:
+              "Pacheco Condori, Alipio. Lengua y Cultura Quechuas I (Autopreparación). Ediciones Madrigal, 2021, Unidad 2, Rimanakuy, PDF 35–37.",
+            url: "https://www.pueblosoriginarios.gob.cl/sites/www.pueblosoriginarios.gob.cl/files/2022-02/Lengua%20y%20Cultura%20Quechuas_Alipio%20Pacheco.pdf",
+            license:
+              "Derechos reservados. PDF 2 prohíbe reproducción parcial o total. Consulta editorial privada según QCH-01; no implica permiso para redistribuir texto.",
+            usedFor:
+              "Pasaje que motivó el diálogo original con nombres de ejemplo, la secuencia de explicación en tres pasos y las actividades de interpretación/producción.",
+            supportType: "pedagogical-proposal",
+            locator: {
+              pdfPage: 35,
+              printedPage: null,
+              heading: "Unidad 2, Rimanakuy",
+            },
+          },
+        ],
       },
       {
         lessonId: "practica-01",
-        title: "Práctica guiada",
-        description: "Ordena los pasos de un primer diálogo de presentación.",
+        title: "Un primer intercambio completo",
+        description:
+          "Integra saludo, nombres, preguntas y respuestas afirmativas, despedida y agradecimiento.",
         kind: "practice",
-        durationMinutes: 5,
+        durationMinutes: 10,
         objectives: [
-          "Ordenar turnos básicos de un diálogo.",
-          "Explicar qué partes aún requieren validación lingüística.",
+          "Comprender un diálogo original breve que combina formas estudiadas en las dos lecciones anteriores.",
+          "Identificar saludo, presentación, pregunta con -chu, seguimiento con -ri y cierre.",
+          "Producir un intercambio escrito guiado y comprobar que pregunta y respuesta concuerdan.",
         ],
         reading: [
-          "Esta práctica de lectura trabaja la estructura de un intercambio en español. Las expresiones quechuas sugeridas por el prototipo se mantienen como borradores hasta documentar una variedad y una revisión humana.",
+          "Lee este diálogo original. Ana y Luis se encuentran y se presentan. Las líneas combinan patrones de la Unidad 2; no son una transcripción del diálogo de la fuente. Se conserva la ortografía de origen (por ejemplo, Ñoqa).",
+          "Ana: Mamay, napaykuyki.\nLuis: Ñoqa Luis kani.\nAna: Qamchu Luis kanki?\nLuis: Ari, ñoqa Luis kani. Qamri?\nAna: Ñoqa Ana kani.\nLuis: Qamchu Ana kanki?\nAna: Ari, ñoqa Ana kani.\nLuis: Ana mamay, tinkunanchiskama.\nAna: Añaychayki.\nLuis: Imamanta.",
+          "La secuencia avanza así: abrir con saludo dirigido; decir el nombre; preguntar con -chu; responder con Ari; ceder el turno con Qamri?; y cerrar con tinkunanchiskama, «hasta que nos encontremos», seguido del agradecimiento Añaychayki, «te agradezco», y la respuesta Imamanta, «de qué o por qué». Las líneas nuevas requieren revisión lingüística y del contexto de tratamiento.",
+          "Pista gramatical: el quechua estudiado forma palabras mediante sufijos unidos a una base. En el saludo se observa -y en Mamay; en las preguntas, -chu o -ri se adjuntan a la forma que lleva el foco. Empieza reconociendo cada sufijo en una frase antes de intentar producir una conversación completa.",
         ],
-        examplePrompt: "¿Qué secuencia organiza una presentación inicial?",
+        phrases: [
+          [
+            "tinkunanchiskama",
+            "hasta que nos encontremos",
+            "Cierre dirigido a la persona interlocutora en el pasaje.",
+          ],
+          [
+            "Añaychayki.",
+            "Te agradezco.",
+            "Agradecimiento al final del intercambio.",
+          ],
+          [
+            "Imamanta.",
+            "De qué o por qué.",
+            "Respuesta que el pasaje coloca tras el agradecimiento; sentido pragmático pendiente de revisión.",
+          ],
+        ],
+        examplePrompt: "¿Qué partes gramaticales aparecen en Qamchu Ana kanki?",
         exampleResponse:
-          "Saludo, presentación o pregunta, respuesta y cierre; las expresiones concretas requieren revisión regional.",
-        activityTitle: "Ordena el diálogo",
+          "Qam + -chu marca la pregunta sobre Ana; kanki concuerda con el sujeto tú en el patrón estudiado.",
+        activityTitle: "Comprende y completa el diálogo",
         activityPrompt:
-          "Ordena estos turnos descritos en español: respuesta; saludo; pregunta de cortesía.",
-        activityAnswer: "Saludo → pregunta de cortesía → respuesta.",
+          "Lee el diálogo y responde quién se presenta después de la pregunta Qamri?",
+        activityAnswer: "Ana se presenta: Ñoqa Ana kani.",
+        activityItems: [
+          {
+            prompt: "En el diálogo, ¿quién se presenta después de Qamri?",
+            options: ["Ana", "Luis", "La madre de Ana"],
+            answer: "Ana",
+            feedback:
+              "Después de Qamri? Luis devuelve el turno; Ana responde con Ñoqa Ana kani («Yo soy Ana»).",
+          },
+          {
+            prompt:
+              "¿Qué línea cierra el encuentro con el sentido «hasta que nos encontremos»?",
+            options: [
+              "Ana mamay, tinkunanchiskama.",
+              "Qamchu Ana kanki?",
+              "Ari, ñoqa Ana kani.",
+            ],
+            answer: "Ana mamay, tinkunanchiskama.",
+            feedback:
+              "Esa es la despedida del diálogo. La pregunta con -chu y la respuesta con Ari pertenecen al intercambio de presentación.",
+          },
+          {
+            prompt:
+              "Completa la respuesta: Qamchu Ana kanki? — ___, ñoqa Ana kani.",
+            options: ["Ari", "Qamri", "Tinkunanchiskama"],
+            answer: "Ari",
+            feedback:
+              "La respuesta afirmativa comienza con Ari y no lleva -chu.",
+          },
+          {
+            prompt:
+              "Escribe una pregunta y una respuesta para presentarte con un nombre distinto. Usa Qamchu [nombre] kanki? y Ari, ñoqa [nombre] kani.",
+            answer:
+              "Modelo: Qamchu Sara kanki? — Ari, ñoqa Sara kani. También sirve cualquier otro nombre en ambas líneas, siempre que coincida en pregunta y respuesta y se mantenga el patrón indicado.",
+            feedback:
+              "Revisa que el mismo nombre aparezca en ambas líneas, que la pregunta tenga -chu y que la respuesta afirmativa empiece con Ari y omita -chu. La respuesta modelo es un ejemplo original; la forma final requiere revisión humana.",
+          },
+          {
+            prompt:
+              "Ordena las funciones de un intercambio: cierre y agradecimiento; pregunta de presentación; saludo; respuesta y devolución del turno.",
+            options: [
+              "Saludo → pregunta de presentación → respuesta/devolución del turno → cierre/agradecimiento.",
+              "Agradecimiento → pregunta → saludo → presentación.",
+              "Pregunta → cierre → respuesta → saludo.",
+            ],
+            answer:
+              "Saludo → pregunta de presentación → respuesta/devolución del turno → cierre/agradecimiento.",
+            feedback:
+              "La secuencia sigue el propósito comunicativo del diálogo: abrir, intercambiar nombres, ceder el turno y cerrar.",
+          },
+        ],
+        sourceItems: [
+          {
+            sourceId: "pacheco-2021-i",
+            citation:
+              "Pacheco Condori, Alipio. Lengua y Cultura Quechuas I (Autopreparación). Ediciones Madrigal, 2021, Unidad 2, saludo y diálogo, PDF 32–37.",
+            url: "https://www.pueblosoriginarios.gob.cl/sites/www.pueblosoriginarios.gob.cl/files/2022-02/Lengua%20y%20Cultura%20Quechuas_Alipio%20Pacheco.pdf",
+            license:
+              "Derechos reservados. PDF 2 prohíbe reproducción parcial o total. Consulta editorial privada según QCH-01; no implica permiso para redistribuir texto. El diálogo de esta unidad es una composición pedagógica original sujeta a revisión.",
+            usedFor:
+              "Respaldo directo de los patrones y localizadores de saludo, presentación, interrogación y despedida; el diálogo y las actividades se redactaron para este material.",
+            supportType: "direct",
+            locator: {
+              pdfPage: 35,
+              printedPage: null,
+              heading: "Unidad 2, Rimanakuy",
+            },
+          },
+          {
+            sourceId: "pacheco-2021-i",
+            citation:
+              "Pacheco Condori, Alipio. Lengua y Cultura Quechuas I (Autopreparación). Ediciones Madrigal, 2021, Unidad 2, despedida y agradecimiento, PDF 39.",
+            url: "https://www.pueblosoriginarios.gob.cl/sites/www.pueblosoriginarios.gob.cl/files/2022-02/Lengua%20y%20Cultura%20Quechuas_Alipio%20Pacheco.pdf",
+            license:
+              "Derechos reservados. PDF 2 prohíbe reproducción parcial o total. Consulta editorial privada según QCH-01; no implica permiso para redistribuir texto.",
+            usedFor:
+              "Localizador directo para tinkunanchiskama, Añaychayki e Imamanta; contexto de cierre retomado como propuesta original pendiente de revisión.",
+            supportType: "direct",
+            locator: {
+              pdfPage: 39,
+              printedPage: null,
+              heading: "Unidad 2, 3. Despedida y agradecimiento",
+            },
+          },
+          {
+            sourceId: "pacheco-2021-i",
+            citation:
+              "Pacheco Condori, Alipio. Lengua y Cultura Quechuas I (Autopreparación). Ediciones Madrigal, 2021, Unidad 2, lengua aglutinante y sintaxis interrogativa, PDF 43 y 57.",
+            url: "https://www.pueblosoriginarios.gob.cl/sites/www.pueblosoriginarios.gob.cl/files/2022-02/Lengua%20y%20Cultura%20Quechuas_Alipio%20Pacheco.pdf",
+            license:
+              "Derechos reservados. PDF 2 prohíbe reproducción parcial o total. Consulta editorial privada según QCH-01; no implica permiso para redistribuir texto.",
+            usedFor:
+              "Respaldo curricular para introducir morfología aglutinante e interrogación en pasos breves. La explicación sencilla y los ejercicios son propuestas pedagógicas originales.",
+            supportType: "direct",
+            locator: {
+              pdfPage: 43,
+              printedPage: null,
+              heading: "Gramática, Morfología, lengua aglutinante",
+            },
+          },
+          {
+            sourceId: "pacheco-2021-i",
+            citation:
+              "Pacheco Condori, Alipio. Lengua y Cultura Quechuas I (Autopreparación). Ediciones Madrigal, 2021, Unidad 2, Rimanakuy y despedida, PDF 32–39.",
+            url: "https://www.pueblosoriginarios.gob.cl/sites/www.pueblosoriginarios.gob.cl/files/2022-02/Lengua%20y%20Cultura%20Quechuas_Alipio%20Pacheco.pdf",
+            license:
+              "Derechos reservados. PDF 2 prohíbe reproducción parcial o total. Consulta editorial privada según QCH-01; no implica permiso para redistribuir texto.",
+            usedFor:
+              "Pasajes que motivaron el diálogo compuesto y original, la progresión por turnos y las actividades de comprensión y producción; el diálogo no se copia de la fuente.",
+            supportType: "pedagogical-proposal",
+            locator: {
+              pdfPage: 35,
+              printedPage: null,
+              heading: "Unidad 2, Rimanakuy",
+            },
+          },
+        ],
       },
     ],
   },

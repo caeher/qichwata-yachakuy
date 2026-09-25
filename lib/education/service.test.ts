@@ -72,20 +72,25 @@ describe("education completion and certificate intent", () => {
     expect((await enrollInCourse(db, { userId, courseId: course.id })).id).toBe(
       enrollment.id,
     );
-    await completeUnit(db, {
-      userId,
-      enrollmentId: enrollment.id,
-      unitId: units[0]!.id,
-    });
-    await completeUnit(db, {
-      userId,
-      enrollmentId: enrollment.id,
-      unitId: units[0]!.id,
-    });
+    await Promise.all([
+      completeUnit(db, {
+        userId,
+        enrollmentId: enrollment.id,
+        unitId: units[0]!.id,
+        answers: ["fixture response"],
+      }),
+      completeUnit(db, {
+        userId,
+        enrollmentId: enrollment.id,
+        unitId: units[0]!.id,
+        answers: ["FIXTURE   RESPONSE"],
+      }),
+    ]);
     await completeUnit(db, {
       userId,
       enrollmentId: enrollment.id,
       unitId: units[1]!.id,
+      answers: ["another accepted response"],
     });
     expect(await db.select().from(unitProgress)).toHaveLength(2);
     await expect(
@@ -110,6 +115,7 @@ describe("education completion and certificate intent", () => {
         userId,
         enrollmentId: enrollment.id,
         unitId: unit.id,
+        answers: ["fixture response"],
       });
     const policy = ({
       progressCount,
@@ -156,6 +162,7 @@ describe("education completion and certificate intent", () => {
         userId: otherUser.userId,
         enrollmentId: enrollment.id,
         unitId: units[0]!.id,
+        answers: ["fixture response"],
       }),
     ).rejects.toBeInstanceOf(EducationError);
   });
@@ -184,6 +191,7 @@ describe("education completion and certificate intent", () => {
         userId,
         enrollmentId: enrollment.id,
         unitId: units[0]!.id,
+        answers: ["fixture response"],
       }),
     ).rejects.toMatchObject({ code: "not_found" });
     expect(
@@ -191,5 +199,30 @@ describe("education completion and certificate intent", () => {
         where: eq(enrollments.id, enrollment.id),
       }),
     ).toBeTruthy();
+  });
+
+  it("requires correct activity evidence before writing completion", async () => {
+    const { db, userId, course, units } = await educationFixture();
+    const enrollment = await enrollInCourse(db, {
+      userId,
+      courseId: course.id,
+    });
+    await expect(
+      completeUnit(db, {
+        userId,
+        enrollmentId: enrollment.id,
+        unitId: units[0]!.id,
+        answers: [""],
+      }),
+    ).rejects.toMatchObject({ code: "evidence_incorrect" });
+    await expect(
+      completeUnit(db, {
+        userId,
+        enrollmentId: enrollment.id,
+        unitId: units[0]!.id,
+        answers: [],
+      }),
+    ).rejects.toMatchObject({ code: "evidence_required" });
+    expect(await db.select().from(unitProgress)).toHaveLength(0);
   });
 });
