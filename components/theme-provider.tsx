@@ -8,7 +8,13 @@ export function ThemeProvider({
   ...props
 }: ComponentProps<typeof NextThemesProvider>) {
   return (
-    <NextThemesProvider {...props} defaultTheme={props.defaultTheme ?? "light"}>
+    <NextThemesProvider
+      {...props}
+      defaultTheme={props.defaultTheme ?? "light"}
+      scriptProps={{
+        type: typeof window === "undefined" ? "text/javascript" : "text/plain",
+      }}
+    >
       {children}
     </NextThemesProvider>
   );

@@ -45,6 +45,7 @@ export class EducationError extends Error {
       | "not_found"
       | "course_unavailable"
       | "criteria_pending"
+      | "issuer_unconfigured"
       | "evidence_required"
       | "evidence_incorrect",
   ) {
@@ -202,7 +203,8 @@ export async function completeUnit(
 
 /**
  * Commits completion and its certificate intent together. The policy is
- * injected by tests/dev fixtures; production callers use the closed policy.
+ * injected by tests/dev fixtures or approved explicitly on the course. Courses
+ * without an approved policy remain closed in production.
  */
 export async function finalizeEnrollment(
   db: AuthDb,
@@ -265,12 +267,15 @@ export async function finalizeEnrollment(
         if (error.message.includes("course_unavailable")) {
           throw new EducationError("course_unavailable");
         }
+        if (error.message.includes("issuer_unconfigured")) {
+          throw new EducationError("issuer_unconfigured");
+        }
       }
       throw error;
     }
   }
 
-  const policy = input.policy ?? pendingCompletionPolicy;
+  const policy = input.policy;
   const now = input.now ?? new Date();
   return db.transaction(async (tx) => {
     const [enrollment] = await tx
@@ -306,11 +311,22 @@ export async function finalizeEnrollment(
       .select({ id: unitProgress.id })
       .from(unitProgress)
       .where(eq(unitProgress.enrollmentId, enrollment.id));
-    const decision = policy({
-      progressCount: progress.length,
-      unitCount: units.length,
-      courseVersion: course.version,
-    });
+    const decision = policy
+      ? policy({
+          progressCount: progress.length,
+          unitCount: units.length,
+          courseVersion: course.version,
+        })
+      : course.completionPolicyStatus === "approved"
+        ? {
+            eligible: true as const,
+            policyVersion: course.completionPolicyVersion,
+          }
+        : pendingCompletionPolicy({
+            progressCount: progress.length,
+            unitCount: units.length,
+            courseVersion: course.version,
+          });
     if (!decision.eligible) throw new EducationError("criteria_pending");
     if (units.length === 0 || progress.length !== units.length)
       throw new EducationError("criteria_pending");
@@ -324,6 +340,7 @@ export async function finalizeEnrollment(
       });
       return { completion: prior, certificate: priorCertificate ?? null };
     }
+    if (!input.issuer.trim()) throw new EducationError("issuer_unconfigured");
 
     const [completion] = await tx
       .insert(courseCompletions)

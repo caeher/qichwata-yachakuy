@@ -177,7 +177,11 @@ export const completeUnit = mutation({
     if (!user || user.deletedAt) throw new ConvexError("not_authenticated");
 
     const enrollment = await ctx.db.get(args.enrollmentId);
-    if (!enrollment || enrollment.userId !== user._id || enrollment.status !== "active") {
+    if (
+      !enrollment ||
+      enrollment.userId !== user._id ||
+      enrollment.status !== "active"
+    ) {
       throw new ConvexError("not_found");
     }
     const unit = await ctx.db.get(args.unitId);
@@ -205,7 +209,10 @@ export const completeUnit = mutation({
       )
       .unique();
     if (existing) {
-      return { progress: existing, feedback: items.map((item) => item.feedback) };
+      return {
+        progress: existing,
+        feedback: items.map((item) => item.feedback),
+      };
     }
 
     const progressId = await ctx.db.insert("unitProgress", {
@@ -262,7 +269,6 @@ export const finalizeEnrollment = mutation({
     if (course.completionPolicyStatus !== "approved") {
       throw new ConvexError("criteria_pending");
     }
-
     const prior = await ctx.db
       .query("courseCompletions")
       .withIndex("by_enrollment", (q) => q.eq("enrollmentId", enrollment._id))
@@ -273,6 +279,9 @@ export const finalizeEnrollment = mutation({
         .withIndex("by_completion", (q) => q.eq("completionId", prior._id))
         .unique();
       return { completion: prior, certificate: priorCertificate ?? null };
+    }
+    if (!args.issuer.trim()) {
+      throw new ConvexError("issuer_unconfigured");
     }
 
     const now = Date.now();

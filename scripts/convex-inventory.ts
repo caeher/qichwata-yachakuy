@@ -1,7 +1,9 @@
 /**
  * Operator script: deployment inventory without PII.
- * Requires NEXT_PUBLIC_CONVEX_URL and CONVEX_DEPLOY_KEY in the environment.
+ * Loads `.env.local`, then uses CONVEX_DEPLOY_KEY or the local Convex admin key.
  */
+import "./lib/ensure-convex-operator-env";
+
 import { internal } from "../convex/_generated/api";
 import { convexInternalQuery, convexConfigured } from "../lib/convex/server";
 
@@ -11,7 +13,9 @@ async function main() {
     process.exit(1);
   }
   if (!process.env.CONVEX_DEPLOY_KEY?.trim()) {
-    console.error("CONVEX_DEPLOY_KEY is not set.");
+    console.error(
+      "CONVEX_DEPLOY_KEY is not set. For cloud deployments, copy Deploy Key from the Convex dashboard into .env.local. For local `pnpm convex:dev`, ensure .convex/local/default/config.json exists.",
+    );
     process.exit(1);
   }
 

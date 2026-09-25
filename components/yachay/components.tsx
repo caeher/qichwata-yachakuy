@@ -10,7 +10,7 @@ import {
 import { cva, type VariantProps } from "class-variance-authority";
 
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "cn";
@@ -36,17 +36,36 @@ export function ActionLink({
   loading?: boolean;
   disabled?: boolean;
 }) {
-  return (
-    <Button
-      variant={variant}
-      size={size}
-      className={className}
-      loading={loading}
-      disabled={disabled}
-      render={<Link href={href} />}
-    >
+  const isUnavailable = disabled || loading;
+  const linkClassName = cn(
+    buttonVariants({ variant, size, className }),
+    isUnavailable && "pointer-events-none opacity-50",
+  );
+  const content = (
+    <>
+      {loading ? (
+        <LoaderCircle aria-hidden className="size-4 animate-spin" />
+      ) : null}
       {children}
-    </Button>
+    </>
+  );
+
+  if (isUnavailable) {
+    return (
+      <span
+        aria-busy={loading || undefined}
+        aria-disabled="true"
+        className={linkClassName}
+      >
+        {content}
+      </span>
+    );
+  }
+
+  return (
+    <Link href={href} className={linkClassName}>
+      {content}
+    </Link>
   );
 }
 

@@ -1,9 +1,7 @@
 import { internal } from "@/convex/_generated/api";
-import {
-  convexConfigured,
-  convexInternalQuery,
-} from "@/lib/convex/server";
+import { convexConfigured, convexInternalQuery } from "@/lib/convex/server";
 import { getAnchorRuntimeConfig } from "@/lib/anchors/service";
+import { runConvexCertificateAnchorJob } from "@/lib/certificates/convex-anchor-job";
 import { runCertificateAnchorJob } from "@/lib/certificates/anchor-job";
 import { timingSafeEqual } from "node:crypto";
 
@@ -35,11 +33,23 @@ export async function POST(request: Request) {
       internal.certificates.listPendingForWorker,
       { limit: 20 },
     );
-    return Response.json({
-      processed: 0,
-      pending: pending.length,
-      note: "certificate_anchor_job_requires_convex_mutations",
-    });
+    for (const certificate of pending) {
+      try {
+        outcomes.push(
+          await runConvexCertificateAnchorJob(
+            runtime.configured ? runtime : null,
+            certificate._id,
+          ),
+        );
+      } catch {
+        outcomes.push({
+          publicId: certificate.publicId,
+          status: "pending",
+          error: "retryable",
+        });
+      }
+    }
+    return Response.json({ processed: outcomes.length, outcomes });
   }
 
   const { asc, inArray } = await import("drizzle-orm");

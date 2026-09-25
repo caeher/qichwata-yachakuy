@@ -174,12 +174,21 @@ export function CourseActions({
           );
           return;
         }
+        if (body.error === "issuer_unconfigured") {
+          throw new Error(
+            "La emisión todavía no está configurada. Falta definir la identidad del emisor.",
+          );
+        }
         throw new Error(body.error ?? "No se pudo validar la finalización.");
       }
       setCertificateId(
         typeof body.certificateId === "string" ? body.certificateId : null,
       );
-      setNotice("La finalización elegible se validó en el servidor.");
+      setNotice(
+        body.certificateId
+          ? "La finalización se validó y el certificado quedó preparado para el anclaje en Stellar."
+          : "La finalización elegible se validó en el servidor.",
+      );
       router.refresh();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Error de red.");
@@ -251,8 +260,9 @@ export function CourseActions({
         {allComplete ? (
           <div className="bg-muted mt-4 flex flex-col gap-3 rounded-xl p-3 text-sm">
             <p role="status">
-              Todas las unidades están guardadas. La emisión requiere evaluación
-              elegible validada en servidor.
+              Todas las unidades están guardadas. La finalización se valida en
+              servidor y, si es elegible, prepara una emisión que el procesador
+              registrará en Stellar.
             </p>
             {completionPolicyStatus === "approved" ? (
               <Button
@@ -262,7 +272,7 @@ export function CourseActions({
                 disabled={finalizing}
                 onClick={() => void requestCompletion()}
               >
-                Solicitar validación de finalización
+                Validar finalización y preparar certificado
               </Button>
             ) : (
               <p className="text-muted-foreground">

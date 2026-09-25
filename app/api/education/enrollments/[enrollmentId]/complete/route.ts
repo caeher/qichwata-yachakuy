@@ -28,7 +28,14 @@ export async function POST(
     if (error instanceof EducationError)
       return NextResponse.json(
         { error: error.code },
-        { status: error.code === "not_found" ? 404 : 409 },
+        {
+          status:
+            error.code === "not_found"
+              ? 404
+              : error.code === "issuer_unconfigured"
+                ? 503
+                : 409,
+        },
       );
     throw error;
   }

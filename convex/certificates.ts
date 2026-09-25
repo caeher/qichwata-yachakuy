@@ -138,13 +138,138 @@ export const listPendingForWorker = internalQuery({
   },
 });
 
+export const reserveForWorker = internalMutation({
+  args: { certificateId: v.id("certificates") },
+  returns: v.any(),
+  handler: async (ctx, { certificateId }) => {
+    const cert = await ctx.db.get(certificateId);
+    if (!cert) return { kind: "done" };
+    if (cert.status === "anchored") return { kind: "done" };
+    const completion = await ctx.db.get(cert.completionId);
+    if (!completion?.eligible) return { kind: "ineligible" };
+    if (cert.pendingTxHash) {
+      return {
+        kind: "poll",
+        certificateId,
+        publicId: cert.publicId,
+        sha256: cert.sha256,
+        txHash: cert.pendingTxHash,
+      };
+    }
+    if (
+      cert.status === "pending" &&
+      cert.pendingAt &&
+      Date.now() - cert.pendingAt < 120_000
+    ) {
+      return { kind: "busy", publicId: cert.publicId, sha256: cert.sha256 };
+    }
+    await ctx.db.patch(certificateId, {
+      status: "pending",
+      pendingAt: Date.now(),
+    });
+    return {
+      kind: "submit",
+      certificateId,
+      publicId: cert.publicId,
+      sha256: cert.sha256,
+    };
+  },
+});
+
+export const saveWorkerTxHash = internalMutation({
+  args: { certificateId: v.id("certificates"), txHash: v.string() },
+  returns: v.null(),
+  handler: async (ctx, { certificateId, txHash }) => {
+    const cert = await ctx.db.get(certificateId);
+    if (!cert || cert.status === "anchored") return null;
+    await ctx.db.patch(certificateId, {
+      status: "pending",
+      pendingTxHash: txHash,
+      pendingAt: Date.now(),
+    });
+    return null;
+  },
+});
+
+export const failWorkerAttempt = internalMutation({
+  args: { certificateId: v.id("certificates") },
+  returns: v.null(),
+  handler: async (ctx, { certificateId }) => {
+    const cert = await ctx.db.get(certificateId);
+    if (!cert || cert.status === "anchored") return null;
+    await ctx.db.patch(certificateId, {
+      status: "failed",
+      pendingAt: undefined,
+      pendingTxHash: undefined,
+    });
+    await ctx.db.insert("auditEvents", {
+      userId: cert.userId,
+      action: "certificate_anchor_failed",
+      certificateId,
+      meta: {},
+      createdAt: Date.now(),
+    });
+    return null;
+  },
+});
+
+export const settleWorkerAnchor = internalMutation({
+  args: {
+    certificateId: v.id("certificates"),
+    network: v.union(v.literal("testnet"), v.literal("mainnet")),
+    contractId: v.string(),
+    ownerPublicKey: v.string(),
+    txHash: v.string(),
+    ledger: v.union(v.number(), v.null()),
+    feeXlm: v.union(v.string(), v.null()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const cert = await ctx.db.get(args.certificateId);
+    if (!cert) throw new Error("certificate_not_found");
+    const completion = await ctx.db.get(cert.completionId);
+    if (!completion?.eligible) throw new Error("certificate_ineligible");
+    const existing = await ctx.db
+      .query("anchors")
+      .withIndex("by_certificate", (q) => q.eq("certificateId", cert._id))
+      .unique();
+    if (!existing) {
+      await ctx.db.insert("anchors", {
+        certificateId: cert._id,
+        network: args.network,
+        txHash: args.txHash,
+        ownerPublicKey: args.ownerPublicKey,
+        ledger: args.ledger ?? undefined,
+        contractId: args.contractId,
+        anchoredAt: Date.now(),
+        feeXlm: args.feeXlm ?? undefined,
+      });
+    }
+    await ctx.db.patch(cert._id, {
+      status: "anchored",
+      pendingTxHash: undefined,
+      pendingAt: undefined,
+    });
+    await ctx.db.insert("auditEvents", {
+      userId: cert.userId,
+      action: "certificate_anchor_settled",
+      certificateId: cert._id,
+      meta: { network: args.network, txHash: args.txHash },
+      createdAt: Date.now(),
+    });
+    return null;
+  },
+});
+
 export const getAnchorForCertificate = query({
   args: { certificateId: v.id("certificates") },
   returns: v.union(v.any(), v.null()),
   handler: async (ctx, args) => {
     return await ctx.db
       .query("anchors")
-      .withIndex("by_certificate", (q) => q.eq("certificateId", args.certificateId))
+      .withIndex("by_certificate", (q) =>
+        q.eq("certificateId", args.certificateId),
+      )
       .unique();
   },
 });
