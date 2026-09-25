@@ -44,6 +44,7 @@ borde suave y sombra verde de baja opacidad. Se conservan `motion-rise`,
 | `SectionHeading` / `StatCard` | compact, hero; paper, leaf, ink | Panel y galería |
 | `LessonRow` | pending/completed | Aprendizaje y galería |
 | `ChatMessage` | user/assistant/error | Galería; la vista de tutor corresponde a la issue 11 |
+| `CertificateCard`, `CertificateDetails`, `VerificationStatus` | preview, pending, anchored, failed, unavailable, unknown, mismatch | Certificados privados/públicos, consulta y galería |
 
 `FeedbackState` unifica las presentaciones vacías, de carga y de error. Los
 estados se anuncian con `role=status`/`aria-live` o `role=alert`. Botones y

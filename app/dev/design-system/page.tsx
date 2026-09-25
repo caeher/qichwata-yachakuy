@@ -16,6 +16,11 @@ import {
   StatusBadge,
   YachayProgress,
 } from "@/components/yachay/components";
+import {
+  CertificateCard,
+  CertificateDetails,
+  VerificationStatus,
+} from "@/components/yachay/certificates";
 
 export default function DesignSystemPage() {
   if (process.env.NODE_ENV !== "development") notFound();
@@ -24,10 +29,10 @@ export default function DesignSystemPage() {
     <main className="mx-auto flex min-h-svh w-full max-w-6xl flex-col gap-12 px-4 py-10 sm:px-6">
       <SiteHeader title="Yachay · Sistema de diseño" />
       <header className="motion-rise flex flex-col gap-3">
-        <p className="text-leaf-dark text-xs font-semibold uppercase tracking-[0.2em]">
+        <p className="text-leaf-dark text-xs font-semibold tracking-[0.2em] uppercase">
           Yachay · Galería de desarrollo
         </p>
-        <h1 className="font-heading text-4xl text-ink sm:text-5xl">
+        <h1 className="font-heading text-ink text-4xl sm:text-5xl">
           Componentes y variantes
         </h1>
         <p className="text-muted-foreground max-w-2xl leading-6">
@@ -38,35 +43,83 @@ export default function DesignSystemPage() {
       </header>
 
       <section className="flex flex-col gap-5">
-        <SectionHeading size="compact" eyebrow="Acción" title="Button y ActionLink" description="Variantes, tamaños y estado de carga." />
-        <div className="flex flex-wrap items-center gap-3 rounded-3xl border border-border bg-paper p-5">
-          <Button variant="primary" size="sm">Principal</Button>
-          <Button variant="secondary" size="md">Secundario</Button>
-          <Button variant="outline" size="lg">Contorno</Button>
+        <SectionHeading
+          size="compact"
+          eyebrow="Acción"
+          title="Button y ActionLink"
+          description="Variantes, tamaños y estado de carga."
+        />
+        <div className="border-border bg-paper flex flex-wrap items-center gap-3 rounded-3xl border p-5">
+          <Button variant="primary" size="sm">
+            Principal
+          </Button>
+          <Button variant="secondary" size="md">
+            Secundario
+          </Button>
+          <Button variant="outline" size="lg">
+            Contorno
+          </Button>
           <Button variant="ghost">Sutil</Button>
-          <Button variant="primary" size="icon" aria-label="Acción rápida"><Sparkles /></Button>
-          <Button variant="primary" loading>Guardando</Button>
-          <Button variant="primary" disabled>Deshabilitado</Button>
-          <ActionLink variant="outline" href="#" loading>Cargando enlace</ActionLink>
-          <ActionLink variant="ghost" href="#" disabled>Enlace deshabilitado</ActionLink>
-          <Button variant="primary" render={<a href="#estados" />}><ArrowRight /> Enlace de acción</Button>
+          <Button variant="primary" size="icon" aria-label="Acción rápida">
+            <Sparkles />
+          </Button>
+          <Button variant="primary" loading>
+            Guardando
+          </Button>
+          <Button variant="primary" disabled>
+            Deshabilitado
+          </Button>
+          <ActionLink variant="outline" href="#" loading>
+            Cargando enlace
+          </ActionLink>
+          <ActionLink variant="ghost" href="#" disabled>
+            Enlace deshabilitado
+          </ActionLink>
+          <Button variant="primary" render={<a href="#estados" />}>
+            <ArrowRight /> Enlace de acción
+          </Button>
         </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-3" aria-label="Variantes de encabezado">
-        <div className="rounded-3xl bg-paper p-5">
-          <SectionHeading size="compact" surface="paper" eyebrow="Compacto · paper" title="Un encabezado breve" description="Contexto para una sección de contenido." />
+      <section
+        className="grid gap-4 md:grid-cols-3"
+        aria-label="Variantes de encabezado"
+      >
+        <div className="bg-paper rounded-3xl p-5">
+          <SectionHeading
+            size="compact"
+            surface="paper"
+            eyebrow="Compacto · paper"
+            title="Un encabezado breve"
+            description="Contexto para una sección de contenido."
+          />
         </div>
-        <div className="rounded-3xl bg-leaf p-5">
-          <SectionHeading size="hero" surface="leaf" eyebrow="Hero · leaf" title="Una sección destacada" description="El mismo componente se adapta a una superficie hoja." />
+        <div className="bg-leaf rounded-3xl p-5">
+          <SectionHeading
+            size="hero"
+            surface="leaf"
+            eyebrow="Hero · leaf"
+            title="Una sección destacada"
+            description="El mismo componente se adapta a una superficie hoja."
+          />
         </div>
-        <div className="rounded-3xl bg-ink p-5">
-          <SectionHeading size="hero" surface="ink" eyebrow="Hero · ink" title="Una superficie de tinta" description="Texto claro para sostener el contraste en ambos temas." />
+        <div className="bg-ink rounded-3xl p-5">
+          <SectionHeading
+            size="hero"
+            surface="ink"
+            eyebrow="Hero · ink"
+            title="Una superficie de tinta"
+            description="Texto claro para sostener el contraste en ambos temas."
+          />
         </div>
       </section>
 
       <section id="estados" className="flex flex-col gap-5">
-        <SectionHeading size="compact" eyebrow="Estado" title="Badges y mensajes de estado" />
+        <SectionHeading
+          size="compact"
+          eyebrow="Estado"
+          title="Badges y mensajes de estado"
+        />
         <div className="flex flex-wrap items-center gap-3">
           <StatusBadge tone="neutral">Neutral</StatusBadge>
           <StatusBadge tone="success">Completado</StatusBadge>
@@ -75,63 +128,183 @@ export default function DesignSystemPage() {
           <Badge variant="outline">Primitiva Base UI</Badge>
         </div>
         <div className="grid gap-3 md:grid-cols-3">
-          <FeedbackState state="loading" title="Cargando contenido" description="El mensaje se anuncia mediante una región de estado." />
-          <FeedbackState state="empty" title="Aún no hay lecciones" description="Cuando haya contenido publicado, aparecerá aquí." />
-          <FeedbackState state="error" title="No se pudo cargar" description="Comprueba la conexión e inténtalo de nuevo." />
+          <FeedbackState
+            state="loading"
+            title="Cargando contenido"
+            description="El mensaje se anuncia mediante una región de estado."
+          />
+          <FeedbackState
+            state="empty"
+            title="Aún no hay lecciones"
+            description="Cuando haya contenido publicado, aparecerá aquí."
+          />
+          <FeedbackState
+            state="error"
+            title="No se pudo cargar"
+            description="Comprueba la conexión e inténtalo de nuevo."
+          />
         </div>
       </section>
 
       <section className="flex flex-col gap-5">
-        <SectionHeading size="compact" eyebrow="Superficies" title="Card y ModuleCard" description="Acentos hoja, arcilla y gold (papel profundo + arcilla)." />
+        <SectionHeading
+          size="compact"
+          eyebrow="Superficies"
+          title="Card y ModuleCard"
+          description="Acentos hoja, arcilla y gold (papel profundo + arcilla)."
+        />
         <div className="grid gap-4 md:grid-cols-3">
           {(["leaf", "clay", "gold"] as const).map((accent) => (
             <Card key={accent} variant="marketing" accent={accent}>
-              <CardHeader><CardTitle className="font-heading capitalize">Acento {accent}</CardTitle></CardHeader>
-              <CardContent className="text-muted-foreground">Marketing · superficie papel · radio suave.</CardContent>
+              <CardHeader>
+                <CardTitle className="font-heading capitalize">
+                  Acento {accent}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-muted-foreground">
+                Marketing · superficie papel · radio suave.
+              </CardContent>
             </Card>
           ))}
         </div>
         <div className="grid gap-4 md:grid-cols-3">
-          {(["available", "in-progress", "completed"] as const).map((status, index) => (
-            <ModuleCard key={status} title={["Saludos y presencia", "Familia y comunidad", "Territorio y tiempo"][index]} description="Una muestra con descripción extensa que conserva una lectura cómoda en anchos reducidos." progress={[0, 42, 100][index]} status={status} accent={(["leaf", "clay", "gold"] as const)[index]} />
+          {(["available", "in-progress", "completed"] as const).map(
+            (status, index) => (
+              <ModuleCard
+                key={status}
+                title={
+                  [
+                    "Saludos y presencia",
+                    "Familia y comunidad",
+                    "Territorio y tiempo",
+                  ][index]
+                }
+                description="Una muestra con descripción extensa que conserva una lectura cómoda en anchos reducidos."
+                progress={[0, 42, 100][index]}
+                status={status}
+                accent={(["leaf", "clay", "gold"] as const)[index]}
+              />
+            ),
+          )}
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-5">
+        <SectionHeading
+          size="compact"
+          eyebrow="Progreso"
+          title="Tonos y tamaños"
+        />
+        <Card variant="learning">
+          <CardContent className="flex flex-col gap-5 py-5">
+            <YachayProgress value={68} label="Progreso hoja, tamaño normal" />
+            <YachayProgress
+              value={34}
+              label="Progreso arcilla, tamaño compacto"
+              tone="clay"
+              size="compact"
+            />
+          </CardContent>
+        </Card>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <StatCard
+            label="Lecciones"
+            value="6 / 9"
+            size="compact"
+            surface="paper"
+          />
+          <StatCard label="Avance" value="68%" size="hero" surface="leaf" />
+          <StatCard
+            label="Constancia"
+            value="4 días"
+            size="hero"
+            surface="ink"
+          />
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-5">
+        <SectionHeading
+          size="compact"
+          eyebrow="Certificados"
+          title="Estados y evidencia"
+          description="Fixtures de presentación; solo un recibo real contrastado puede mostrar un enlace al explorador."
+        />
+        <div className="grid gap-4 md:grid-cols-2">
+          {(
+            ["preview", "pending", "anchored", "failed", "unavailable"] as const
+          ).map((status) => (
+            <CertificateCard
+              key={status}
+              title="Saludos y presencia"
+              version="1.0"
+              status={status}
+            >
+              <VerificationStatus status={status} />
+              <CertificateDetails
+                evidence={{
+                  issuer: "Instituto Quechua",
+                  publicId: "018f0000-0000-4000-8000-000000000001",
+                  issuedAt: "2026-01-02T03:05:00.000Z",
+                  sha256: "a".repeat(64),
+                  networkLabel: "Configurada: Stellar Testnet",
+                }}
+              />
+            </CertificateCard>
           ))}
         </div>
       </section>
 
       <section className="flex flex-col gap-5">
-        <SectionHeading size="compact" eyebrow="Progreso" title="Tonos y tamaños" />
-        <Card variant="learning">
-          <CardContent className="flex flex-col gap-5 py-5">
-            <YachayProgress value={68} label="Progreso hoja, tamaño normal" />
-            <YachayProgress value={34} label="Progreso arcilla, tamaño compacto" tone="clay" size="compact" />
-          </CardContent>
-        </Card>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <StatCard label="Lecciones" value="6 / 9" size="compact" surface="paper" />
-          <StatCard label="Avance" value="68%" size="hero" surface="leaf" />
-          <StatCard label="Constancia" value="4 días" size="hero" surface="ink" />
-        </div>
-      </section>
-
-      <section className="flex flex-col gap-5">
-        <SectionHeading size="compact" eyebrow="Aprendizaje y tutor" title="LessonRow y ChatMessage" />
+        <SectionHeading
+          size="compact"
+          eyebrow="Aprendizaje y tutor"
+          title="LessonRow y ChatMessage"
+        />
         <div className="grid gap-5 md:grid-cols-2">
           <div className="flex flex-col gap-3">
-            <LessonRow title="Allin p’unchay" description="Saludo para la mañana." status="completed" />
-            <LessonRow title="Presentarse" description="Comparte tu nombre y procedencia." status="pending" href="#" />
+            <LessonRow
+              title="Allin p’unchay"
+              description="Saludo para la mañana."
+              status="completed"
+            />
+            <LessonRow
+              title="Presentarse"
+              description="Comparte tu nombre y procedencia."
+              status="pending"
+              href="#"
+            />
           </div>
-          <div className="flex flex-col gap-3 rounded-3xl bg-muted p-4">
-            <ChatMessage role="assistant">¡Allin p’unchay! ¿Qué frase quieres practicar?</ChatMessage>
-            <ChatMessage role="user">Quiero saludar a mi comunidad.</ChatMessage>
-            <ChatMessage role="error">No pude conectar con el tutor. Prueba de nuevo.</ChatMessage>
+          <div className="bg-muted flex flex-col gap-3 rounded-3xl p-4">
+            <ChatMessage role="assistant">
+              ¡Allin p’unchay! ¿Qué frase quieres practicar?
+            </ChatMessage>
+            <ChatMessage role="user">
+              Quiero saludar a mi comunidad.
+            </ChatMessage>
+            <ChatMessage role="error">
+              No pude conectar con el tutor. Prueba de nuevo.
+            </ChatMessage>
           </div>
         </div>
       </section>
 
       <section className="grid gap-4 md:grid-cols-3">
-        <Card className="motion-rise"><CardHeader><CardTitle>motion-rise</CardTitle></CardHeader></Card>
-        <Card className="motion-fade"><CardHeader><CardTitle>motion-fade</CardTitle></CardHeader></Card>
-        <Card className="motion-drift"><CardHeader><CardTitle>motion-drift</CardTitle></CardHeader></Card>
+        <Card className="motion-rise">
+          <CardHeader>
+            <CardTitle>motion-rise</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card className="motion-fade">
+          <CardHeader>
+            <CardTitle>motion-fade</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card className="motion-drift">
+          <CardHeader>
+            <CardTitle>motion-drift</CardTitle>
+          </CardHeader>
+        </Card>
       </section>
     </main>
   );
