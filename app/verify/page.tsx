@@ -4,20 +4,29 @@ import { SiteHeader } from "@/components/site-header";
 import { VerifyForm } from "@/app/verify/verify-form";
 import { clientIp } from "@/lib/verify/rate-limit";
 import { checkVerifyRateLimit } from "@/lib/verify/rate-limit-shared";
+import { resolveStellarEndpoints } from "@/lib/stellar/endpoints";
 
-type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
+type Props = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
 export default async function VerifyPage({ searchParams }: Props) {
   const query = await searchParams;
   const legacyIdentifier = Object.values(query)
     .flatMap((value) => (Array.isArray(value) ? value : value ? [value] : []))
     .find((value) => /^YCH-[A-Za-z0-9-]+$/i.test(value));
-  const initialHash = Object.entries(query)
-    .filter(([key]) => ["hash", "sha256", "id", "identifier", "certificateId"].includes(key))
-    .flatMap(([, value]) => (Array.isArray(value) ? value : value ? [value] : []))
-    .find((value) => !/^YCH-/i.test(value)) ?? "";
+  const initialHash =
+    Object.entries(query)
+      .filter(([key]) =>
+        ["hash", "sha256", "id", "identifier", "certificateId"].includes(key),
+      )
+      .flatMap(([, value]) =>
+        Array.isArray(value) ? value : value ? [value] : [],
+      )
+      .find((value) => !/^YCH-/i.test(value)) ?? "";
   const h = await headers();
   const rate = checkVerifyRateLimit(clientIp(h));
+  const configuredNetwork = resolveStellarEndpoints().network;
 
   return (
     <div className="flex min-h-svh flex-col">
@@ -37,9 +46,15 @@ export default async function VerifyPage({ searchParams }: Props) {
           </p>
         </section>
         {legacyIdentifier ? (
-          <div className="rounded-xl border border-clay/30 bg-clay-pale p-4 text-sm text-clay-dark" role="status">
+          <div
+            className="border-clay/30 bg-clay-pale text-clay-dark rounded-xl border p-4 text-sm"
+            role="status"
+          >
             <p className="font-semibold">Referencia heredada sin verificar</p>
-            <p className="mt-2">{legacyIdentifier} proviene del sistema anterior. No hay evidencia de anclaje asociada y no se reconoce como certificado vigente.</p>
+            <p className="mt-2">
+              {legacyIdentifier} proviene del sistema anterior. No hay evidencia
+              de anclaje asociada y no se reconoce como certificado vigente.
+            </p>
           </div>
         ) : null}
         {!rate.ok ? (
@@ -47,7 +62,10 @@ export default async function VerifyPage({ searchParams }: Props) {
             Demasiadas comprobaciones. Espera un momento.
           </p>
         ) : (
-          <VerifyForm initialHash={initialHash} />
+          <VerifyForm
+            initialHash={initialHash}
+            configuredNetwork={configuredNetwork}
+          />
         )}
       </main>
     </div>
