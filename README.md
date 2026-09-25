@@ -5,7 +5,8 @@ Plataforma educativa B2C con cuentas individuales, scaffolding de aprendizaje y 
 ## Stack
 
 - Next.js 16.3.5, React 19, TypeScript, Tailwind CSS v4 y shadcn/ui
-- PostgreSQL con Drizzle ORM
+- PostgreSQL con Drizzle ORM (tests y rutas legacy)
+- **Convex** como base de datos en desarrollo/producción cuando `NEXT_PUBLIC_CONVEX_URL` está configurado
 - Clerk para identidad y autenticación
 - Stellar Soroban para comprobantes de integridad
 - Vitest y PGlite para pruebas sin un servidor PostgreSQL
@@ -18,11 +19,15 @@ Plataforma educativa B2C con cuentas individuales, scaffolding de aprendizaje y 
 ```bash
 pnpm install
 cp .env.example .env.local
-pnpm db:migrate
+# Ver docs/LOCAL_SETUP.md (Clerk, Convex, Alchemy, Stellar, OpenAI)
+pnpm convex:dev   # terminal aparte
+pnpm convex:seed
 pnpm dev
 ```
 
-La cuenta se provisiona al entrar por primera vez o recibir `user.created` de Clerk. No hace falta ejecutar un seed para registrar o iniciar sesión; `pnpm db:seed` no crea planes ni suscripciones. Configura `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `DATABASE_URL` y el secreto de firma del webhook para un entorno completo. Sin credenciales externas, `pnpm build` y `pnpm test` usan sus rutas de respaldo y fakes.
+La cuenta se provisiona al entrar por primera vez o recibir `user.created` de Clerk. No hace falta ejecutar un seed para registrar o iniciar sesión; `pnpm db:seed` carga el catálogo inicial como borradores y no publica cursos. Configura `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `DATABASE_URL` y el secreto de firma del webhook para un entorno completo. Sin credenciales externas, `pnpm build` y `pnpm test` usan sus rutas de respaldo y fakes.
+
+El tutor de quechua sigue apagado hasta una evaluación lingüística controlada. Revisa [configuración y evaluación del tutor](docs/coach.md) antes de configurar `OPENAI_COACH_ENABLED=true`.
 
 El webhook de Clerk vive en `/api/webhooks/clerk` y debe validar `user.created` y `user.deleted`. Los reintentos conservan un solo usuario interno y sincronizan el correo. El identificador interno y el ID de Clerk se mantienen al eliminar la cuenta; el contenido de Stellar permanece verificable.
 
@@ -48,7 +53,7 @@ PostgreSQL conserva usuarios, progreso educativo, snapshots canónicos y comprob
 | `pnpm lint`            | ESLint                                             |
 | `pnpm typecheck`       | TypeScript                                         |
 | `pnpm db:migrate`      | Aplicar migraciones a `DATABASE_URL`               |
-| `pnpm db:seed`         | Inicializar datos requeridos (actualmente ninguno) |
+| `pnpm db:seed`         | Cargar catálogo educativo inicial como borradores   |
 | `pnpm contract:test`   | Tests del contrato Soroban                         |
 | `pnpm contract:build`  | Compilar el contrato Soroban                       |
 | `pnpm contract:deploy` | Desplegar el contrato Soroban                      |
@@ -67,6 +72,7 @@ La migración copia la relación de cada objeto existente a `legacy_object_inven
 - [`docs/stellar.md`](docs/stellar.md): RPC y contrato Soroban
 - [`docs/security.md`](docs/security.md): controles y modelo de amenazas
 - [`docs/certificates.md`](docs/certificates.md): hash canónico, estados, recuperación y privacidad
+- [`docs/yachay-migration-closeout.md`](docs/yachay-migration-closeout.md): estado de integración, validación y pendientes de cierre
 - [`docs/plans/README.md`](docs/plans/README.md): planes anteriores conservados como referencia histórica
 
 La integración de cobros, Stripe, suscripciones, planes comerciales y upselling no forma parte del producto.

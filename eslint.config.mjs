@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // The nested app is a retained migration reference, not part of the root app.
+    "quechua-convex/**",
   ]),
 ]);
 

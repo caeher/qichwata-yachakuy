@@ -15,7 +15,9 @@ import {
 describe("schema migrations and seed", () => {
   it("does not require commercial seed data for an individual account", async () => {
     const { db } = await createTestDb();
-    await seedApplicationData();
+    await (
+      seedApplicationData as unknown as (database: typeof db) => Promise<void>
+    )(db);
     const [user] = await db
       .insert(users)
       .values({ clerkUserId: "individual_no_plan" })

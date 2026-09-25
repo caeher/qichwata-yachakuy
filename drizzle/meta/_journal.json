@@ -57,6 +57,20 @@
       "when": 1790201640323,
       "tag": "0007_spooky_fixer",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1790345746456,
+      "tag": "0008_harsh_gladiator",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790346121214,
+      "tag": "0009_tranquil_unicorn",
+      "breakpoints": true
     }
   ]
 }

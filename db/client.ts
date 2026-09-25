@@ -3,6 +3,8 @@ import postgres from "postgres";
 
 import * as schema from "@/db/schema";
 
+import { convexConfigured } from "@/lib/convex/server";
+
 type GlobalDb = {
   sql?: ReturnType<typeof postgres>;
   db?: ReturnType<typeof drizzle<typeof schema>>;
@@ -11,6 +13,11 @@ type GlobalDb = {
 const globalForDb = globalThis as unknown as GlobalDb;
 
 export function getDb() {
+  if (convexConfigured()) {
+    throw new Error(
+      "PostgreSQL getDb() is disabled when NEXT_PUBLIC_CONVEX_URL is set. Use Convex queries/mutations.",
+    );
+  }
   const url = process.env.DATABASE_URL;
   if (!url) {
     throw new Error("DATABASE_URL is not set");

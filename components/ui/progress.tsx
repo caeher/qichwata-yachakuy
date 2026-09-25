@@ -1,14 +1,32 @@
 "use client";
 
 import { Progress as ProgressPrimitive } from "@base-ui/react/progress";
+import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "cn";
+
+const progressTrackVariants = cva(
+  "relative flex w-full items-center overflow-x-hidden rounded-full",
+  {
+    variants: { size: { compact: "h-1.5", normal: "h-2" } },
+    defaultVariants: { size: "normal" },
+  },
+);
+
+const progressIndicatorVariants = cva("h-full transition-all", {
+  variants: { tone: { leaf: "bg-leaf", clay: "bg-clay" } },
+  defaultVariants: { tone: "leaf" },
+});
 
 function Progress({
   className,
   children,
   value,
+  tone = "leaf",
+  size = "normal",
   ...props
-}: ProgressPrimitive.Root.Props) {
+}: ProgressPrimitive.Root.Props &
+  VariantProps<typeof progressIndicatorVariants> &
+  VariantProps<typeof progressTrackVariants>) {
   return (
     <ProgressPrimitive.Root
       value={value}
@@ -17,18 +35,23 @@ function Progress({
       {...props}
     >
       {children}
-      <ProgressTrack>
-        <ProgressIndicator />
+      <ProgressTrack size={size}>
+        <ProgressIndicator tone={tone} />
       </ProgressTrack>
     </ProgressPrimitive.Root>
   );
 }
 
-function ProgressTrack({ className, ...props }: ProgressPrimitive.Track.Props) {
+function ProgressTrack({
+  className,
+  size = "normal",
+  ...props
+}: ProgressPrimitive.Track.Props & VariantProps<typeof progressTrackVariants>) {
   return (
     <ProgressPrimitive.Track
       className={cn(
-        "bg-muted relative flex h-1 w-full items-center overflow-x-hidden rounded-full",
+        "bg-muted",
+        progressTrackVariants({ size }),
         className,
       )}
       data-slot="progress-track"
@@ -39,12 +62,14 @@ function ProgressTrack({ className, ...props }: ProgressPrimitive.Track.Props) {
 
 function ProgressIndicator({
   className,
+  tone = "leaf",
   ...props
-}: ProgressPrimitive.Indicator.Props) {
+}: ProgressPrimitive.Indicator.Props &
+  VariantProps<typeof progressIndicatorVariants>) {
   return (
     <ProgressPrimitive.Indicator
       data-slot="progress-indicator"
-      className={cn("bg-primary h-full transition-all", className)}
+      className={cn(progressIndicatorVariants({ tone }), className)}
       {...props}
     />
   );

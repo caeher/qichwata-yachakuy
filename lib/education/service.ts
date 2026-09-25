@@ -1,6 +1,9 @@
 import { and, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 
+import type { Id } from "@/convex/_generated/dataModel";
+import { api, convexConfigured, convexMutation } from "@/lib/convex/server";
+import { getClerkConvexToken } from "@/lib/convex/clerk-token";
 import type { AuthDb } from "@/lib/auth/provision-user";
 import {
   certificates,
@@ -11,6 +14,10 @@ import {
   enrollments,
   unitProgress,
 } from "@/db/schema";
+import {
+  isCourseEligibleForEnrollment,
+  isCourseUnitContent,
+} from "@/lib/education/content";
 import {
   canonicalCertificateJson,
   hashCertificatePayload,
@@ -34,7 +41,13 @@ export const pendingCompletionPolicy: CompletionPolicy = () => ({
 
 export class EducationError extends Error {
   constructor(
-    readonly code: "not_found" | "course_unavailable" | "criteria_pending",
+    readonly code:
+      | "not_found"
+      | "course_unavailable"
+      | "criteria_pending"
+      | "issuer_unconfigured"
+      | "evidence_required"
+      | "evidence_incorrect",
   ) {
     super(code);
     this.name = "EducationError";
@@ -45,10 +58,38 @@ export async function enrollInCourse(
   db: AuthDb,
   input: { userId: string; courseId: string },
 ) {
+  if (convexConfigured()) {
+    const token = await getClerkConvexToken();
+    const enrollment = await convexMutation(
+      api.education.enroll,
+      { courseId: input.courseId as Id<"courses"> },
+      token,
+    );
+    if (!enrollment) throw new Error("enrollment_persist_failed");
+    return {
+      id: enrollment._id,
+      userId: enrollment.userId,
+      courseId: enrollment.courseId,
+      courseVersion: enrollment.courseVersion,
+      status: enrollment.status,
+      enrolledAt: new Date(enrollment.enrolledAt),
+    };
+  }
+
   const course = await db.query.courses.findFirst({
-    where: and(eq(courses.id, input.courseId), eq(courses.status, "published")),
+    where: eq(courses.id, input.courseId),
   });
-  if (!course || course.demo) throw new EducationError("course_unavailable");
+  if (!course) throw new EducationError("course_unavailable");
+  const content = await db.query.courseUnits.findMany({
+    where: eq(courseUnits.courseId, course.id),
+  });
+  if (
+    !isCourseEligibleForEnrollment({
+      course,
+      contents: content.map((unit) => unit.content),
+    })
+  )
+    throw new EducationError("course_unavailable");
   const [row] = await db
     .insert(enrollments)
     .values({
@@ -78,8 +119,41 @@ export async function enrollInCourse(
 
 export async function completeUnit(
   db: AuthDb,
-  input: { userId: string; enrollmentId: string; unitId: string },
+  input: {
+    userId: string;
+    enrollmentId: string;
+    unitId: string;
+    answers: string[];
+  },
 ) {
+  if (convexConfigured()) {
+    const token = await getClerkConvexToken();
+    try {
+      return await convexMutation(
+        api.education.completeUnit,
+        {
+          enrollmentId: input.enrollmentId as Id<"enrollments">,
+          unitId: input.unitId as Id<"courseUnits">,
+          answers: input.answers,
+        },
+        token,
+      );
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message.includes("not_found")) {
+          throw new EducationError("not_found");
+        }
+        if (error.message.includes("evidence_required")) {
+          throw new EducationError("evidence_required");
+        }
+        if (error.message.includes("evidence_incorrect")) {
+          throw new EducationError("evidence_incorrect");
+        }
+      }
+      throw error;
+    }
+  }
+
   const enrollment = await db.query.enrollments.findFirst({
     where: and(
       eq(enrollments.id, input.enrollmentId),
@@ -95,6 +169,20 @@ export async function completeUnit(
     ),
   });
   if (!unit) throw new EducationError("not_found");
+  const content = isCourseUnitContent(unit.content) ? unit.content : null;
+  const items = content?.activity.items;
+  if (!items?.length || input.answers.length !== items.length)
+    throw new EducationError("evidence_required");
+  const normalize = (value: string) =>
+    value.normalize("NFC").trim().replace(/\s+/g, " ").toLocaleLowerCase("es");
+  const answersAreCorrect = items.every((item, index) => {
+    const provided = normalize(input.answers[index] ?? "");
+    const accepted = [item.answer, ...(item.acceptedAnswers ?? [])].map(
+      normalize,
+    );
+    return provided.length > 0 && accepted.includes(provided);
+  });
+  if (!answersAreCorrect) throw new EducationError("evidence_incorrect");
   const [row] = await db
     .insert(unitProgress)
     .values({ enrollmentId: enrollment.id, unitId: unit.id })
@@ -102,20 +190,21 @@ export async function completeUnit(
       target: [unitProgress.enrollmentId, unitProgress.unitId],
     })
     .returning();
-  return (
+  const progress =
     row ??
     (await db.query.unitProgress.findFirst({
       where: and(
         eq(unitProgress.enrollmentId, enrollment.id),
         eq(unitProgress.unitId, unit.id),
       ),
-    }))
-  );
+    }));
+  return { progress, feedback: items.map((item) => item.feedback) };
 }
 
 /**
  * Commits completion and its certificate intent together. The policy is
- * injected by tests/dev fixtures; production callers use the closed policy.
+ * injected by tests/dev fixtures or approved explicitly on the course. Courses
+ * without an approved policy remain closed in production.
  */
 export async function finalizeEnrollment(
   db: AuthDb,
@@ -127,7 +216,66 @@ export async function finalizeEnrollment(
     now?: Date;
   },
 ) {
-  const policy = input.policy ?? pendingCompletionPolicy;
+  if (convexConfigured()) {
+    const token = await getClerkConvexToken();
+    try {
+      const outcome = await convexMutation(
+        api.education.finalizeEnrollment,
+        {
+          enrollmentId: input.enrollmentId as Id<"enrollments">,
+          issuer: input.issuer,
+        },
+        token,
+      );
+      return {
+        completion: outcome.completion
+          ? {
+              id: outcome.completion._id,
+              enrollmentId: outcome.completion.enrollmentId,
+              courseVersion: outcome.completion.courseVersion,
+              policyVersion: outcome.completion.policyVersion,
+              validatedAt: new Date(outcome.completion.validatedAt),
+              eligible: outcome.completion.eligible,
+            }
+          : null,
+        certificate: outcome.certificate
+          ? {
+              id: outcome.certificate._id,
+              publicId: outcome.certificate.publicId,
+              userId: outcome.certificate.userId,
+              completionId: outcome.certificate.completionId,
+              snapshot: outcome.certificate.snapshot,
+              schemaVersion: outcome.certificate.schemaVersion,
+              sha256: outcome.certificate.sha256,
+              status: outcome.certificate.status,
+              pendingTxHash: outcome.certificate.pendingTxHash ?? null,
+              pendingAt: outcome.certificate.pendingAt
+                ? new Date(outcome.certificate.pendingAt)
+                : null,
+              createdAt: new Date(outcome.certificate.createdAt),
+            }
+          : null,
+      };
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message.includes("criteria_pending")) {
+          throw new EducationError("criteria_pending");
+        }
+        if (error.message.includes("not_found")) {
+          throw new EducationError("not_found");
+        }
+        if (error.message.includes("course_unavailable")) {
+          throw new EducationError("course_unavailable");
+        }
+        if (error.message.includes("issuer_unconfigured")) {
+          throw new EducationError("issuer_unconfigured");
+        }
+      }
+      throw error;
+    }
+  }
+
+  const policy = input.policy;
   const now = input.now ?? new Date();
   return db.transaction(async (tx) => {
     const [enrollment] = await tx
@@ -144,24 +292,41 @@ export async function finalizeEnrollment(
     const course = await tx.query.courses.findFirst({
       where: and(
         eq(courses.id, enrollment.courseId),
-        eq(courses.status, "published"),
         eq(courses.version, enrollment.courseVersion),
       ),
     });
-    if (!course || course.demo) throw new EducationError("course_unavailable");
+    if (!course) throw new EducationError("course_unavailable");
     const units = await tx
-      .select({ id: courseUnits.id })
+      .select({ id: courseUnits.id, content: courseUnits.content })
       .from(courseUnits)
       .where(eq(courseUnits.courseId, course.id));
+    if (
+      !isCourseEligibleForEnrollment({
+        course,
+        contents: units.map((unit) => unit.content),
+      })
+    )
+      throw new EducationError("course_unavailable");
     const progress = await tx
       .select({ id: unitProgress.id })
       .from(unitProgress)
       .where(eq(unitProgress.enrollmentId, enrollment.id));
-    const decision = policy({
-      progressCount: progress.length,
-      unitCount: units.length,
-      courseVersion: course.version,
-    });
+    const decision = policy
+      ? policy({
+          progressCount: progress.length,
+          unitCount: units.length,
+          courseVersion: course.version,
+        })
+      : course.completionPolicyStatus === "approved"
+        ? {
+            eligible: true as const,
+            policyVersion: course.completionPolicyVersion,
+          }
+        : pendingCompletionPolicy({
+            progressCount: progress.length,
+            unitCount: units.length,
+            courseVersion: course.version,
+          });
     if (!decision.eligible) throw new EducationError("criteria_pending");
     if (units.length === 0 || progress.length !== units.length)
       throw new EducationError("criteria_pending");
@@ -175,6 +340,7 @@ export async function finalizeEnrollment(
       });
       return { completion: prior, certificate: priorCertificate ?? null };
     }
+    if (!input.issuer.trim()) throw new EducationError("issuer_unconfigured");
 
     const [completion] = await tx
       .insert(courseCompletions)

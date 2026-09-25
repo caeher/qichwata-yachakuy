@@ -5,6 +5,63 @@ import type { TestDatabase } from "@/db/pglite";
 import { plans, users } from "@/db/schema";
 import { provisionUser } from "@/lib/auth/provision-user";
 
+/** Minimal ready content used only to exercise enrollment in isolated tests. */
+export function publishedUnitContent() {
+  return {
+    schemaVersion: 1,
+    status: "published",
+    kind: "practice",
+    durationMinutes: 5,
+    objectives: ["Test fixture objective"],
+    reading: { title: "Fixture", paragraphs: ["Test fixture content."] },
+    vocabulary: [],
+    phrases: [],
+    examples: [],
+    activity: {
+      title: "Fixture",
+      instructions: ["Complete the fixture."],
+      items: [
+        {
+          prompt: "What is the reviewed fixture answer?",
+          answer: "fixture response",
+          acceptedAnswers: ["another accepted response"],
+          feedback: "Correct fixture response.",
+        },
+      ],
+      modality: "text",
+      audioStatus: "not_required",
+    },
+    review: {
+      status: "reviewed",
+      reviewedBy: "test reviewer",
+      reviewedAt: "2026-01-01",
+      notes: [],
+    },
+    sources: {
+      status: "documented",
+      items: [
+        {
+          citation: "Fixture source",
+          license: "Fixture license",
+          usedFor: "Test",
+        },
+      ],
+      requirements: [],
+    },
+    regionalVariant: {
+      status: "specified",
+      name: "Fixture variety",
+      notes: "Test only",
+    },
+    authorship: {
+      status: "attributed",
+      author: "Test fixture",
+      license: "Fixture license",
+    },
+    source: { system: "test-fixture", moduleSlug: "test", lessonId: "fixture" },
+  };
+}
+
 export async function provisionLegacyFreeUser(
   db: TestDatabase,
   input: { clerkUserId: string; email: string | null },

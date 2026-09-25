@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "lib": ["ES2021", "dom"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "paths": {
+      "@/*": ["../*"]
+    }
+  },
+  "exclude": ["**/*.test.ts", "**/*.convex.test.ts"],
+  "include": ["./**/*"]
+}

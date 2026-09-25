@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
-import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 
-import { getDb } from "@/db/client";
-import { certificates } from "@/db/schema";
-import { verifyCertificateByHash } from "@/lib/certificates/verify";
+import {
+  CertificateCard,
+  CertificateDetails,
+  VerificationStatus,
+  type CertificateStatus,
+} from "@/components/yachay/certificates";
+import { legacyDb } from "@/lib/db/legacy-db";
+import { convexConfigured } from "@/lib/convex/server";
+import { getPublicCertificate, verifyCertificateByHash } from "@/lib/certificates/verify";
 import { createChainLookup } from "@/lib/verify/chain";
 import { resolveStellarEndpoints } from "@/lib/stellar/endpoints";
 import { clientIp } from "@/lib/verify/rate-limit";
@@ -17,6 +22,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: `Certificado ${publicId.slice(0, 8)}` };
 }
 
+function statusFor(status: string): CertificateStatus {
+  if (status === "anchored") return "anchored";
+  if (status === "pending") return "pending";
+  if (status === "failed") return "failed";
+  if (status === "chain_unavailable") return "unavailable";
+  if (status === "integrity_mismatch") return "mismatch";
+  return "mismatch";
+}
+
 export default async function PublicCertificatePage({ params }: Props) {
   const { publicId } = await params;
   const requestHeaders = await headers();
@@ -24,39 +38,62 @@ export default async function PublicCertificatePage({ params }: Props) {
   if (!rate.ok) {
     return (
       <main className="mx-auto max-w-2xl px-4 py-12">
-        <p className="text-destructive text-sm">
-          Demasiadas comprobaciones. Espera un momento.
-        </p>
+        <VerificationStatus status="unavailable">
+          Demasiadas comprobaciones. Espera un momento antes de volver a
+          consultar.
+        </VerificationStatus>
       </main>
     );
   }
-  if (!process.env.DATABASE_URL)
+  if (!convexConfigured() && !process.env.DATABASE_URL) {
     return (
       <main className="mx-auto max-w-2xl px-4 py-12">
-        <p>Verificación no disponible.</p>
+        <VerificationStatus status="unavailable">
+          La base de datos no está disponible para recuperar el certificado.
+        </VerificationStatus>
       </main>
     );
-  const db = getDb();
-  const cert = await db.query.certificates.findFirst({
-    where: eq(certificates.publicId, publicId),
-  });
-  if (!cert)
+  }
+  const db = legacyDb();
+  const loaded = await getPublicCertificate(db, publicId);
+  if (!loaded) {
     return (
-      <main className="mx-auto max-w-2xl px-4 py-12">
-        <h1 className="text-2xl font-semibold">Certificado desconocido</h1>
+      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 py-12 sm:px-6">
+        <CertificateCard title="Certificado desconocido" status="unknown">
+          <p>No existe un certificado raíz con este identificador público.</p>
+          <p className="text-muted-foreground text-sm">
+            Los identificadores heredados YCH se conservan como referencias sin
+            evidencia y no se consideran certificados verificados.
+          </p>
+        </CertificateCard>
       </main>
     );
+  }
+
+  const cert = {
+    publicId: loaded.publicId,
+    sha256: loaded.sha256,
+    snapshot:
+      "issuer" in loaded
+        ? {
+            issuer: loaded.issuer,
+            course: { title: loaded.courseTitle },
+            issuedAt: loaded.issuedAt,
+          }
+        : {},
+    createdAt: new Date(loaded.issuedAt ?? Date.now()),
+    status: loaded.state,
+  };
+
   const endpoints = resolveStellarEndpoints();
+  const contractId = process.env.STELLAR_CONTRACT_ID?.trim() || null;
   let result;
   try {
     result = await verifyCertificateByHash(
       db,
       createChainLookup(),
       cert.sha256,
-      {
-        network: endpoints.network,
-        contractId: process.env.STELLAR_CONTRACT_ID?.trim() || null,
-      },
+      { network: endpoints.network, contractId },
     );
   } catch {
     result = {
@@ -67,55 +104,67 @@ export default async function PublicCertificatePage({ params }: Props) {
   }
   const snapshot = cert.snapshot as {
     issuer?: string;
-    course?: { title?: string };
+    course?: { title?: string; version?: string };
+    completion?: { policyVersion?: string; completedAt?: string };
     issuedAt?: string;
   };
-  const status =
-    result.status === "anchored"
-      ? "Confirmado en Stellar"
-      : result.status === "pending"
-        ? "Emisión pendiente"
-        : result.status === "failed"
-          ? "Emisión fallida; requiere recuperación"
-          : result.status === "chain_unavailable"
-            ? "No se pudo consultar Stellar"
-            : "Los datos no coinciden con el hash emitido";
+  const status = statusFor(result.status);
+  const evidence = result.status === "anchored" ? result : null;
+  const snapshotTrusted =
+    result.status !== "integrity_mismatch" && result.status !== "unknown";
+
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-12 sm:px-6">
-      <p className="text-muted-foreground text-xs tracking-wide uppercase">
-        Certificado educativo
-      </p>
-      <h1 className="text-3xl font-semibold tracking-tight">
-        {snapshot.course?.title ?? "Finalización educativa"}
-      </h1>
-      <p className="text-muted-foreground">
-        Emisor: {snapshot.issuer ?? "Pendiente"}
-      </p>
-      <p>
-        Estado de verificación: <strong>{status}</strong>
-      </p>
-      <dl className="grid gap-2 text-sm">
-        <dt className="text-muted-foreground">Identificador público</dt>
-        <dd className="font-mono break-all">{cert.publicId}</dd>
-        <dt className="text-muted-foreground">Emitido</dt>
-        <dd>{snapshot.issuedAt ?? cert.createdAt.toISOString()}</dd>
-        <dt className="text-muted-foreground">SHA-256 del payload canónico</dt>
-        <dd className="font-mono break-all">{cert.sha256}</dd>
-      </dl>
-      {result.status === "anchored" && result.expertUrl ? (
-        <a
-          href={result.expertUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="font-medium underline"
-        >
-          Ver transacción en Stellar Expert
-        </a>
-      ) : null}
-      <p className="text-muted-foreground text-sm">
-        La comprobación confirma integridad del payload y registro del emisor en
-        la red indicada. No representa acreditación académica externa. El hash
-        corresponde a los datos canónicos versionados, no a un archivo PDF.
+    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-12 sm:px-6">
+      <CertificateCard
+        title={
+          snapshotTrusted
+            ? (snapshot.course?.title ?? "Finalización educativa")
+            : "Snapshot con discrepancia"
+        }
+        version={snapshotTrusted ? snapshot.course?.version : undefined}
+        status={status}
+      >
+        <VerificationStatus status={status}>
+          {status === "anchored"
+            ? "Integridad del snapshot y transacción contrastadas con Stellar en esta consulta. No equivale a acreditación académica externa."
+            : status === "pending"
+              ? "La intención está guardada; aún no hay evidencia de anclaje confirmada."
+              : status === "failed"
+                ? "El intento de anclaje falló y está pendiente de recuperación."
+                : status === "unavailable"
+                  ? "La consulta de la red no está disponible. El certificado no se declara verificado."
+                  : status === "unknown"
+                    ? "No hay un certificado raíz asociado a esta referencia."
+                    : "Los datos del snapshot, el hash o el recibo no coinciden."}
+        </VerificationStatus>
+        <CertificateDetails
+          evidence={{
+            issuer: snapshotTrusted ? snapshot.issuer : undefined,
+            publicId: cert.publicId,
+            issuedAt: snapshotTrusted
+              ? (snapshot.issuedAt ?? cert.createdAt.toISOString())
+              : undefined,
+            sha256: cert.sha256,
+            network: evidence?.network,
+            networkLabel:
+              evidence?.network ?? `Configurada: ${endpoints.network}`,
+            contractId,
+            txHash: evidence?.txHash,
+            ledger: evidence?.ledger,
+            expertUrl: evidence?.expertUrl,
+          }}
+        />
+        {snapshotTrusted && snapshot.completion?.policyVersion ? (
+          <p className="text-muted-foreground text-xs">
+            Versión de política de finalización:{" "}
+            {snapshot.completion.policyVersion}
+          </p>
+        ) : null}
+      </CertificateCard>
+      <p className="text-muted-foreground text-sm leading-6">
+        El hash corresponde al snapshot canónico inmutable de finalización, no a
+        un archivo PDF. La vista pública omite el nombre y la identidad privada
+        del alumno.
       </p>
     </main>
   );

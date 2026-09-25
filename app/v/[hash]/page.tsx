@@ -3,7 +3,8 @@ import { headers } from "next/headers";
 
 import { SiteHeader } from "@/components/site-header";
 import { VerifyForm } from "@/app/verify/verify-form";
-import { getDb } from "@/db/client";
+import { legacyDb } from "@/lib/db/legacy-db";
+import { convexConfigured } from "@/lib/convex/server";
 import { createChainLookup } from "@/lib/verify/chain";
 import { normalizeHashHex } from "@/lib/verify/hash-input";
 import { ChainUnavailableError, lookupAnchor } from "@/lib/verify/lookup";
@@ -79,7 +80,7 @@ export default async function VerifyHashPage({ params }: Props) {
   } catch {
     return (
       <div className="flex min-h-svh flex-col">
-        <SiteHeader title="stellar-data-integrity" />
+        <SiteHeader title="Yachay · lengua viva" />
         <main className="mx-auto w-full max-w-2xl px-4 py-12 sm:px-6">
           <p className="text-destructive text-sm">Hash no válido.</p>
         </main>
@@ -95,9 +96,9 @@ export default async function VerifyHashPage({ params }: Props) {
     ReturnType<typeof verifyCertificateByHash>
   > | null = null;
 
-  if (rate.ok && process.env.DATABASE_URL) {
+  if (rate.ok && (convexConfigured() || process.env.DATABASE_URL)) {
     try {
-      const db = getDb();
+      const db = convexConfigured() ? (null as never) : legacyDb();
       const contractId = process.env.STELLAR_CONTRACT_ID?.trim() || null;
       lookupResult = await lookupAnchor(
         db,
@@ -128,7 +129,7 @@ export default async function VerifyHashPage({ params }: Props) {
 
   return (
     <div className="flex min-h-svh flex-col">
-      <SiteHeader title="stellar-data-integrity" />
+      <SiteHeader title="Yachay · lengua viva" />
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8 px-4 py-12 sm:px-6">
         <p className="text-muted-foreground text-xs">
           Verificación de comprobante o certificado por SHA-256.

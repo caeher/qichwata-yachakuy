@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
 import { createTestDb } from "@/db/pglite";
+import { publishedUnitContent } from "@/db/test-fixtures";
 import {
   certificates,
   courseCompletions,
@@ -31,13 +32,31 @@ async function educationFixture() {
       title: "Introducción al Quechua",
       version: "1.0",
       status: "published",
+      enrollmentEnabled: true,
     })
     .returning();
   const [unit1, unit2] = await db
     .insert(courseUnits)
     .values([
-      { courseId: course.id, position: 1, title: "Saludos" },
-      { courseId: course.id, position: 2, title: "Presentación" },
+      {
+        courseId: course.id,
+        position: 1,
+        title: "Saludos",
+        content: publishedUnitContent(),
+      },
+      {
+        courseId: course.id,
+        position: 2,
+        title: "Presentación",
+        content: {
+          ...publishedUnitContent(),
+          source: {
+            system: "test-fixture",
+            moduleSlug: "test",
+            lessonId: "fixture-2",
+          },
+        },
+      },
     ])
     .returning();
   return { db, userId, course, units: [unit1, unit2] };
@@ -53,20 +72,25 @@ describe("education completion and certificate intent", () => {
     expect((await enrollInCourse(db, { userId, courseId: course.id })).id).toBe(
       enrollment.id,
     );
-    await completeUnit(db, {
-      userId,
-      enrollmentId: enrollment.id,
-      unitId: units[0]!.id,
-    });
-    await completeUnit(db, {
-      userId,
-      enrollmentId: enrollment.id,
-      unitId: units[0]!.id,
-    });
+    await Promise.all([
+      completeUnit(db, {
+        userId,
+        enrollmentId: enrollment.id,
+        unitId: units[0]!.id,
+        answers: ["fixture response"],
+      }),
+      completeUnit(db, {
+        userId,
+        enrollmentId: enrollment.id,
+        unitId: units[0]!.id,
+        answers: ["FIXTURE   RESPONSE"],
+      }),
+    ]);
     await completeUnit(db, {
       userId,
       enrollmentId: enrollment.id,
       unitId: units[1]!.id,
+      answers: ["another accepted response"],
     });
     expect(await db.select().from(unitProgress)).toHaveLength(2);
     await expect(
@@ -91,6 +115,7 @@ describe("education completion and certificate intent", () => {
         userId,
         enrollmentId: enrollment.id,
         unitId: unit.id,
+        answers: ["fixture response"],
       });
     const policy = ({
       progressCount,
@@ -119,7 +144,7 @@ describe("education completion and certificate intent", () => {
         now: new Date(),
       }),
     ]);
-    expect(first.completion.id).toBe(second.completion.id);
+    expect(first.completion!.id).toBe(second.completion!.id);
     expect(first.certificate?.id).toBe(second.certificate?.id);
     expect(first.certificate?.sha256).toMatch(/^[a-f0-9]{64}$/);
     expect(first.certificate?.snapshot).toMatchObject({
@@ -137,6 +162,7 @@ describe("education completion and certificate intent", () => {
         userId: otherUser.userId,
         enrollmentId: enrollment.id,
         unitId: units[0]!.id,
+        answers: ["fixture response"],
       }),
     ).rejects.toBeInstanceOf(EducationError);
   });
@@ -150,14 +176,22 @@ describe("education completion and certificate intent", () => {
         title: "Otro",
         version: "1",
         status: "published",
+        enrollmentEnabled: true,
       })
       .returning();
+    await db.insert(courseUnits).values({
+      courseId: other.id,
+      position: 1,
+      title: "Otra unidad",
+      content: publishedUnitContent(),
+    });
     const enrollment = await enrollInCourse(db, { userId, courseId: other.id });
     await expect(
       completeUnit(db, {
         userId,
         enrollmentId: enrollment.id,
         unitId: units[0]!.id,
+        answers: ["fixture response"],
       }),
     ).rejects.toMatchObject({ code: "not_found" });
     expect(
@@ -165,5 +199,30 @@ describe("education completion and certificate intent", () => {
         where: eq(enrollments.id, enrollment.id),
       }),
     ).toBeTruthy();
+  });
+
+  it("requires correct activity evidence before writing completion", async () => {
+    const { db, userId, course, units } = await educationFixture();
+    const enrollment = await enrollInCourse(db, {
+      userId,
+      courseId: course.id,
+    });
+    await expect(
+      completeUnit(db, {
+        userId,
+        enrollmentId: enrollment.id,
+        unitId: units[0]!.id,
+        answers: [""],
+      }),
+    ).rejects.toMatchObject({ code: "evidence_incorrect" });
+    await expect(
+      completeUnit(db, {
+        userId,
+        enrollmentId: enrollment.id,
+        unitId: units[0]!.id,
+        answers: [],
+      }),
+    ).rejects.toMatchObject({ code: "evidence_required" });
+    expect(await db.select().from(unitProgress)).toHaveLength(0);
   });
 });

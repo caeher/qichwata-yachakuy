@@ -1,15 +1,21 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Geist, Geist_Mono } from "next/font/google";
+import { DM_Sans, Fraunces, Geist_Mono } from "next/font/google";
 
 import { AppClerkProvider } from "@/components/app-clerk-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
   subsets: ["latin"],
+});
+
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
@@ -18,21 +24,26 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Integridad de datos en Stellar",
-  description: "Aprendizaje y certificados verificables con SHA-256 y Stellar.",
+  title: "Yachay — Aprende quechua con raíces",
+  description:
+    "Acércate al quechua con rutas de aprendizaje, práctica gradual y respeto por sus variantes.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
   return (
-    <html lang="es" suppressHydrationWarning>
+    <html
+      lang="es"
+      className={`${dmSans.variable} ${fraunces.variable} ${geistMono.variable}`}
+      suppressHydrationWarning
+    >
       <body
-        className={`${geistSans.variable} ${geistMono.variable} bg-background text-foreground min-h-svh font-sans antialiased`}
+        className="bg-background text-foreground min-h-svh font-sans antialiased"
       >
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="light"
           enableSystem
           disableTransitionOnChange
         >

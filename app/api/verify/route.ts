@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { getDb } from "@/db/client";
+import { legacyDb } from "@/lib/db/legacy-db";
+import { convexConfigured, convexQuery, api } from "@/lib/convex/server";
 import { retiredResourceResponse } from "@/lib/api/retired-resource";
 import { rateLimitedResponse } from "@/lib/http/rate-limited";
 import { createChainLookup } from "@/lib/verify/chain";
@@ -71,22 +72,34 @@ export async function POST(request: Request) {
     return rateLimitedResponse(rate.retryAfterSeconds);
   }
 
-  if (!process.env.DATABASE_URL) {
+  if (!convexConfigured() && !process.env.DATABASE_URL) {
     return NextResponse.json(
       { error: "database_unconfigured" },
       { status: 503 },
     );
   }
 
-  const db = getDb();
+  const db = legacyDb();
   if (certificateId) {
-    const certificate = await db.query.certificates.findFirst({
-      where: eq(certificates.publicId, certificateId),
-    });
-    if (!certificate) {
-      return NextResponse.json({ status: "unknown", certificateId });
+    let certificateSha256: string | null = null;
+    if (convexConfigured()) {
+      const certificate = await convexQuery(api.certificates.getByPublicId, {
+        publicId: certificateId,
+      });
+      if (!certificate || !("sha256" in certificate)) {
+        return NextResponse.json({ status: "unknown", certificateId });
+      }
+      certificateSha256 = normalizeHashHex(certificate.sha256);
+    } else {
+      const certificate = await db.query.certificates.findFirst({
+        where: eq(certificates.publicId, certificateId),
+      });
+      if (!certificate) {
+        return NextResponse.json({ status: "unknown", certificateId });
+      }
+      certificateSha256 = normalizeHashHex(certificate.sha256);
     }
-    sha256 = normalizeHashHex(certificate.sha256);
+    sha256 = certificateSha256;
   }
   if (!sha256)
     return NextResponse.json({ error: "invalid_input" }, { status: 400 });

@@ -3,10 +3,12 @@
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { VerificationStatus } from "@/components/yachay/certificates";
 
 type VerifyResult =
   | {
       status: "anchored";
+      publicId: string;
       sha256: string;
       network: string;
       txHash: string | null;
@@ -24,16 +26,20 @@ type VerifyResult =
       sha256: string;
     }
   | { status: "unknown"; certificateId: string; sha256?: string };
+type LegacyResult = { status: "legacy"; certificateId: string };
 
 type Props = {
   initialHash?: string;
+  configuredNetwork?: string;
 };
 
-export function VerifyForm({ initialHash = "" }: Props) {
+export function VerifyForm({ initialHash = "", configuredNetwork }: Props) {
   const [hashField, setHashField] = useState(initialHash);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<VerifyResult | null>(null);
+  const [result, setResult] = useState<(VerifyResult | LegacyResult) | null>(
+    null,
+  );
   const [clipboardFallback, setClipboardFallback] = useState<string | null>(
     null,
   );
@@ -48,6 +54,12 @@ export function VerifyForm({ initialHash = "" }: Props) {
     try {
       if (!hashField.trim()) {
         setError("Pega un SHA-256 o el ID público del certificado.");
+        setLoading(false);
+        return;
+      }
+
+      if (/^YCH-[A-Za-z0-9-]+$/i.test(hashField.trim())) {
+        setResult({ status: "legacy", certificateId: hashField.trim() });
         setLoading(false);
         return;
       }
@@ -117,16 +129,18 @@ export function VerifyForm({ initialHash = "" }: Props) {
       </form>
 
       {result ? (
-        <div className="border-border bg-card flex flex-col gap-3 rounded-xl border p-4">
+        <div className="border-border bg-paper flex flex-col gap-3 rounded-2xl border p-4">
           {result.status === "anchored" ? (
             <>
-              <p className="font-medium">
-                {result.onChain === true
-                  ? "Confirmado actualmente en Stellar"
-                  : result.onChain === false
-                    ? "El hash no aparece actualmente en Stellar"
-                    : "Recibo local; estado actual de Stellar desconocido"}
-              </p>
+              <VerificationStatus
+                status={
+                  result.onChain === true
+                    ? "anchored"
+                    : result.onChain === false
+                      ? "mismatch"
+                      : "unavailable"
+                }
+              />
               <code className="bg-muted block rounded-md p-3 text-xs break-all">
                 {result.sha256}
               </code>
@@ -155,6 +169,12 @@ export function VerifyForm({ initialHash = "" }: Props) {
                   Ver en Stellar Expert
                 </a>
               ) : null}
+              <a
+                className="text-sm font-medium underline"
+                href={`/certificates/${result.publicId}`}
+              >
+                Abrir detalle público del certificado
+              </a>
               <Button
                 type="button"
                 variant="outline"
@@ -173,30 +193,43 @@ export function VerifyForm({ initialHash = "" }: Props) {
             </>
           ) : null}
           {result.status === "unknown" ? (
-            <p className="text-sm">Certificado desconocido.</p>
+            <VerificationStatus status="unknown" />
+          ) : null}
+          {result.status === "legacy" ? (
+            <VerificationStatus status="unknown">
+              {result.certificateId} es una referencia heredada. No hay
+              evidencia de finalización ni anclaje asociada; no se reconoce como
+              certificado verificado.
+            </VerificationStatus>
           ) : null}
           {result.status === "not_found" ? (
-            <p className="text-sm">No hay un ancla para este hash.</p>
+            <VerificationStatus status="unknown">
+              No hay un ancla ni un certificado raíz asociado a este hash.
+            </VerificationStatus>
           ) : null}
           {result.status === "pending" ? (
-            <p className="text-sm">
-              Certificado emitido; anclaje pendiente de Stellar.
-            </p>
+            <VerificationStatus status="pending" />
           ) : null}
           {result.status === "failed" ? (
-            <p className="text-sm">
-              El anclaje falló y está disponible para recuperación.
-            </p>
+            <VerificationStatus status="failed" />
           ) : null}
           {result.status === "integrity_mismatch" ? (
-            <p className="text-destructive text-sm">
-              Los datos no coinciden con el hash o recibo registrado.
-            </p>
+            <VerificationStatus status="mismatch" />
           ) : null}
           {result.status === "chain_unavailable" ? (
-            <p className="text-destructive text-sm">
-              Stellar no está disponible; la verificación en cadena no se pudo
-              confirmar.
+            <VerificationStatus status="unavailable" />
+          ) : null}
+          {"publicId" in result && result.status !== "anchored" ? (
+            <a
+              className="text-sm font-medium underline"
+              href={`/certificates/${result.publicId}`}
+            >
+              Abrir detalle público del certificado
+            </a>
+          ) : null}
+          {configuredNetwork && result.status !== "legacy" ? (
+            <p className="text-muted-foreground text-xs">
+              Red configurada para esta consulta: {configuredNetwork}.
             </p>
           ) : null}
         </div>

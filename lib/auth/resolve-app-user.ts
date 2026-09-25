@@ -3,6 +3,8 @@ import { eq } from "drizzle-orm";
 import type { AuthDb } from "@/lib/auth/provision-user";
 import { provisionUser } from "@/lib/auth/provision-user";
 import { users } from "@/db/schema";
+import { api, convexConfigured, convexMutation } from "@/lib/convex/server";
+import { getClerkConvexToken } from "@/lib/convex/clerk-token";
 
 export type AppUserRow = {
   id: string;
@@ -39,6 +41,20 @@ export async function resolveAppUser(
   clerkUserId: string,
   email: string | null,
 ): Promise<AppUserRow | null> {
+  if (convexConfigured()) {
+    const token = await getClerkConvexToken();
+    if (!token && !process.env.CONVEX_DEPLOY_KEY?.trim()) {
+      throw new Error(
+        'Clerk JWT template "convex" is missing or invalid. Create it in Clerk Dashboard (JWT templates → Convex), set CLERK_JWT_ISSUER_DOMAIN on your Convex deployment, then restart pnpm dev. See convex/CLERK_AUTH.md.',
+      );
+    }
+    return await convexMutation(
+      api.users.resolveAppUser,
+      { clerkUserId, email },
+      token,
+    );
+  }
+
   await provisionUser(db, { clerkUserId, email });
   return fetchAppUser(db, clerkUserId);
 }
