@@ -6,14 +6,32 @@ import { stroopsToFeeXlm } from "@/lib/anchors/fee";
 
 type Runtime = Extract<AnchorRuntimeConfig, { configured: true }>;
 
+type Reservation =
+  | { kind: "done" }
+  | { kind: "ineligible" }
+  | { kind: "busy"; publicId: string; sha256: string }
+  | {
+      kind: "poll";
+      certificateId: unknown;
+      publicId: string;
+      sha256: string;
+      txHash: string;
+    }
+  | {
+      kind: "submit";
+      certificateId: unknown;
+      publicId: string;
+      sha256: string;
+    };
+
 export async function runConvexCertificateAnchorJob(
   runtime: Runtime | null,
   certificateId: Id<"certificates">,
 ) {
-  const reservation = await convexInternalMutation(
+  const reservation = (await convexInternalMutation(
     internal.certificates.reserveForWorker,
     { certificateId },
-  );
+  )) as Reservation;
   if (reservation.kind === "done" || reservation.kind === "ineligible") {
     return {
       status: reservation.kind === "done" ? "pending" : "failed",
