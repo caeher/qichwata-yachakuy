@@ -81,7 +81,10 @@ export default async function PublicCertificatePage({ params }: Props) {
             issuedAt: loaded.issuedAt,
           }
         : {},
-    createdAt: new Date(loaded.issuedAt ?? Date.now()),
+    createdAt: new Date(
+      ("issuedAt" in loaded ? loaded.issuedAt : undefined) ??
+        "1970-01-01T00:00:00.000Z",
+    ),
     status: loaded.state,
   };
 
