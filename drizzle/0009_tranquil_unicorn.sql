@@ -1,0 +1,2 @@
+ALTER TABLE "courses" ADD CONSTRAINT "courses_level_check" CHECK ("courses"."level" in ('beginner', 'intermediate', 'advanced'));--> statement-breakpoint
+ALTER TABLE "courses" ADD CONSTRAINT "courses_estimated_duration_check" CHECK ("courses"."estimated_duration_minutes" >= 0);

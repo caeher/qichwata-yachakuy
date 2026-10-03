@@ -8,16 +8,14 @@ import {
   reserveAnchor,
   settleAnchor,
 } from "@/db/anchor-quota";
-import { FREE_MONTHLY_ANCHORS } from "@/db/constants";
+import { LEGACY_MONTHLY_ANCHOR_LIMIT } from "@/db/constants";
 import { createTestDb } from "@/db/pglite";
-import { seedPlans } from "@/db/seed";
 import { documents, usageEvents } from "@/db/schema";
-import { provisionFreePlan } from "@/lib/auth/provision-user";
+import { provisionLegacyFreeUser } from "@/db/test-fixtures";
 
 async function setupUser() {
   const { db } = await createTestDb();
-  await seedPlans(db);
-  const { userId } = await provisionFreePlan(db, {
+  const { userId } = await provisionLegacyFreeUser(db, {
     clerkUserId: "clerk_quota",
     email: "q@example.com",
   });
@@ -34,10 +32,7 @@ async function insertDraft(
     .values({
       userId,
       name: "d.txt",
-      mimeType: "text/plain",
-      sizeBytes: 1,
       sha256: sha,
-      storageKey: `${userId}/x`,
       status: "draft",
     })
     .returning();
@@ -49,7 +44,7 @@ describe("anchor-quota", () => {
     const { db, userId } = await setupUser();
     const now = new Date();
 
-    for (let i = 0; i < FREE_MONTHLY_ANCHORS; i += 1) {
+    for (let i = 0; i < LEGACY_MONTHLY_ANCHOR_LIMIT; i += 1) {
       const sha = `${i.toString(16)}`.padStart(64, "a");
       const doc = await insertDraft(db, userId, sha);
       await db

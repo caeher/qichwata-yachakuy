@@ -8,6 +8,9 @@ function isPublicApiPath(pathname: string): boolean {
   if (pathname === "/api/stellar/health") {
     return true;
   }
+  if (pathname === "/api/jobs/certificates") {
+    return true;
+  }
   if (pathname === "/api/verify") {
     return true;
   }

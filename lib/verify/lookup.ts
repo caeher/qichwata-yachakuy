@@ -1,9 +1,11 @@
-import { and, asc, eq, isNull } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 
 import type { Database } from "@/db/client";
 import type { TestDatabase } from "@/db/pglite";
 import { anchors, documents } from "@/db/schema";
+import { api, convexConfigured, convexQuery } from "@/lib/convex/server";
 import { expertTxUrl } from "@/lib/anchors/expert-url";
+import { resolveStellarEndpoints } from "@/lib/stellar/endpoints";
 
 type Db = Database | TestDatabase;
 
@@ -41,31 +43,104 @@ export type VerifyResult =
       onChain: boolean | null;
       source: "database" | "chain" | "both";
     }
-  | { status: "not_found"; sha256: string }
-  | { status: "mismatch"; sha256: string; claimedSha256: string };
-
-export async function lookupWithClaim(
-  db: Db,
-  chain: (hash: string) => Promise<ChainLookupResult>,
-  claim: { sha256: string; claimedSha256: string | null },
-  contractId: string | null,
-): Promise<VerifyResult> {
-  if (claim.claimedSha256 !== null && claim.sha256 !== claim.claimedSha256) {
-    return {
-      status: "mismatch",
-      sha256: claim.sha256,
-      claimedSha256: claim.claimedSha256,
-    };
-  }
-  return lookupAnchor(db, chain, claim.sha256, contractId);
-}
+  | { status: "not_found"; sha256: string };
 
 export async function lookupAnchor(
   db: Db,
   chain: (hash: string) => Promise<ChainLookupResult>,
   sha256: string,
   contractId: string | null,
+  expectedNetwork: "testnet" | "mainnet" = resolveStellarEndpoints().network,
 ): Promise<VerifyResult> {
+  if (convexConfigured()) {
+    const dbRow = await convexQuery(api.verify.lookupDocumentAnchor, {
+      sha256,
+    });
+    let chainResult: ChainLookupResult;
+    try {
+      chainResult = await chain(sha256);
+    } catch {
+      if (dbRow) {
+        return buildDatabaseResult(
+          sha256,
+          {
+            network: dbRow.network,
+            txHash: dbRow.txHash,
+            ledger: dbRow.ledger,
+            contractId: dbRow.contractId,
+            anchoredAt: new Date(dbRow.anchoredAt),
+          },
+          null,
+        );
+      }
+      throw new ChainUnavailableError();
+    }
+    if (!chainResult.configured) {
+      if (dbRow) {
+        return buildDatabaseResult(
+          sha256,
+          {
+            network: dbRow.network,
+            txHash: dbRow.txHash,
+            ledger: dbRow.ledger,
+            contractId: dbRow.contractId,
+            anchoredAt: new Date(dbRow.anchoredAt),
+          },
+          null,
+        );
+      }
+      return { status: "not_found", sha256 };
+    }
+    if (chainResult.record && dbRow) {
+      const expert = expertTxUrl(
+        dbRow.network as "testnet" | "mainnet",
+        dbRow.txHash,
+      );
+      return {
+        status: "anchored",
+        sha256,
+        network: dbRow.network as "testnet" | "mainnet",
+        txHash: dbRow.txHash,
+        ledger: dbRow.ledger ?? chainResult.record.ledger,
+        anchoredAt: new Date(dbRow.anchoredAt).toISOString(),
+        contractId: dbRow.contractId ?? contractId,
+        owner: chainResult.record.owner,
+        expertUrl: expert,
+        onChain: true,
+        source: "both",
+      };
+    }
+    if (dbRow) {
+      return buildDatabaseResult(
+        sha256,
+        {
+          network: dbRow.network,
+          txHash: dbRow.txHash,
+          ledger: dbRow.ledger,
+          contractId: dbRow.contractId,
+          anchoredAt: new Date(dbRow.anchoredAt),
+        },
+        false,
+      );
+    }
+    if (chainResult.record) {
+      return {
+        status: "anchored",
+        sha256,
+        network: expectedNetwork,
+        txHash: null,
+        ledger: chainResult.record.ledger,
+        anchoredAt: new Date(chainResult.record.timestamp * 1000).toISOString(),
+        contractId,
+        owner: chainResult.record.owner,
+        expertUrl: null,
+        onChain: true,
+        source: "chain",
+      };
+    }
+    return { status: "not_found", sha256 };
+  }
+
   const rows = await db
     .select({
       network: anchors.network,
@@ -76,13 +151,7 @@ export async function lookupAnchor(
     })
     .from(anchors)
     .innerJoin(documents, eq(anchors.documentId, documents.id))
-    .where(
-      and(
-        eq(documents.sha256, sha256),
-        eq(documents.status, "anchored"),
-        isNull(documents.deletedAt),
-      ),
-    )
+    .where(and(eq(documents.sha256, sha256), eq(documents.status, "anchored")))
     .orderBy(asc(anchors.anchoredAt))
     .limit(1);
 
@@ -133,7 +202,7 @@ export async function lookupAnchor(
     return {
       status: "anchored",
       sha256,
-      network: "testnet",
+      network: expectedNetwork,
       txHash: null,
       ledger: chainResult.record.ledger,
       anchoredAt: new Date(chainResult.record.timestamp * 1000).toISOString(),

@@ -20,6 +20,7 @@ export type AnchorClient = {
     hashHex: string;
     metaCid: string;
     owner: string;
+    onSubmitted?: (txHash: string) => Promise<void>;
   }): Promise<AnchorSubmitResult>;
   poll(txHash: string): Promise<AnchorSubmitResult>;
 };

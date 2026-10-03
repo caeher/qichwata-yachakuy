@@ -2,9 +2,8 @@ import { eq } from "drizzle-orm";
 import { describe, expect, it, vi } from "vitest";
 
 import { createTestDb } from "@/db/pglite";
-import { seedPlans } from "@/db/seed";
 import { auditEvents, documents, usageEvents } from "@/db/schema";
-import { provisionFreePlan } from "@/lib/auth/provision-user";
+import { provisionLegacyFreeUser } from "@/db/test-fixtures";
 import { runAnchorJob } from "@/lib/anchors/job";
 import type { AnchorClient } from "@/lib/stellar/anchor-types";
 
@@ -12,8 +11,7 @@ const OPERATOR = "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF";
 
 async function draftDoc() {
   const { db } = await createTestDb();
-  await seedPlans(db);
-  const { userId } = await provisionFreePlan(db, {
+  const { userId } = await provisionLegacyFreeUser(db, {
     clerkUserId: "clerk_job",
     email: "j@example.com",
   });
@@ -22,10 +20,7 @@ async function draftDoc() {
     .values({
       userId,
       name: "j.txt",
-      mimeType: "text/plain",
-      sizeBytes: 1,
       sha256: "1".repeat(64),
-      storageKey: `${userId}/j`,
       status: "draft",
     })
     .returning();

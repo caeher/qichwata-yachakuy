@@ -3,6 +3,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { getDb } from "@/db/client";
 import { resolveAppUser } from "@/lib/auth/resolve-app-user";
 import type { AppUserRow } from "@/lib/auth/resolve-app-user";
+import { convexConfigured } from "@/lib/convex/server";
 
 export type DashboardUserContext =
   | { kind: "clerk_missing" }
@@ -27,11 +28,11 @@ export async function loadDashboardUser(): Promise<DashboardUserContext> {
     clerkUser?.emailAddresses[0]?.emailAddress ??
     null;
 
-  if (!process.env.DATABASE_URL) {
+  if (!convexConfigured() && !process.env.DATABASE_URL) {
     return { kind: "database_missing" };
   }
 
-  const db = getDb();
+  const db = convexConfigured() ? (null as never) : getDb();
   const appUser = await resolveAppUser(db, userId, email);
   if (!appUser) {
     return { kind: "database_missing" };

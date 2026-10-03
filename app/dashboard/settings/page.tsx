@@ -1,9 +1,8 @@
 import { currentUser } from "@clerk/nextjs/server";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getDb } from "@/db/client";
-import { loadUsageSummary } from "@/lib/billing/usage";
 import { loadDashboardUser } from "@/lib/dashboard/load-dashboard-user";
+import { resolveStellarEndpoints } from "@/lib/stellar/endpoints";
 
 export default async function SettingsPage() {
   const ctx = await loadDashboardUser();
@@ -19,9 +18,6 @@ export default async function SettingsPage() {
     );
   }
 
-  const db = getDb();
-  const usage = await loadUsageSummary(db, ctx.appUser.id);
-
   const name = [clerkUser?.firstName, clerkUser?.lastName]
     .filter(Boolean)
     .join(" ");
@@ -32,6 +28,8 @@ export default async function SettingsPage() {
     )?.emailAddress ??
     clerkUser?.emailAddresses[0]?.emailAddress ??
     null;
+  const stellar = resolveStellarEndpoints();
+  const contractId = process.env.STELLAR_CONTRACT_ID?.trim() || null;
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-12 sm:px-6">
@@ -43,11 +41,33 @@ export default async function SettingsPage() {
         <CardContent className="flex flex-col gap-2 text-sm">
           {name ? <p>Nombre: {name}</p> : null}
           <p>Correo: {email ?? "Sin correo"}</p>
-          <p>Plan: {usage?.planName ?? "—"}</p>
           <p className="text-muted-foreground pt-2">
             La cuenta la gestiona Clerk. Si eliminas la cuenta en Clerk,
-            borramos el archivo y tus datos de perfil. El anclaje en Stellar, si
-            existe, no se puede borrar.
+            redactamos el perfil y los nombres de registros históricos. Sus
+            huellas y comprobantes en Stellar se conservan para verificación.
+          </p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Integridad de certificados</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-2 text-sm">
+          <p>
+            Red configurada:{" "}
+            {stellar.network === "mainnet"
+              ? "Stellar Mainnet"
+              : "Stellar Testnet"}
+          </p>
+          <p>
+            Contrato Soroban:{" "}
+            {contractId ? "Configurado" : "Pendiente de configuración"}
+          </p>
+          <p className="text-muted-foreground pt-2">
+            La configuración de red no confirma un certificado. Su estado
+            verificado requiere que el snapshot, el recibo y la consulta actual
+            de Stellar coincidan. Los enlaces al explorador aparecen en el
+            detalle únicamente cuando existe evidencia de transacción.
           </p>
         </CardContent>
       </Card>
