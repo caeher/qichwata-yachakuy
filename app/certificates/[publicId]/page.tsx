@@ -9,7 +9,10 @@ import {
 } from "@/components/yachay/certificates";
 import { legacyDb } from "@/lib/db/legacy-db";
 import { convexConfigured } from "@/lib/convex/server";
-import { getPublicCertificate, verifyCertificateByHash } from "@/lib/certificates/verify";
+import {
+  getPublicCertificate,
+  verifyCertificateByHash,
+} from "@/lib/certificates/verify";
 import { createChainLookup } from "@/lib/verify/chain";
 import { resolveStellarEndpoints } from "@/lib/stellar/endpoints";
 import { clientIp } from "@/lib/verify/rate-limit";
