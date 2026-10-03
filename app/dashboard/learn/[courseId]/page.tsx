@@ -166,10 +166,13 @@ export default async function CoursePage({
   const db = convexConfigured() ? (null as never) : getDb();
 
   let course: CourseRow | undefined;
-  let units: Array<{ id: string; position: number; title: string; content: unknown }>;
-  let enrollment:
-    | { id: string; courseVersion: string }
-    | undefined;
+  let units: Array<{
+    id: string;
+    position: number;
+    title: string;
+    content: unknown;
+  }>;
+  let enrollment: { id: string; courseVersion: string } | undefined;
   let progress: Array<{ unitId: string }>;
 
   if (convexConfigured()) {
@@ -186,10 +189,16 @@ export default async function CoursePage({
         </main>
       );
     }
-    course = { ...detail.course, id: detail.course._id } as unknown as CourseRow;
+    course = {
+      ...detail.course,
+      id: detail.course._id,
+    } as unknown as CourseRow;
     units = detail.units.map((unit) => ({ ...unit, id: unit._id }));
     enrollment = detail.enrollment
-      ? { id: detail.enrollment._id, courseVersion: detail.enrollment.courseVersion }
+      ? {
+          id: detail.enrollment._id,
+          courseVersion: detail.enrollment.courseVersion,
+        }
       : undefined;
     progress = detail.progressUnitIds.map((unitId) => ({ unitId }));
   } else {
@@ -212,13 +221,13 @@ export default async function CoursePage({
       contents: units.map((unit) => unit.content),
     });
     enrollment = canEnrollLocal
-      ? (await db.query.enrollments.findFirst({
+      ? ((await db.query.enrollments.findFirst({
           where: and(
             eq(enrollments.courseId, course.id),
             eq(enrollments.userId, ctx.appUser.id),
             eq(enrollments.courseVersion, course.version),
           ),
-        })) ?? undefined
+        })) ?? undefined)
       : undefined;
     progress = enrollment
       ? await db.query.unitProgress.findMany({

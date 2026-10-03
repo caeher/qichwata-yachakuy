@@ -11,17 +11,17 @@ Ejecutar en staging o local con `NEXT_PUBLIC_CONVEX_URL` definida y **`DATABASE_
 
 ## Recorrido manual (Convex-only)
 
-| Paso | Ruta / acción | Éxito esperado |
-| --- | --- | --- |
-| Visitante | `/` | Landing sin error de base de datos |
-| Registro | Clerk sign-up | Webhook crea fila en `users` (dashboard Convex) |
-| Catálogo | `/dashboard/learn` | Lista cursos (borrador o publicados según seed) |
-| Inscripción | Curso publicado con `enrollmentEnabled` | 201 desde API; fila en `enrollments` |
-| Unidad | Completar práctica con respuesta correcta | `unitProgress` sin duplicados |
-| Progreso | `/dashboard/progress` | Resumen coherente con Convex |
-| Cierre | Completar curso | Con política `pending`, error `criteria_pending` |
-| Verificación | `/verify` con `publicId` válido | Respuesta desde `certificates.getByPublicId` |
-| Certificados job | `POST /api/jobs/certificates` | Con Convex: `processed: 0` y nota de mutaciones pendientes (hueco conocido) |
+| Paso             | Ruta / acción                             | Éxito esperado                                                              |
+| ---------------- | ----------------------------------------- | --------------------------------------------------------------------------- |
+| Visitante        | `/`                                       | Landing sin error de base de datos                                          |
+| Registro         | Clerk sign-up                             | Webhook crea fila en `users` (dashboard Convex)                             |
+| Catálogo         | `/dashboard/learn`                        | Lista cursos (borrador o publicados según seed)                             |
+| Inscripción      | Curso publicado con `enrollmentEnabled`   | 201 desde API; fila en `enrollments`                                        |
+| Unidad           | Completar práctica con respuesta correcta | `unitProgress` sin duplicados                                               |
+| Progreso         | `/dashboard/progress`                     | Resumen coherente con Convex                                                |
+| Cierre           | Completar curso                           | Con política `pending`, error `criteria_pending`                            |
+| Verificación     | `/verify` con `publicId` válido           | Respuesta desde `certificates.getByPublicId`                                |
+| Certificados job | `POST /api/jobs/certificates`             | Con Convex: `processed: 0` y nota de mutaciones pendientes (hueco conocido) |
 
 ## Fallos que invalidan la migración
 

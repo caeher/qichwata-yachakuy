@@ -12,12 +12,12 @@ Los nombres de entidades y rutas siguientes son una propuesta de implementación
 
 ## Modelo mínimo propuesto
 
-| Entidad | Datos y restricciones principales |
-| --- | --- |
-| `courses` | ID, slug único, título provisional, descripción, versión y estado borrador/publicado. |
-| `course_units` | Curso, orden, título y placeholder de contenido; orden único dentro del curso. |
-| `enrollments` | Usuario, curso/versión, estado, fechas; una inscripción por usuario y versión cursada. |
-| `unit_progress` | Inscripción, unidad y fecha de finalización; unicidad por inscripción/unidad. |
+| Entidad              | Datos y restricciones principales                                                           |
+| -------------------- | ------------------------------------------------------------------------------------------- |
+| `courses`            | ID, slug único, título provisional, descripción, versión y estado borrador/publicado.       |
+| `course_units`       | Curso, orden, título y placeholder de contenido; orden único dentro del curso.              |
+| `enrollments`        | Usuario, curso/versión, estado, fechas; una inscripción por usuario y versión cursada.      |
+| `unit_progress`      | Inscripción, unidad y fecha de finalización; unicidad por inscripción/unidad.               |
 | `course_completions` | Inscripción única, versión del curso, versión de política y fecha de finalización validada. |
 
 Separar finalización académica y estado blockchain: una indisponibilidad de Stellar no revierte el aprendizaje completado.

@@ -59,7 +59,9 @@ export const loadLearningSummary = query({
         [...enrollmentIds].map((enrollmentId) =>
           ctx.db
             .query("unitProgress")
-            .withIndex("by_enrollment", (q) => q.eq("enrollmentId", enrollmentId))
+            .withIndex("by_enrollment", (q) =>
+              q.eq("enrollmentId", enrollmentId),
+            )
             .collect(),
         ),
       )
@@ -70,7 +72,9 @@ export const loadLearningSummary = query({
         [...enrollmentIds].map((enrollmentId) =>
           ctx.db
             .query("courseCompletions")
-            .withIndex("by_enrollment", (q) => q.eq("enrollmentId", enrollmentId))
+            .withIndex("by_enrollment", (q) =>
+              q.eq("enrollmentId", enrollmentId),
+            )
             .unique(),
         ),
       )
@@ -78,7 +82,9 @@ export const loadLearningSummary = query({
       (row): row is NonNullable<typeof row> => row !== null && row.eligible,
     );
 
-    const courseById = new Map(catalogCourses.map((course) => [course._id, course]));
+    const courseById = new Map(
+      catalogCourses.map((course) => [course._id, course]),
+    );
     const unitsByCourse = new Map<string, typeof catalogUnits>();
     for (const unit of catalogUnits) {
       const units = unitsByCourse.get(unit.courseId) ?? [];
@@ -166,9 +172,7 @@ export const loadLearningSummary = query({
         courseId: course._id,
         title: course.title,
         description: course.description,
-        accent: accents.has(course.accent)
-          ? course.accent
-          : "leaf",
+        accent: accents.has(course.accent) ? course.accent : "leaf",
         version: course.version,
         unitCount: validUnits.length,
         completedCount,
@@ -179,9 +183,7 @@ export const loadLearningSummary = query({
             ? "in-progress"
             : "available",
         certificate: certificateLabel,
-        nextUnit: nextUnit
-          ? { id: nextUnit._id, title: nextUnit.title }
-          : null,
+        nextUnit: nextUnit ? { id: nextUnit._id, title: nextUnit.title } : null,
       });
     }
 

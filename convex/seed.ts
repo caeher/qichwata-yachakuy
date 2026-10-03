@@ -49,7 +49,11 @@ export const seedDraftCatalog = internalMutation({
       const seenSources = new Set(
         existingUnits.map((unit) => {
           const source = unit.content as {
-            source?: { system?: string; moduleSlug?: string; lessonId?: string };
+            source?: {
+              system?: string;
+              moduleSlug?: string;
+              lessonId?: string;
+            };
           };
           return source?.source?.system === "yachay-convex"
             ? `${source.source.moduleSlug}/${source.source.lessonId}`

@@ -53,7 +53,9 @@ export async function lookupAnchor(
   expectedNetwork: "testnet" | "mainnet" = resolveStellarEndpoints().network,
 ): Promise<VerifyResult> {
   if (convexConfigured()) {
-    const dbRow = await convexQuery(api.verify.lookupDocumentAnchor, { sha256 });
+    const dbRow = await convexQuery(api.verify.lookupDocumentAnchor, {
+      sha256,
+    });
     let chainResult: ChainLookupResult;
     try {
       chainResult = await chain(sha256);

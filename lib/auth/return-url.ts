@@ -2,7 +2,11 @@ const FALLBACK_DESTINATION = "/dashboard";
 
 /** Accept only same-site absolute paths for post-authentication navigation. */
 export function safeReturnUrl(value: string | string[] | undefined): string {
-  if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//")) {
+  if (
+    typeof value !== "string" ||
+    !value.startsWith("/") ||
+    value.startsWith("//")
+  ) {
     return FALLBACK_DESTINATION;
   }
 

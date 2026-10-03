@@ -28,10 +28,12 @@ export default async function ProgressPage() {
 
   const summary = await loadLearningSummary(ctx.appUser.id);
   const hasCourses = summary.courses.length > 0;
-  const allComplete = hasCourses && summary.completedCourses === summary.courses.length;
-  const certificatesAvailable = summary.courses.filter((course) =>
-    course.certificate.startsWith("Certificado disponible") ||
-    course.certificate === "Certificado verificado",
+  const allComplete =
+    hasCourses && summary.completedCourses === summary.courses.length;
+  const certificatesAvailable = summary.courses.filter(
+    (course) =>
+      course.certificate.startsWith("Certificado disponible") ||
+      course.certificate === "Certificado verificado",
   ).length;
   const policyPending = summary.courses.some(
     (course) => course.certificate === "Política de certificado pendiente",
@@ -43,12 +45,21 @@ export default async function ProgressPage() {
         level="h1"
         size="compact"
         eyebrow="Yachay · Mi espacio"
-        title={allComplete ? "Has completado tu recorrido" : "Tu camino toma forma"}
+        title={
+          allComplete ? "Has completado tu recorrido" : "Tu camino toma forma"
+        }
         description="El avance se calcula con las unidades válidas de tus inscripciones vigentes. Puedes volver a cualquier curso para continuar."
       />
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Métricas de progreso">
-        <StatCard label="Avance total" value={`${summary.progress}%`} surface="leaf" />
+      <section
+        className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+        aria-label="Métricas de progreso"
+      >
+        <StatCard
+          label="Avance total"
+          value={`${summary.progress}%`}
+          surface="leaf"
+        />
         <StatCard
           label="Unidades completadas"
           value={`${summary.completedUnits}/${summary.totalUnits}`}
@@ -67,7 +78,10 @@ export default async function ProgressPage() {
             <CardTitle>Aún no hay cursos inscritos</CardTitle>
           </CardHeader>
           <CardContent className="text-muted-foreground flex flex-col items-start gap-4 text-sm leading-6">
-            <p>Elige un curso disponible para empezar a registrar tu avance. Las métricas aparecerán a medida que completes sus unidades.</p>
+            <p>
+              Elige un curso disponible para empezar a registrar tu avance. Las
+              métricas aparecerán a medida que completes sus unidades.
+            </p>
             <ActionLink href="/dashboard/learn">Explorar cursos</ActionLink>
           </CardContent>
         </Card>
@@ -76,9 +90,17 @@ export default async function ProgressPage() {
           <Card variant="learning" accent={allComplete ? "gold" : "leaf"}>
             <CardHeader>
               <CardTitle className="flex flex-wrap items-center gap-2">
-                {allComplete ? "Recorrido completado" : summary.completedUnits === 0 ? "Tu recorrido está listo" : "Sigue con tu próximo paso"}
+                {allComplete
+                  ? "Recorrido completado"
+                  : summary.completedUnits === 0
+                    ? "Tu recorrido está listo"
+                    : "Sigue con tu próximo paso"}
                 <StatusBadge tone={allComplete ? "success" : "pending"}>
-                  {allComplete ? "Completado" : summary.completedUnits === 0 ? "Sin avance" : "En progreso"}
+                  {allComplete
+                    ? "Completado"
+                    : summary.completedUnits === 0
+                      ? "Sin avance"
+                      : "En progreso"}
                 </StatusBadge>
               </CardTitle>
             </CardHeader>
@@ -87,8 +109,12 @@ export default async function ProgressPage() {
                 <>
                   <div className="w-full">
                     <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                      <span className="font-semibold">{summary.next.title} · {summary.next.nextUnit.title}</span>
-                      <span className="text-muted-foreground">{summary.next.progress}% del curso</span>
+                      <span className="font-semibold">
+                        {summary.next.title} · {summary.next.nextUnit.title}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {summary.next.progress}% del curso
+                      </span>
                     </div>
                     <div className="mt-3">
                       <YachayProgress
@@ -97,7 +123,9 @@ export default async function ProgressPage() {
                       />
                     </div>
                   </div>
-                  <ActionLink href={`/dashboard/learn/${summary.next.courseId}?unitId=${summary.next.nextUnit.id}`}>
+                  <ActionLink
+                    href={`/dashboard/learn/${summary.next.courseId}?unitId=${summary.next.nextUnit.id}`}
+                  >
                     Ir a la siguiente unidad
                   </ActionLink>
                 </>
@@ -110,8 +138,16 @@ export default async function ProgressPage() {
                         ? "Completaste las unidades. La política de emisión de certificados sigue pendiente."
                         : "Completaste todas las unidades válidas de tus cursos inscritos."}
                   </p>
-                  <ActionLink href={certificatesAvailable > 0 ? "/dashboard/certificates" : "/dashboard/learn"}>
-                    {certificatesAvailable > 0 ? "Ver certificados" : "Revisar cursos"}
+                  <ActionLink
+                    href={
+                      certificatesAvailable > 0
+                        ? "/dashboard/certificates"
+                        : "/dashboard/learn"
+                    }
+                  >
+                    {certificatesAvailable > 0
+                      ? "Ver certificados"
+                      : "Revisar cursos"}
                   </ActionLink>
                 </div>
               )}
@@ -143,7 +179,15 @@ export default async function ProgressPage() {
                     <CardContent className="flex flex-wrap items-center justify-between gap-2 text-sm">
                       <span className="text-muted-foreground">Certificado</span>
                       <StatusBadge
-                        tone={course.certificate.startsWith("Certificado verificado") ? "success" : course.certificate.includes("pendiente") ? "pending" : "neutral"}
+                        tone={
+                          course.certificate.startsWith(
+                            "Certificado verificado",
+                          )
+                            ? "success"
+                            : course.certificate.includes("pendiente")
+                              ? "pending"
+                              : "neutral"
+                        }
                       >
                         {course.certificate}
                       </StatusBadge>
@@ -154,7 +198,10 @@ export default async function ProgressPage() {
             </ul>
             {certificatesAvailable > 0 ? (
               <p className="text-sm">
-                <Link href="/dashboard/certificates" className="text-leaf-dark font-semibold underline underline-offset-4">
+                <Link
+                  href="/dashboard/certificates"
+                  className="text-leaf-dark font-semibold underline underline-offset-4"
+                >
                   Revisar mis certificados
                 </Link>
               </p>
@@ -164,7 +211,8 @@ export default async function ProgressPage() {
       )}
 
       <p className="text-muted-foreground text-sm">
-        Rachas y palabras vistas no se muestran porque aún no hay eventos ni reglas de cómputo definidos.
+        Rachas y palabras vistas no se muestran porque aún no hay eventos ni
+        reglas de cómputo definidos.
       </p>
     </main>
   );

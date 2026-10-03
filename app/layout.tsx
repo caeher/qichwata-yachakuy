@@ -38,9 +38,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       className={`${dmSans.variable} ${fraunces.variable} ${geistMono.variable}`}
       suppressHydrationWarning
     >
-      <body
-        className="bg-background text-foreground min-h-svh font-sans antialiased"
-      >
+      <body className="bg-background text-foreground min-h-svh font-sans antialiased">
         <ThemeProvider
           attribute="class"
           defaultTheme="light"

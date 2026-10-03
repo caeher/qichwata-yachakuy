@@ -60,7 +60,9 @@ function Button({
       disabled={disabled || loading}
       {...props}
     >
-      {loading ? <LoaderCircle aria-hidden className="size-4 animate-spin" /> : null}
+      {loading ? (
+        <LoaderCircle aria-hidden className="size-4 animate-spin" />
+      ) : null}
       {children}
     </ButtonPrimitive>
   );

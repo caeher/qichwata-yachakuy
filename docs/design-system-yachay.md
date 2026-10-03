@@ -35,16 +35,16 @@ borde suave y sombra verde de baja opacidad. Se conservan `motion-rise`,
 
 ## Componentes compartidos
 
-| Componente | Variantes | Uso actual |
-| --- | --- | --- |
-| `Button` / `ActionLink` | primary, secondary, outline, ghost; sm, md, lg, icon; loading y disabled | Landing, acciones de lección y galería |
-| `Card` / `ModuleCard` | marketing, learning; leaf, clay, gold; available, in-progress, completed | Landing, catálogo y galería |
-| `StatusBadge` | neutral, success, pending, error | Panel, certificados y galería |
-| `YachayProgress` | leaf, clay; compact, normal | Módulos y galería |
-| `SectionHeading` / `StatCard` | compact, hero; paper, leaf, ink | Panel y galería |
-| `LessonRow` | pending/completed | Aprendizaje y galería |
-| `ChatMessage` | user/assistant/error | Galería; la vista de tutor corresponde a la issue 11 |
-| `CertificateCard`, `CertificateDetails`, `VerificationStatus` | preview, pending, anchored, failed, unavailable, unknown, mismatch | Certificados privados/públicos, consulta y galería |
+| Componente                                                    | Variantes                                                                | Uso actual                                           |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------- |
+| `Button` / `ActionLink`                                       | primary, secondary, outline, ghost; sm, md, lg, icon; loading y disabled | Landing, acciones de lección y galería               |
+| `Card` / `ModuleCard`                                         | marketing, learning; leaf, clay, gold; available, in-progress, completed | Landing, catálogo y galería                          |
+| `StatusBadge`                                                 | neutral, success, pending, error                                         | Panel, certificados y galería                        |
+| `YachayProgress`                                              | leaf, clay; compact, normal                                              | Módulos y galería                                    |
+| `SectionHeading` / `StatCard`                                 | compact, hero; paper, leaf, ink                                          | Panel y galería                                      |
+| `LessonRow`                                                   | pending/completed                                                        | Aprendizaje y galería                                |
+| `ChatMessage`                                                 | user/assistant/error                                                     | Galería; la vista de tutor corresponde a la issue 11 |
+| `CertificateCard`, `CertificateDetails`, `VerificationStatus` | preview, pending, anchored, failed, unavailable, unknown, mismatch       | Certificados privados/públicos, consulta y galería   |
 
 `FeedbackState` unifica las presentaciones vacías, de carga y de error. Los
 estados se anuncian con `role=status`/`aria-live` o `role=alert`. Botones y
@@ -57,19 +57,19 @@ Relaciones calculadas según WCAG 2.2 para colores sólidos; AA exige 4.5:1 en
 texto normal y 3:1 para texto grande. Se validaron las parejas principales de
 texto y superficie:
 
-| Pareja | Contraste |
-| --- | ---: |
-| tinta / papel | 13.05:1 |
-| tinta suave `#536055` / fondo claro | 5.71:1 |
-| tinta suave / papel profundo | 5.21:1 |
-| hoja oscura / hoja pálida | 8.02:1 |
-| arcilla oscura `#8f4b2e` / arcilla pálida | 4.83:1 |
-| error `#9e3d2f` / papel | 6.35:1 |
-| tinta clara / papel oscuro | 11.59:1 |
-| tinta suave oscura / papel oscuro | 8.04:1 |
-| hoja clara / hoja pálida oscura | 6.99:1 |
-| arcilla clara / arcilla pálida oscura | 6.24:1 |
-| error oscuro `#ff9384` / papel oscuro | 6.24:1 |
+| Pareja                                    | Contraste |
+| ----------------------------------------- | --------: |
+| tinta / papel                             |   13.05:1 |
+| tinta suave `#536055` / fondo claro       |    5.71:1 |
+| tinta suave / papel profundo              |    5.21:1 |
+| hoja oscura / hoja pálida                 |    8.02:1 |
+| arcilla oscura `#8f4b2e` / arcilla pálida |    4.83:1 |
+| error `#9e3d2f` / papel                   |    6.35:1 |
+| tinta clara / papel oscuro                |   11.59:1 |
+| tinta suave oscura / papel oscuro         |    8.04:1 |
+| hoja clara / hoja pálida oscura           |    6.99:1 |
+| arcilla clara / arcilla pálida oscura     |    6.24:1 |
+| error oscuro `#ff9384` / papel oscuro     |    6.24:1 |
 
 ## Galería local
 

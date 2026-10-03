@@ -55,7 +55,10 @@ export default defineSchema({
     estimatedDurationMinutes: v.number(),
     enrollmentEnabled: v.boolean(),
     completionPolicyVersion: v.string(),
-    completionPolicyStatus: v.union(v.literal("pending"), v.literal("approved")),
+    completionPolicyStatus: v.union(
+      v.literal("pending"),
+      v.literal("approved"),
+    ),
     createdAt: v.number(),
   })
     .index("by_status", ["status"])

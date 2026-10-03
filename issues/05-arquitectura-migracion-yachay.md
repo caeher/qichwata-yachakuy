@@ -10,33 +10,33 @@ Integrar las funcionalidades de `quechua-convex` en la aplicación raíz, conser
 
 El origen utiliza Pages Router, dos componentes extensos, progreso en Convex y un tutor mediante AI Gateway. La raíz ya dispone de inscripción, progreso por unidad, finalización, certificados y verificación. La propuesta es adaptar las capacidades del origen a esa infraestructura, sin introducir una segunda fuente de datos activa.
 
-| Capacidad del origen | Destino propuesto | Issue |
-| --- | --- | --- |
-| Tokens, tipografía y componentes | `app/globals.css`, `components/ui`, componentes de dominio | [06](06-design-system-yachay.md) |
-| Landing, Clerk y `/aprender` | `/`, acceso existente y `/dashboard` | [07](07-landing-acceso-navegacion.md) |
-| Tres módulos y nueve lecciones | Catálogo en PostgreSQL y contenido versionado | [08](08-catalogo-contenido-inicial.md) |
-| Completar lecciones | `/dashboard/learn/[courseId]` y servicios educativos | [09](09-lecciones-practica-progreso.md) |
-| Inicio y progreso | `/dashboard`, `/dashboard/progress` | [10](10-panel-progreso-real.md) |
-| Tutor `/api/coach` | `/dashboard/practice`, Route Handler y OpenAI | [11](11-tutor-openai.md) |
-| Certificados y `/verificar` | Certificados y verificación existentes | [12](12-certificados-diseno-verificacion.md) |
-| Cierre de migración | Validación conjunta y documentación | [13](13-integracion-validacion-migracion.md) |
+| Capacidad del origen             | Destino propuesto                                          | Issue                                        |
+| -------------------------------- | ---------------------------------------------------------- | -------------------------------------------- |
+| Tokens, tipografía y componentes | `app/globals.css`, `components/ui`, componentes de dominio | [06](06-design-system-yachay.md)             |
+| Landing, Clerk y `/aprender`     | `/`, acceso existente y `/dashboard`                       | [07](07-landing-acceso-navegacion.md)        |
+| Tres módulos y nueve lecciones   | Catálogo en PostgreSQL y contenido versionado              | [08](08-catalogo-contenido-inicial.md)       |
+| Completar lecciones              | `/dashboard/learn/[courseId]` y servicios educativos       | [09](09-lecciones-practica-progreso.md)      |
+| Inicio y progreso                | `/dashboard`, `/dashboard/progress`                        | [10](10-panel-progreso-real.md)              |
+| Tutor `/api/coach`               | `/dashboard/practice`, Route Handler y OpenAI              | [11](11-tutor-openai.md)                     |
+| Certificados y `/verificar`      | Certificados y verificación existentes                     | [12](12-certificados-diseno-verificacion.md) |
+| Cierre de migración              | Validación conjunta y documentación                        | [13](13-integracion-validacion-migracion.md) |
 
 ## Mapa de destino
 
 Este mapa fija las equivalencias para implementar las issues siguientes. Los IDs UUID de PostgreSQL son internos y no sustituyen los slugs/IDs legibles del origen. La equivalencia estable se conserva en el slug del curso y en metadatos de procedencia del contenido de cada unidad.
 
-| Origen Yachay | Destino canónico raíz | Regla de equivalencia |
-| --- | --- | --- |
-| `pages/index.tsx`, `components/yachay-landing.tsx` | `/` | Landing pública; las cifras y muestras de progreso son ilustrativas. |
-| Clerk en `_app.tsx`, `pages/sign-in`, `pages/sign-up` | `/sign-in`, `/sign-up`, `proxy.ts`, `app/dashboard/layout.tsx` | Una sesión Clerk; aprovisionamiento local por `users.clerk_user_id`. |
-| `/aprender` | `/dashboard` | Alias de compatibilidad hacia el inicio autenticado. El catálogo permanece en `/dashboard/learn`. |
-| `learning:DEFAULT_LEARNING_MODULES[].slug` | `courses.slug` | Conservar exactamente `saludos-y-presencia`, `familia-y-comunidad` y `territorio-y-tiempo`; crear cada curso con una versión explícita. |
-| `lessons[].id` | `course_units.content.source.lessonId` | Conservar `hola`, `presentarse`, `practica-01`, `familia`, `mi-comunidad`, `practica-02`, `lugares`, `tiempo` y `practica-03`. El ID UUID de `course_units` se obtiene por curso/versión y clave de origen, nunca por posición solamente. |
-| `learning:progress.userId` | `users.clerk_user_id` → `users.id` → `enrollments` → `unit_progress` | El `identity.subject` de Clerk se coteja exactamente con `clerk_user_id`; los IDs locales no se infieren del email. |
-| `completedLessonIds[]` | Una fila `unit_progress` por unidad reconocida | Deduplicar dentro del arreglo; ignorar como progreso importable, pero reportar, cada ID desconocido. La importación conserva avance histórico y no crea `course_completions` ni certificados. |
-| `learning:certificates.identifier` (`YCH-...`) | Registro legado de referencia; sin equivalencia automática a `certificates.public_id` | No insertar en `certificates`, `course_completions` ni `anchors`. Mantener el identificador para consulta informativa y etiquetarlo como no verificado. |
-| `/verificar` | `/verify` | Redirección de compatibilidad sin bucle; preservar la consulta URL. Los hashes/UUID raíz siguen la verificación normal; un `YCH-...` legado se identifica como registro legado sin evidencia de anclaje. |
-| `/api/coach` | Futuro Route Handler de `/api/coach` | Reimplementar en servidor con OpenAI; no reutilizar AI Gateway, `context` ni mensajes del cliente como fuente autorizada. |
+| Origen Yachay                                         | Destino canónico raíz                                                                 | Regla de equivalencia                                                                                                                                                                                                                     |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pages/index.tsx`, `components/yachay-landing.tsx`    | `/`                                                                                   | Landing pública; las cifras y muestras de progreso son ilustrativas.                                                                                                                                                                      |
+| Clerk en `_app.tsx`, `pages/sign-in`, `pages/sign-up` | `/sign-in`, `/sign-up`, `proxy.ts`, `app/dashboard/layout.tsx`                        | Una sesión Clerk; aprovisionamiento local por `users.clerk_user_id`.                                                                                                                                                                      |
+| `/aprender`                                           | `/dashboard`                                                                          | Alias de compatibilidad hacia el inicio autenticado. El catálogo permanece en `/dashboard/learn`.                                                                                                                                         |
+| `learning:DEFAULT_LEARNING_MODULES[].slug`            | `courses.slug`                                                                        | Conservar exactamente `saludos-y-presencia`, `familia-y-comunidad` y `territorio-y-tiempo`; crear cada curso con una versión explícita.                                                                                                   |
+| `lessons[].id`                                        | `course_units.content.source.lessonId`                                                | Conservar `hola`, `presentarse`, `practica-01`, `familia`, `mi-comunidad`, `practica-02`, `lugares`, `tiempo` y `practica-03`. El ID UUID de `course_units` se obtiene por curso/versión y clave de origen, nunca por posición solamente. |
+| `learning:progress.userId`                            | `users.clerk_user_id` → `users.id` → `enrollments` → `unit_progress`                  | El `identity.subject` de Clerk se coteja exactamente con `clerk_user_id`; los IDs locales no se infieren del email.                                                                                                                       |
+| `completedLessonIds[]`                                | Una fila `unit_progress` por unidad reconocida                                        | Deduplicar dentro del arreglo; ignorar como progreso importable, pero reportar, cada ID desconocido. La importación conserva avance histórico y no crea `course_completions` ni certificados.                                             |
+| `learning:certificates.identifier` (`YCH-...`)        | Registro legado de referencia; sin equivalencia automática a `certificates.public_id` | No insertar en `certificates`, `course_completions` ni `anchors`. Mantener el identificador para consulta informativa y etiquetarlo como no verificado.                                                                                   |
+| `/verificar`                                          | `/verify`                                                                             | Redirección de compatibilidad sin bucle; preservar la consulta URL. Los hashes/UUID raíz siguen la verificación normal; un `YCH-...` legado se identifica como registro legado sin evidencia de anclaje.                                  |
+| `/api/coach`                                          | Futuro Route Handler de `/api/coach`                                                  | Reimplementar en servidor con OpenAI; no reutilizar AI Gateway, `context` ni mensajes del cliente como fuente autorizada.                                                                                                                 |
 
 Las claves `course_units.content.source` deben incluir `system: "yachay-convex"`, `moduleSlug` y `lessonId`, además de la versión del contrato de contenido. La posición ordena la presentación, pero no identifica una lección. Una vez publicado un curso, su versión y esas claves no se reutilizan para contenido distinto.
 

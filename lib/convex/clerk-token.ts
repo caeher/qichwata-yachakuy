@@ -9,9 +9,10 @@ function isMissingConvexJwtTemplate(error: unknown): boolean {
       : "";
   const clerkErrors =
     "errors" in error && Array.isArray(error.errors) ? error.errors : [];
-  const clerkCode = clerkErrors[0] && typeof clerkErrors[0] === "object"
-    ? (clerkErrors[0] as { code?: string }).code
-    : undefined;
+  const clerkCode =
+    clerkErrors[0] && typeof clerkErrors[0] === "object"
+      ? (clerkErrors[0] as { code?: string }).code
+      : undefined;
   return (
     status === 404 ||
     clerkCode === "resource_not_found" ||

@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 
-type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
+type Props = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
 function toQueryString(params: Record<string, string | string[] | undefined>) {
   const query = new URLSearchParams();

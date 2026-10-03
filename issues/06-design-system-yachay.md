@@ -20,14 +20,14 @@ Preservar los estilos de `quechua-convex` y convertirlos en un sistema compartid
 3. Resolver explícitamente el tema: Yachay de origen es claro y la raíz permite modo oscuro. Mantener el claro como referencia de fidelidad y definir equivalentes legibles para oscuro antes de ofrecerlo en las vistas migradas.
 4. Reutilizar Base UI y `class-variance-authority`; extender las primitivas existentes y extraer componentes de dominio sin dependencias de Clerk, Convex o peticiones de red.
 
-| Componente | Variantes mínimas propuestas |
-| --- | --- |
-| Button / ActionLink | primary, secondary, outline, ghost; sm, md, lg, icon; loading y disabled |
-| Card / ModuleCard | marketing y learning; leaf, clay, gold; available, in-progress, completed |
-| Badge / StatusBadge | neutral, success, pending, error |
-| Progress | leaf y clay; tamaños compacto y normal |
-| SectionHeading / StatCard | compact y hero; superficie paper, leaf e ink |
-| LessonRow / ChatMessage | pending/completed; user/assistant/error |
+| Componente                | Variantes mínimas propuestas                                              |
+| ------------------------- | ------------------------------------------------------------------------- |
+| Button / ActionLink       | primary, secondary, outline, ghost; sm, md, lg, icon; loading y disabled  |
+| Card / ModuleCard         | marketing y learning; leaf, clay, gold; available, in-progress, completed |
+| Badge / StatusBadge       | neutral, success, pending, error                                          |
+| Progress                  | leaf y clay; tamaños compacto y normal                                    |
+| SectionHeading / StatCard | compact y hero; superficie paper, leaf e ink                              |
+| LessonRow / ChatMessage   | pending/completed; user/assistant/error                                   |
 
 5. Resolver el acento `gold`: el dominio lo referencia, pero el CSS del origen no define esos tokens y la tarjeta usa papel/arcilla como alternativa. Documentar y centralizar esa equivalencia visual, o definir una paleta revisada.
 6. Conservar `motion-rise`, `motion-fade`, `motion-drift` y el respeto por `prefers-reduced-motion`. Unificar estados de carga, vacío y error.

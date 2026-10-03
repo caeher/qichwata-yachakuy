@@ -13,7 +13,8 @@ function normalize(value: string) {
 }
 
 function utc(value: Date) {
-  if (Number.isNaN(value.getTime())) throw new Error("invalid_certificate_date");
+  if (Number.isNaN(value.getTime()))
+    throw new Error("invalid_certificate_date");
   return value.toISOString();
 }
 
@@ -45,7 +46,9 @@ export function canonicalCertificateJson(input: {
   return JSON.stringify(payload);
 }
 
-export async function hashCertificatePayload(canonicalJson: string): Promise<string> {
+export async function hashCertificatePayload(
+  canonicalJson: string,
+): Promise<string> {
   const digest = await crypto.subtle.digest(
     "SHA-256",
     new TextEncoder().encode(canonicalJson),

@@ -6,10 +6,7 @@ import { provisionUserInner } from "@/lib/auth/provision-user";
 import { webhookEvents } from "@/db/schema";
 import { eraseUserAccountInner } from "@/lib/privacy/erase-user";
 import { internal } from "@/convex/_generated/api";
-import {
-  convexConfigured,
-  convexInternalMutation,
-} from "@/lib/convex/server";
+import { convexConfigured, convexInternalMutation } from "@/lib/convex/server";
 
 function primaryEmail(data: {
   email_addresses: { id: string; email_address: string }[];

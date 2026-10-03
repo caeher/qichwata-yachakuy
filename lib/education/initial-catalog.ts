@@ -1032,7 +1032,8 @@ export const INITIAL_COURSES: CourseSeed[] = [
       {
         lessonId: "lugares",
         title: "Orientarse con referencias",
-        description: "Distingue sentidos espaciales antes de describir un recorrido.",
+        description:
+          "Distingue sentidos espaciales antes de describir un recorrido.",
         kind: "vocabulary",
         durationMinutes: 9,
         objectives: [
@@ -1102,7 +1103,8 @@ export const INITIAL_COURSES: CourseSeed[] = [
               printedPage: 147,
               heading: "ARRIBA (adv.), sentidos locativos y de movimiento",
               headword: "ARRIBA",
-              sense: "sentidos locativos diferenciados por relación espacial y movimiento",
+              sense:
+                "sentidos locativos diferenciados por relación espacial y movimiento",
             },
           },
           {
@@ -1144,7 +1146,8 @@ export const INITIAL_COURSES: CourseSeed[] = [
       {
         lessonId: "tiempo",
         title: "Referencias temporales por verificar",
-        description: "Distingue tiempo presente y pasado sin inferir una frase.",
+        description:
+          "Distingue tiempo presente y pasado sin inferir una frase.",
         kind: "phrases",
         durationMinutes: 8,
         objectives: [
@@ -1200,7 +1203,8 @@ export const INITIAL_COURSES: CourseSeed[] = [
               "Que pacha siempre equivale a territorio.",
               "Que cualquier combinación de kunan con un nombre expresa hoy.",
             ],
-            answer: "Kunan p’unchay con el sentido «hoy día», en PDF 30 / impresa 29.",
+            answer:
+              "Kunan p’unchay con el sentido «hoy día», en PDF 30 / impresa 29.",
             feedback:
               "La sección del manual registra la expresión completa; no se deriva de entradas sueltas. Su uso en la subvariante Cusco del curso todavía requiere revisión humana.",
           },
@@ -1252,7 +1256,8 @@ export const INITIAL_COURSES: CourseSeed[] = [
               printedPage: 178,
               heading: "AYER, acepciones temporales",
               headword: "AYER",
-              sense: "día anterior; otros sentidos de tiempo pasado diferenciados",
+              sense:
+                "día anterior; otros sentidos de tiempo pasado diferenciados",
             },
           },
           {
@@ -1268,7 +1273,8 @@ export const INITIAL_COURSES: CourseSeed[] = [
             locator: {
               pdfPage: 30,
               printedPage: 29,
-              heading: "Adverbios, expresiones compuestas y referencias temporales",
+              heading:
+                "Adverbios, expresiones compuestas y referencias temporales",
               headword: "kunan p’unchay",
               sense: "expresión compuesta con sentido de ‘hoy día’",
             },

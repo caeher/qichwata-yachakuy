@@ -34,16 +34,16 @@ Ejecutar `pnpm lint`, `pnpm typecheck`, `pnpm test` y `pnpm build` desde la raí
 
 El estado operativo detallado está en [docs/yachay-migration-closeout.md](../docs/yachay-migration-closeout.md). La aplicación raíz contiene la integración técnica, pero esta issue sigue abierta hasta adjuntar evidencia externa y visual.
 
-| Requisito | Estado | Evidencia |
-| --- | --- | --- |
-| Progreso con respuestas correctas, idempotencia y política académica cerrada por defecto | Implementado con fixtures | `lib/education/service.test.ts`; la finalización elegible se comprueba con política inyectada en pruebas. |
-| Recorrido extremo a extremo con usuario/servicios configurados | Pendiente | Requiere Clerk y PostgreSQL de staging; no se considera cubierto solo por pruebas de servicio. |
-| Capturas de origen y raíz a 375, 768 y 1440 px | Pendiente | En el entorno de revisión no hay Chromium/Playwright ni capturas de referencia versionadas. |
-| Aislamiento de Convex en la raíz | Revisado estáticamente | Sin imports/proveedor en el código operativo raíz ni dependencia raíz; TypeScript y ESLint excluyen la referencia anidada. |
-| Alias `/aprender`, `/verificar` y referencia `YCH-` | Probado con fixtures | `app/legacy-route-aliases.test.ts` verifica las redirecciones y conservación de query/identificador. |
-| Inventario remoto Convex | Bloqueado por acceso | Sin deployment consultado; tablas y recuentos quedan pendientes, no se afirma que esté vacío. |
-| OpenAI real y Stellar testnet | Pendiente | Pruebas automáticas usan simulaciones; no había credenciales de servicio para comprobación controlada. |
-| Revisión académica y publicación | Pendiente por política/contenido | El seed crea borradores; matrículas productivas y certificados dependen de revisión y aprobación. |
+| Requisito                                                                                | Estado                           | Evidencia                                                                                                                  |
+| ---------------------------------------------------------------------------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Progreso con respuestas correctas, idempotencia y política académica cerrada por defecto | Implementado con fixtures        | `lib/education/service.test.ts`; la finalización elegible se comprueba con política inyectada en pruebas.                  |
+| Recorrido extremo a extremo con usuario/servicios configurados                           | Pendiente                        | Requiere Clerk y PostgreSQL de staging; no se considera cubierto solo por pruebas de servicio.                             |
+| Capturas de origen y raíz a 375, 768 y 1440 px                                           | Pendiente                        | En el entorno de revisión no hay Chromium/Playwright ni capturas de referencia versionadas.                                |
+| Aislamiento de Convex en la raíz                                                         | Revisado estáticamente           | Sin imports/proveedor en el código operativo raíz ni dependencia raíz; TypeScript y ESLint excluyen la referencia anidada. |
+| Alias `/aprender`, `/verificar` y referencia `YCH-`                                      | Probado con fixtures             | `app/legacy-route-aliases.test.ts` verifica las redirecciones y conservación de query/identificador.                       |
+| Inventario remoto Convex                                                                 | Bloqueado por acceso             | Sin deployment consultado; tablas y recuentos quedan pendientes, no se afirma que esté vacío.                              |
+| OpenAI real y Stellar testnet                                                            | Pendiente                        | Pruebas automáticas usan simulaciones; no había credenciales de servicio para comprobación controlada.                     |
+| Revisión académica y publicación                                                         | Pendiente por política/contenido | El seed crea borradores; matrículas productivas y certificados dependen de revisión y aprobación.                          |
 
 Validación local final: `pnpm lint`, `pnpm typecheck`, `pnpm test` (30 archivos,
 95 pruebas) y `pnpm build` pasaron. Una primera ejecución de la suite tuvo un

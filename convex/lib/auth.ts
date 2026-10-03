@@ -51,17 +51,3 @@ export async function markUserDeletedRecord(
   if (!user || user.deletedAt) return;
   await ctx.db.patch(user._id, { deletedAt: Date.now(), email: null });
 }
-
-function toAppUser(row: {
-  _id: string;
-  clerkUserId: string;
-  email: string | null;
-  deletedAt?: number;
-}) {
-  if (row.deletedAt) return null;
-  return {
-    id: row._id,
-    clerkUserId: row.clerkUserId,
-    email: row.email,
-  };
-}

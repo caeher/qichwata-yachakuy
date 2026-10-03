@@ -14,7 +14,9 @@ const links = [
 ] as const;
 
 function isActive(pathname: string, href: string, exact: boolean) {
-  return exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+  return exact
+    ? pathname === href
+    : pathname === href || pathname.startsWith(`${href}/`);
 }
 
 export function DashboardNav() {

@@ -49,9 +49,7 @@ export async function POST(
         ("completedAt" in progress.progress
           ? progress.progress.completedAt instanceof Date
             ? progress.progress.completedAt.toISOString()
-            : new Date(
-                progress.progress.completedAt as number,
-              ).toISOString()
+            : new Date(progress.progress.completedAt as number).toISOString()
           : null),
       feedback: progress.feedback,
     });

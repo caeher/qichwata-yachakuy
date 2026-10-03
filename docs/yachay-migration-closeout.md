@@ -7,17 +7,17 @@ Convex esté vacío.
 
 ## Estado de capacidades
 
-| Capacidad | Estado comprobable | Bloqueo o evidencia pendiente |
-| --- | --- | --- |
-| Registro, acceso e identidad | Rutas Clerk y aprovisionamiento están en la raíz. | Validación con instancia Clerk configurada y cuenta controlada. |
-| Catálogo inicial | `pnpm db:seed` crea cursos y unidades versionados como borradores. | Contenido, autoría, licencia, variedad regional y revisión lingüística antes de publicar. |
-| Inscripción y práctica | PostgreSQL guarda matrículas; el servidor corrige respuestas antes de persistir el avance. | Recorrido extremo a extremo con usuario y PostgreSQL de staging. |
-| Progreso | Se deriva de `unit_progress`; no hay rachas simuladas. | Revisión visual y prueba con persistencia de staging. |
-| Tutor | `/api/coach` usa OpenAI Responses API; apagado por defecto; pruebas usan cliente simulado. | Evaluación lingüística controlada y configuración privada de OpenAI antes de habilitarlo. |
-| Certificados | La intención y la verificación tienen almacenamiento y estados explícitos. La política de finalización está pendiente, por lo que no se emiten certificados de curso en producción. | Política académica, emisor e identidad institucional aprobados; luego prueba controlada con testnet. |
-| Verificación histórica | `/verify` y `/v/[hash]` conservan verificación por hash; `/verificar` redirige a `/verify` preservando la query. | Probar casos históricos concretos y confirmación real en Stellar testnet. |
-| Alias de rutas | Pruebas verifican `/aprender` → `/dashboard` y `/verificar` → `/verify`, incluyendo query repetida e ID `YCH-`. | Ninguno para los alias implementados. |
-| Convex | No se encontraron imports, proveedor ni dependencia Convex en `app`, `components`, `db`, `lib`, `scripts` ni dependencias raíz. `quechua-convex` sigue como referencia. | Inventario del deployment remoto pendiente; se requiere acceso del operador Convex. |
+| Capacidad                    | Estado comprobable                                                                                                                                                                  | Bloqueo o evidencia pendiente                                                                        |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Registro, acceso e identidad | Rutas Clerk y aprovisionamiento están en la raíz.                                                                                                                                   | Validación con instancia Clerk configurada y cuenta controlada.                                      |
+| Catálogo inicial             | `pnpm db:seed` crea cursos y unidades versionados como borradores.                                                                                                                  | Contenido, autoría, licencia, variedad regional y revisión lingüística antes de publicar.            |
+| Inscripción y práctica       | PostgreSQL guarda matrículas; el servidor corrige respuestas antes de persistir el avance.                                                                                          | Recorrido extremo a extremo con usuario y PostgreSQL de staging.                                     |
+| Progreso                     | Se deriva de `unit_progress`; no hay rachas simuladas.                                                                                                                              | Revisión visual y prueba con persistencia de staging.                                                |
+| Tutor                        | `/api/coach` usa OpenAI Responses API; apagado por defecto; pruebas usan cliente simulado.                                                                                          | Evaluación lingüística controlada y configuración privada de OpenAI antes de habilitarlo.            |
+| Certificados                 | La intención y la verificación tienen almacenamiento y estados explícitos. La política de finalización está pendiente, por lo que no se emiten certificados de curso en producción. | Política académica, emisor e identidad institucional aprobados; luego prueba controlada con testnet. |
+| Verificación histórica       | `/verify` y `/v/[hash]` conservan verificación por hash; `/verificar` redirige a `/verify` preservando la query.                                                                    | Probar casos históricos concretos y confirmación real en Stellar testnet.                            |
+| Alias de rutas               | Pruebas verifican `/aprender` → `/dashboard` y `/verificar` → `/verify`, incluyendo query repetida e ID `YCH-`.                                                                     | Ninguno para los alias implementados.                                                                |
+| Convex                       | No se encontraron imports, proveedor ni dependencia Convex en `app`, `components`, `db`, `lib`, `scripts` ni dependencias raíz. `quechua-convex` sigue como referencia.             | Inventario del deployment remoto pendiente; se requiere acceso del operador Convex.                  |
 
 ## Evidencia de inventario remoto
 
@@ -26,12 +26,12 @@ los archivos locales de entorno revisados. La raíz no tiene Convex como
 dependencia. Eso solo demuestra falta de configuración local visible; no es
 evidencia del estado de la base remota.
 
-| Dato de inventario | Resultado |
-| --- | --- |
-| Deployment consultado | Ninguno; no se obtuvo acceso al deployment. |
-| Fecha/hora de consulta remota | No realizada. |
-| Tablas y recuentos | Pendientes; no se presume cero. |
-| Export, checksum y conciliación | No realizados. |
+| Dato de inventario                      | Resultado                                                                                                            |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Deployment consultado                   | Ninguno; no se obtuvo acceso al deployment.                                                                          |
+| Fecha/hora de consulta remota           | No realizada.                                                                                                        |
+| Tablas y recuentos                      | Pendientes; no se presume cero.                                                                                      |
+| Export, checksum y conciliación         | No realizados.                                                                                                       |
 | Estado de migración de cuentas/progreso | Solo está migrado/versionado el contenido inicial del prototipo; no se importaron datos de usuarios ni certificados. |
 
 El operador debe adjuntar el identificador no secreto del deployment, fecha de
@@ -67,12 +67,12 @@ datos sin recibo de cadena no se muestra como confirmación Stellar.
 
 Desde la raíz, el 2026-09-25:
 
-| Comando | Resultado |
-| --- | --- |
-| `pnpm lint` | Pasó; ESLint evalúa la aplicación raíz y excluye `quechua-convex`. |
-| `pnpm typecheck` | Pasó. |
-| `pnpm test` | Pasó: 30 archivos, 95 pruebas. Las integraciones de OpenAI y Stellar usan dobles locales. |
-| `pnpm build` | Pasó con secretos externos vacíos; generó las rutas de la aplicación raíz. |
+| Comando          | Resultado                                                                                 |
+| ---------------- | ----------------------------------------------------------------------------------------- |
+| `pnpm lint`      | Pasó; ESLint evalúa la aplicación raíz y excluye `quechua-convex`.                        |
+| `pnpm typecheck` | Pasó.                                                                                     |
+| `pnpm test`      | Pasó: 30 archivos, 95 pruebas. Las integraciones de OpenAI y Stellar usan dobles locales. |
+| `pnpm build`     | Pasó con secretos externos vacíos; generó las rutas de la aplicación raíz.                |
 
 Una ejecución inicial de `pnpm test` tuvo un timeout al inicializar PGlite en
 `app/api/verify/route.test.ts`; la repetición completa pasó. La prueba de alias

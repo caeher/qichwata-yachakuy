@@ -49,11 +49,7 @@ function ProgressTrack({
 }: ProgressPrimitive.Track.Props & VariantProps<typeof progressTrackVariants>) {
   return (
     <ProgressPrimitive.Track
-      className={cn(
-        "bg-muted",
-        progressTrackVariants({ size }),
-        className,
-      )}
+      className={cn("bg-muted", progressTrackVariants({ size }), className)}
       data-slot="progress-track"
       {...props}
     />

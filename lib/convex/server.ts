@@ -42,10 +42,7 @@ export function getConvexAdminClient(): AdminCapableClient {
   return adminClient as AdminCapableClient;
 }
 
-export async function convexQuery<
-  Args extends DefaultFunctionArgs,
-  Result,
->(
+export async function convexQuery<Args extends DefaultFunctionArgs, Result>(
   ref: FunctionReference<"query", "public", Args, Result>,
   args: Args,
   token?: string | null,
@@ -59,10 +56,7 @@ export async function convexQuery<
   return client.query(ref, args as never);
 }
 
-export async function convexMutation<
-  Args extends DefaultFunctionArgs,
-  Result,
->(
+export async function convexMutation<Args extends DefaultFunctionArgs, Result>(
   ref: FunctionReference<"mutation", "public", Args, Result>,
   args: Args,
   token?: string | null,

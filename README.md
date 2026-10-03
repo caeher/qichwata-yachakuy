@@ -45,18 +45,18 @@ PostgreSQL conserva usuarios, progreso educativo, snapshots canónicos y comprob
 
 ## Comandos
 
-| Comando                | Descripción                                        |
-| ---------------------- | -------------------------------------------------- |
-| `pnpm dev`             | Servidor local                                     |
-| `pnpm build`           | Build de producción sin credenciales externas      |
-| `pnpm test`            | Vitest con PGlite en memoria                       |
-| `pnpm lint`            | ESLint                                             |
-| `pnpm typecheck`       | TypeScript                                         |
-| `pnpm db:migrate`      | Aplicar migraciones a `DATABASE_URL`               |
-| `pnpm db:seed`         | Cargar catálogo educativo inicial como borradores   |
-| `pnpm contract:test`   | Tests del contrato Soroban                         |
-| `pnpm contract:build`  | Compilar el contrato Soroban                       |
-| `pnpm contract:deploy` | Desplegar el contrato Soroban                      |
+| Comando                | Descripción                                       |
+| ---------------------- | ------------------------------------------------- |
+| `pnpm dev`             | Servidor local                                    |
+| `pnpm build`           | Build de producción sin credenciales externas     |
+| `pnpm test`            | Vitest con PGlite en memoria                      |
+| `pnpm lint`            | ESLint                                            |
+| `pnpm typecheck`       | TypeScript                                        |
+| `pnpm db:migrate`      | Aplicar migraciones a `DATABASE_URL`              |
+| `pnpm db:seed`         | Cargar catálogo educativo inicial como borradores |
+| `pnpm contract:test`   | Tests del contrato Soroban                        |
+| `pnpm contract:build`  | Compilar el contrato Soroban                      |
+| `pnpm contract:deploy` | Desplegar el contrato Soroban                     |
 
 `pnpm build` y `pnpm test` no requieren Clerk, PostgreSQL, Alchemy ni claves de la hot wallet.
 

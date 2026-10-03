@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  Show,
-  SignInButton,
-  SignUpButton,
-  UserButton,
-} from "@clerk/nextjs";
+import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 
 import { ActionLink } from "@/components/yachay/components";
 
@@ -37,7 +32,7 @@ export function SiteAuthControls() {
         <SignInButton mode="modal">
           <button
             type="button"
-            className="inline-flex h-9 items-center rounded-full px-4 text-sm font-bold text-ink transition hover:bg-paper-deep"
+            className="text-ink hover:bg-paper-deep inline-flex h-9 items-center rounded-full px-4 text-sm font-bold transition"
           >
             Entrar
           </button>
@@ -45,7 +40,7 @@ export function SiteAuthControls() {
         <SignUpButton mode="modal">
           <button
             type="button"
-            className="inline-flex h-9 items-center rounded-full bg-leaf px-4 text-sm font-bold text-paper transition hover:bg-leaf-dark"
+            className="bg-leaf text-paper hover:bg-leaf-dark inline-flex h-9 items-center rounded-full px-4 text-sm font-bold transition"
           >
             Comenzar
           </button>

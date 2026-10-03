@@ -15,12 +15,18 @@ export default function proxy(request: NextRequest) {
   if (!process.env.CLERK_SECRET_KEY) {
     if (isProtectedPath(request.nextUrl.pathname)) {
       const signIn = new URL("/sign-in", request.url);
-      signIn.searchParams.set("redirect_url", currentPathWithQuery(request.nextUrl));
+      signIn.searchParams.set(
+        "redirect_url",
+        currentPathWithQuery(request.nextUrl),
+      );
       return NextResponse.redirect(signIn);
     }
     return NextResponse.next();
   }
-  const res = runClerk(request, {} as never) as unknown as Promise<NextResponse>;
+  const res = runClerk(
+    request,
+    {} as never,
+  ) as unknown as Promise<NextResponse>;
   return res.then((r) => {
     // Clerk's decorateRequest turns every NextResponse.next() into an
     // absolute self-rewrite (x-middleware-rewrite) to propagate auth

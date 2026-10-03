@@ -28,7 +28,8 @@ export default async function DashboardPage() {
 
   const summary = await loadLearningSummary(ctx.appUser.id);
   const hasCourses = summary.courses.length > 0;
-  const allComplete = hasCourses && summary.completedCourses === summary.courses.length;
+  const allComplete =
+    hasCourses && summary.completedCourses === summary.courses.length;
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-4 py-10 sm:px-6 sm:py-12">
@@ -45,17 +46,23 @@ export default async function DashboardPage() {
         <Card variant="learning" accent="leaf" className="p-5">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold tracking-[0.14em] text-leaf-dark uppercase">
+              <p className="text-leaf-dark text-xs font-semibold tracking-[0.14em] uppercase">
                 Continuar aprendiendo
               </p>
               {summary.next ? (
                 <>
-                  <h2 className="mt-2 font-heading text-xl">{summary.next.nextUnit.title}</h2>
-                  <p className="text-muted-foreground mt-1 text-sm">{summary.next.title}</p>
+                  <h2 className="font-heading mt-2 text-xl">
+                    {summary.next.nextUnit.title}
+                  </h2>
+                  <p className="text-muted-foreground mt-1 text-sm">
+                    {summary.next.title}
+                  </p>
                 </>
               ) : (
-                <h2 className="mt-2 font-heading text-xl">
-                  {hasCourses ? "Recorrido completado" : "Elige tu primer curso"}
+                <h2 className="font-heading mt-2 text-xl">
+                  {hasCourses
+                    ? "Recorrido completado"
+                    : "Elige tu primer curso"}
                 </h2>
               )}
             </div>
@@ -67,7 +74,10 @@ export default async function DashboardPage() {
           </div>
           <div className="mt-4">
             {summary.next ? (
-              <ActionLink href={`/dashboard/learn/${summary.next.courseId}?unitId=${summary.next.nextUnit.id}`} size="sm">
+              <ActionLink
+                href={`/dashboard/learn/${summary.next.courseId}?unitId=${summary.next.nextUnit.id}`}
+                size="sm"
+              >
                 Ir a la siguiente unidad
               </ActionLink>
             ) : allComplete ? (
@@ -83,8 +93,15 @@ export default async function DashboardPage() {
         </Card>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Resumen de aprendizaje">
-        <StatCard label="Avance total" value={`${summary.progress}%`} surface="leaf" />
+      <section
+        className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+        aria-label="Resumen de aprendizaje"
+      >
+        <StatCard
+          label="Avance total"
+          value={`${summary.progress}%`}
+          surface="leaf"
+        />
         <StatCard
           label="Unidades completadas"
           value={`${summary.completedUnits}/${summary.totalUnits}`}
@@ -103,7 +120,10 @@ export default async function DashboardPage() {
             <CardTitle>Tu recorrido empieza con un curso</CardTitle>
           </CardHeader>
           <CardContent className="text-muted-foreground flex flex-col items-start gap-4 text-sm leading-6">
-            <p>Inscríbete en un curso disponible para guardar unidades completadas y ver aquí tu avance real.</p>
+            <p>
+              Inscríbete en un curso disponible para guardar unidades
+              completadas y ver aquí tu avance real.
+            </p>
             <ActionLink href="/dashboard/learn">Elegir un curso</ActionLink>
           </CardContent>
         </Card>
@@ -133,9 +153,13 @@ export default async function DashboardPage() {
             ))}
           </ul>
           <p className="text-muted-foreground text-sm">
-            Las rachas y las palabras vistas todavía no tienen eventos de cómputo definidos.
+            Las rachas y las palabras vistas todavía no tienen eventos de
+            cómputo definidos.
           </p>
-          <Link href="/dashboard/progress" className="text-leaf-dark text-sm font-semibold underline underline-offset-4">
+          <Link
+            href="/dashboard/progress"
+            className="text-leaf-dark text-sm font-semibold underline underline-offset-4"
+          >
             Ver desglose de progreso
           </Link>
         </section>

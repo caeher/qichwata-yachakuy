@@ -32,7 +32,10 @@ function tryLocalConvexAdminKey() {
     url.startsWith("http://localhost:");
   if (!isLocal) return;
 
-  const configPath = resolve(process.cwd(), ".convex/local/default/config.json");
+  const configPath = resolve(
+    process.cwd(),
+    ".convex/local/default/config.json",
+  );
   if (!existsSync(configPath)) return;
 
   try {

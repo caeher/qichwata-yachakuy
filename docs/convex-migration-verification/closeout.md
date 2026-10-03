@@ -4,15 +4,15 @@ Fecha: 2026-09-25. Criterio: **Convex es la base activa** cuando `NEXT_PUBLIC_CO
 
 ## Resultado por área
 
-| Área | Estado | Evidencia |
-| --- | --- | --- |
-| Matriz estática | Documentada | [static-matrix.md](./static-matrix.md) |
-| Paridad de esquema | Alineada en tablas educativas/certificados | [schema-parity.md](./schema-parity.md), `lib/convex/schema-parity.test.ts` |
-| Funciones Convex (educación) | Verificadas en mock | `lib/convex/education.convex.test.ts` (4 pruebas) |
-| Suite PGlite | No sustituye Convex | `pnpm test`: 101 pruebas; las nuevas cubren la rama Convex |
-| Inventario remoto | Pendiente de operador | [inventory-remote.md](./inventory-remote.md) |
-| Auth Clerk JWT en deployment | Pendiente de configuración | `convex/auth.config.ts` con `providers: []` hasta configurar issuer en deployment; ver [auth-and-e2e-checklist.md](./auth-and-e2e-checklist.md) |
-| Recorrido Convex-only manual | Checklist listo | [auth-and-e2e-checklist.md](./auth-and-e2e-checklist.md) |
+| Área                         | Estado                                     | Evidencia                                                                                                                                       |
+| ---------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Matriz estática              | Documentada                                | [static-matrix.md](./static-matrix.md)                                                                                                          |
+| Paridad de esquema           | Alineada en tablas educativas/certificados | [schema-parity.md](./schema-parity.md), `lib/convex/schema-parity.test.ts`                                                                      |
+| Funciones Convex (educación) | Verificadas en mock                        | `lib/convex/education.convex.test.ts` (4 pruebas)                                                                                               |
+| Suite PGlite                 | No sustituye Convex                        | `pnpm test`: 101 pruebas; las nuevas cubren la rama Convex                                                                                      |
+| Inventario remoto            | Pendiente de operador                      | [inventory-remote.md](./inventory-remote.md)                                                                                                    |
+| Auth Clerk JWT en deployment | Pendiente de configuración                 | `convex/auth.config.ts` con `providers: []` hasta configurar issuer en deployment; ver [auth-and-e2e-checklist.md](./auth-and-e2e-checklist.md) |
+| Recorrido Convex-only manual | Checklist listo                            | [auth-and-e2e-checklist.md](./auth-and-e2e-checklist.md)                                                                                        |
 
 ## Flujos que pasan por Convex (con URL configurada)
 

@@ -108,7 +108,9 @@ describe("initial learning catalog seed", () => {
         } else {
           expect(content.sources.items.length).toBeGreaterThan(0);
         }
-        expect(content.regionalVariant.status).toMatch(/^(undetermined|specified)$/);
+        expect(content.regionalVariant.status).toMatch(
+          /^(undetermined|specified)$/,
+        );
         expect(content.authorship.status).toMatch(/^(pending|attributed)$/);
         expect(
           isCourseEligibleForEnrollment({
