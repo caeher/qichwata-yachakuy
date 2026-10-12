@@ -5,6 +5,7 @@ import {
   getUserByClerkId,
   markUserDeletedRecord,
   provisionUserRecord,
+  requireIdentity,
 } from "./lib/auth";
 
 export type AppUser = {
@@ -28,10 +29,7 @@ function toAppUser(row: {
 }
 
 export const resolveAppUser = mutation({
-  args: {
-    clerkUserId: v.string(),
-    email: v.union(v.string(), v.null()),
-  },
+  args: {},
   returns: v.union(
     v.object({
       id: v.string(),
@@ -40,20 +38,21 @@ export const resolveAppUser = mutation({
     }),
     v.null(),
   ),
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (identity && identity.subject !== args.clerkUserId) {
-      return null;
-    }
-    await provisionUserRecord(ctx, args);
-    const user = await getUserByClerkId(ctx, args.clerkUserId);
+  handler: async (ctx) => {
+    const identity = await requireIdentity(ctx);
+    const clerkUserId = identity.subject;
+    const email =
+      identity.emailVerified === true ? (identity.email ?? null) : null;
+
+    await provisionUserRecord(ctx, { clerkUserId, email });
+    const user = await getUserByClerkId(ctx, clerkUserId);
     if (!user) return null;
     return toAppUser(user);
   },
 });
 
 export const getAppUserByClerkId = query({
-  args: { clerkUserId: v.string() },
+  args: {},
   returns: v.union(
     v.object({
       id: v.string(),
@@ -62,8 +61,9 @@ export const getAppUserByClerkId = query({
     }),
     v.null(),
   ),
-  handler: async (ctx, args) => {
-    const user = await getUserByClerkId(ctx, args.clerkUserId);
+  handler: async (ctx) => {
+    const identity = await requireIdentity(ctx);
+    const user = await getUserByClerkId(ctx, identity.subject);
     if (!user) return null;
     return toAppUser(user);
   },

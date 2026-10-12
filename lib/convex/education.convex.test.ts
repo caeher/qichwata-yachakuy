@@ -12,11 +12,12 @@ const modules = import.meta.glob("../../convex/**/*.ts");
 const CLERK_ID = "convex-test-clerk-user";
 
 async function asLearner(t: ReturnType<typeof convexTest>) {
-  const authed = t.withIdentity({ subject: CLERK_ID });
-  await authed.mutation(api.users.resolveAppUser, {
-    clerkUserId: CLERK_ID,
+  const authed = t.withIdentity({
+    subject: CLERK_ID,
     email: "learner@convex.test",
+    emailVerified: true,
   });
+  await authed.mutation(api.users.resolveAppUser, {});
   return authed;
 }
 

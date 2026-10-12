@@ -1,6 +1,7 @@
 # Clerk JWT for Convex
 
 1. Clerk Dashboard → **JWT templates** → **New template** → choose **Convex** (slug must be `convex`, audience `convex`).
+   - Ensure the template includes the standard `email` and `email_verified` claims, mapped to `{{user.primary_email_address}}` and `{{user.email_verified}}`. Convex exposes these as `identity.email` and `identity.emailVerified`; the app stores the email only when the verified claim is `true`.
 2. Copy the template **Issuer** (instance root, not the JWKS path), e.g. `https://rapid-crawdad-4559.clerk.accounts.dev`.
    - JWKS for verification: `{issuer}/.well-known/jwks.json` (Convex fetches this from the issuer domain).
 3. Set on the Convex deployment (not only Next.js):

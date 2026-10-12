@@ -30,7 +30,11 @@ export async function provisionUserRecord(
 ): Promise<{ userId: string }> {
   const existing = await getUserByClerkId(ctx, input.clerkUserId);
   if (existing) {
-    if (!existing.deletedAt && input.email !== existing.email) {
+    if (
+      !existing.deletedAt &&
+      input.email !== null &&
+      input.email !== existing.email
+    ) {
       await ctx.db.patch(existing._id, { email: input.email });
     }
     return { userId: existing._id };

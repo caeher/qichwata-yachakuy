@@ -48,11 +48,7 @@ export async function resolveAppUser(
         'Clerk JWT template "convex" is missing or invalid. Create it in Clerk Dashboard (JWT templates → Convex), set CLERK_JWT_ISSUER_DOMAIN on your Convex deployment, then restart pnpm dev. See convex/CLERK_AUTH.md.',
       );
     }
-    return await convexMutation(
-      api.users.resolveAppUser,
-      { clerkUserId, email },
-      token,
-    );
+    return await convexMutation(api.users.resolveAppUser, {}, token);
   }
 
   await provisionUser(db, { clerkUserId, email });
