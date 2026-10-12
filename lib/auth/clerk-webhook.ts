@@ -42,27 +42,34 @@ export async function handleClerkWebhook(db: AuthDb, req: NextRequest) {
 
   if (convexConfigured()) {
     try {
-      const inserted = await convexInternalMutation(
-        internal.users.recordWebhookEvent,
-        { svixId, eventType: evt.type },
-      );
-      if (!inserted) {
-        return new Response("OK", { status: 200 });
-      }
+      let webhookArgs: {
+        svixId: string;
+        eventType: string;
+        clerkUserId?: string;
+        email?: string | null;
+      } = { svixId, eventType: evt.type };
+
       if (evt.type === "user.created") {
         const clerkUserId = evt.data.id;
         if (!clerkUserId) throw new Error("missing user id");
-        await convexInternalMutation(internal.users.provisionFromWebhook, {
+        webhookArgs = {
+          ...webhookArgs,
           clerkUserId,
           email: primaryEmail(evt.data),
-        });
+        };
       } else if (evt.type === "user.deleted") {
         const clerkUserId = evt.data.id;
         if (!clerkUserId) throw new Error("missing user id");
-        await convexInternalMutation(internal.users.deleteFromWebhook, {
+        webhookArgs = {
+          ...webhookArgs,
           clerkUserId,
-        });
+        };
       }
+
+      await convexInternalMutation(
+        internal.users.processWebhookEvent,
+        webhookArgs,
+      );
     } catch {
       return new Response("Webhook processing failed", { status: 500 });
     }

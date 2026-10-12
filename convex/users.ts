@@ -81,19 +81,12 @@ export const provisionFromWebhook = internalMutation({
   },
 });
 
-export const deleteFromWebhook = internalMutation({
-  args: { clerkUserId: v.string() },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    await markUserDeletedRecord(ctx, args.clerkUserId);
-    return null;
-  },
-});
-
-export const recordWebhookEvent = internalMutation({
+export const processWebhookEvent = internalMutation({
   args: {
     svixId: v.string(),
     eventType: v.string(),
+    clerkUserId: v.optional(v.string()),
+    email: v.optional(v.union(v.string(), v.null())),
   },
   returns: v.boolean(),
   handler: async (ctx, args) => {
@@ -102,6 +95,20 @@ export const recordWebhookEvent = internalMutation({
       .withIndex("by_external_id", (q) => q.eq("externalId", args.svixId))
       .unique();
     if (existing) return false;
+
+    if (args.eventType === "user.created") {
+      if (!args.clerkUserId) throw new Error("missing user id");
+      await provisionUserRecord(ctx, {
+        clerkUserId: args.clerkUserId,
+        email: args.email ?? null,
+      });
+    } else if (args.eventType === "user.deleted") {
+      if (!args.clerkUserId) throw new Error("missing user id");
+      await markUserDeletedRecord(ctx, args.clerkUserId);
+    }
+
+    // Convex commits the effect and event marker in one transaction. If either
+    // operation throws, neither change is committed and Svix can safely retry.
     await ctx.db.insert("webhookEvents", {
       externalId: args.svixId,
       eventType: args.eventType,

@@ -21,17 +21,17 @@
 
 ## Unicidad: Postgres `uniqueIndex` vs Convex `.index()`
 
-| Restricción                     | Postgres                               | Convex handler                                          |
-| ------------------------------- | -------------------------------------- | ------------------------------------------------------- |
-| Usuario por Clerk               | `users_clerk_user_id_uidx`             | `by_clerk_user_id` + `.unique()` en queries             |
-| Curso slug+versión              | `courses_slug_version_uidx`            | `by_slug_version` + seed upsert                         |
-| Matrícula usuario+curso+versión | `enrollments_user_course_version_uidx` | `education.enroll` consulta `.unique()` antes de insert |
-| Progreso matrícula+unidad       | `unit_progress_enrollment_unit_uidx`   | `completeUnit` idempotente con `.unique()`              |
-| Completación por matrícula      | `course_completions_enrollment_uidx`   | `finalizeEnrollment` consulta `by_enrollment`           |
-| Certificado `publicId`          | `certificates_public_id_uidx`          | `by_public_id` en queries                               |
-| Certificado `sha256`            | `certificates_sha256_uidx`             | `by_sha256`                                             |
-| Certificado por completion      | `certificates_completion_uidx`         | `by_completion`                                         |
-| Webhook idempotente             | `webhook_events.id` PK                 | `recordWebhookEvent` con `by_external_id`               |
+| Restricción                     | Postgres                               | Convex handler                                           |
+| ------------------------------- | -------------------------------------- | -------------------------------------------------------- |
+| Usuario por Clerk               | `users_clerk_user_id_uidx`             | `by_clerk_user_id` + `.unique()` en queries              |
+| Curso slug+versión              | `courses_slug_version_uidx`            | `by_slug_version` + seed upsert                          |
+| Matrícula usuario+curso+versión | `enrollments_user_course_version_uidx` | `education.enroll` consulta `.unique()` antes de insert  |
+| Progreso matrícula+unidad       | `unit_progress_enrollment_unit_uidx`   | `completeUnit` idempotente con `.unique()`               |
+| Completación por matrícula      | `course_completions_enrollment_uidx`   | `finalizeEnrollment` consulta `by_enrollment`            |
+| Certificado `publicId`          | `certificates_public_id_uidx`          | `by_public_id` en queries                                |
+| Certificado `sha256`            | `certificates_sha256_uidx`             | `by_sha256`                                              |
+| Certificado por completion      | `certificates_completion_uidx`         | `by_completion`                                          |
+| Webhook idempotente             | `webhook_events.id` PK                 | `processWebhookEvent` aplica efecto e ID en una mutación |
 
 Convex no impone unicidad a nivel de motor en todos los índices; la verificación exige que los handlers de escritura mantengan el mismo contrato que las restricciones Postgres.
 

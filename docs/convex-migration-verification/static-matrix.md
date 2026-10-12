@@ -6,24 +6,24 @@ Revisado contra el código en la raíz del repositorio.
 
 ## Cubierto en Convex (bifurcación + función)
 
-| Operación                     | Función Convex                                                          | Llamador                                                | Prueba                                 |
-| ----------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------- | -------------------------------------- |
-| Aprovisionar usuario (sesión) | `users.resolveAppUser`                                                  | `lib/auth/resolve-app-user.ts`                          | `convex/education.convex.test.ts`      |
-| Webhook Clerk (create/delete) | `users.provisionFromWebhook`, `deleteFromWebhook`, `recordWebhookEvent` | `lib/auth/clerk-webhook.ts`                             | Manual / staging                       |
-| Catálogo autenticado          | `education.listCatalog`                                                 | `app/dashboard/learn/page.tsx`                          | `convex/education.convex.test.ts`      |
-| Detalle de curso              | `education.getCourseDetail`                                             | `app/dashboard/learn/[courseId]/page.tsx`               | `convex/education.convex.test.ts`      |
-| Inscripción                   | `education.enroll`                                                      | `lib/education/service.ts` → API enrollments            | `convex/education.convex.test.ts`      |
-| Completar unidad              | `education.completeUnit`                                                | `lib/education/service.ts` → API units                  | `convex/education.convex.test.ts`      |
-| Finalizar / certificado       | `education.finalizeEnrollment`                                          | `lib/education/service.ts`                              | `convex/education.convex.test.ts`      |
-| Resumen aprendizaje           | `learningSummary.loadLearningSummary`                                   | `lib/dashboard/learning-summary.ts`                     | Parcial (Convex test)                  |
-| Listar certificados           | `certificates.listForUser`                                              | `app/dashboard/certificates/page.tsx`                   | `convex/education.convex.test.ts`      |
-| Verificar por publicId        | `certificates.getByPublicId`                                            | `app/api/verify/route.ts`, `lib/certificates/verify.ts` | `convex/education.convex.test.ts`      |
-| Verificar por sha256 (doc)    | `verify.lookupDocumentAnchor`                                           | `lib/verify/lookup.ts`, `app/v/[hash]/page.tsx`         | Drizzle: `lib/verify/lookup.test.ts`   |
-| Certificado por hash          | `certificates.getBySha256`                                              | `lib/certificates/verify.ts`                            | `convex/education.convex.test.ts`      |
-| Ancla de certificado          | `certificates.getAnchorForCertificate`                                  | `lib/certificates/verify.ts`                            | Convex test (vacío)                    |
-| Contexto tutor                | `education.getCoachContext`                                             | `app/api/coach/route.ts`                                | Drizzle: `app/api/coach/route.test.ts` |
-| Semilla catálogo              | `seed.seedDraftCatalog`                                                 | `pnpm convex:seed`                                      | `convex/education.convex.test.ts`      |
-| Worker cert. pendientes       | `certificates.listPendingForWorker`                                     | `app/api/jobs/certificates/route.ts`                    | Sin procesar anclas en Convex          |
+| Operación                     | Función Convex                         | Llamador                                                | Prueba                                                                     |
+| ----------------------------- | -------------------------------------- | ------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Aprovisionar usuario (sesión) | `users.resolveAppUser`                 | `lib/auth/resolve-app-user.ts`                          | `convex/education.convex.test.ts`                                          |
+| Webhook Clerk (create/delete) | `users.processWebhookEvent`            | `lib/auth/clerk-webhook.ts`                             | `lib/convex/users.convex.test.ts`, `app/api/webhooks/clerk/convex.test.ts` |
+| Catálogo autenticado          | `education.listCatalog`                | `app/dashboard/learn/page.tsx`                          | `convex/education.convex.test.ts`                                          |
+| Detalle de curso              | `education.getCourseDetail`            | `app/dashboard/learn/[courseId]/page.tsx`               | `convex/education.convex.test.ts`                                          |
+| Inscripción                   | `education.enroll`                     | `lib/education/service.ts` → API enrollments            | `convex/education.convex.test.ts`                                          |
+| Completar unidad              | `education.completeUnit`               | `lib/education/service.ts` → API units                  | `convex/education.convex.test.ts`                                          |
+| Finalizar / certificado       | `education.finalizeEnrollment`         | `lib/education/service.ts`                              | `convex/education.convex.test.ts`                                          |
+| Resumen aprendizaje           | `learningSummary.loadLearningSummary`  | `lib/dashboard/learning-summary.ts`                     | Parcial (Convex test)                                                      |
+| Listar certificados           | `certificates.listForUser`             | `app/dashboard/certificates/page.tsx`                   | `convex/education.convex.test.ts`                                          |
+| Verificar por publicId        | `certificates.getByPublicId`           | `app/api/verify/route.ts`, `lib/certificates/verify.ts` | `convex/education.convex.test.ts`                                          |
+| Verificar por sha256 (doc)    | `verify.lookupDocumentAnchor`          | `lib/verify/lookup.ts`, `app/v/[hash]/page.tsx`         | Drizzle: `lib/verify/lookup.test.ts`                                       |
+| Certificado por hash          | `certificates.getBySha256`             | `lib/certificates/verify.ts`                            | `convex/education.convex.test.ts`                                          |
+| Ancla de certificado          | `certificates.getAnchorForCertificate` | `lib/certificates/verify.ts`                            | Convex test (vacío)                                                        |
+| Contexto tutor                | `education.getCoachContext`            | `app/api/coach/route.ts`                                | Drizzle: `app/api/coach/route.test.ts`                                     |
+| Semilla catálogo              | `seed.seedDraftCatalog`                | `pnpm convex:seed`                                      | `convex/education.convex.test.ts`                                          |
+| Worker cert. pendientes       | `certificates.listPendingForWorker`    | `app/api/jobs/certificates/route.ts`                    | Sin procesar anclas en Convex                                              |
 
 ## Huecos (solo Drizzle o sin equivalente Convex)
 

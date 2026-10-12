@@ -1,6 +1,6 @@
 import { convexTest } from "convex-test";
 import { ConvexError } from "convex/values";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { api, internal } from "@/convex/_generated/api";
 import schema from "@/convex/schema";
@@ -10,7 +10,38 @@ const modules = import.meta.glob("../../convex/**/*.ts");
 const OWNER_ID = "convex-test-owner";
 const OTHER_ID = "convex-test-other";
 
+const failures = vi.hoisted(() => ({ provision: false, deletion: false }));
+
+vi.mock("../../convex/lib/auth", async (importOriginal) => {
+  const auth = await importOriginal<typeof import("../../convex/lib/auth")>();
+  return {
+    ...auth,
+    provisionUserRecord: async (
+      ...args: Parameters<typeof auth.provisionUserRecord>
+    ) => {
+      const shouldFail = failures.provision;
+      failures.provision = false;
+      const result = await auth.provisionUserRecord(...args);
+      if (shouldFail) throw new Error("injected provisioning failure");
+      return result;
+    },
+    markUserDeletedRecord: async (
+      ...args: Parameters<typeof auth.markUserDeletedRecord>
+    ) => {
+      const shouldFail = failures.deletion;
+      failures.deletion = false;
+      const result = await auth.markUserDeletedRecord(...args);
+      if (shouldFail) throw new Error("injected deletion failure");
+      return result;
+    },
+  };
+});
+
 describe("Convex user access", () => {
+  beforeEach(() => {
+    failures.provision = false;
+    failures.deletion = false;
+  });
   it("rejects anonymous provisioning and profile reads", async () => {
     const t = convexTest(schema, modules);
 
@@ -105,23 +136,34 @@ describe("Convex user access", () => {
     expect(profile?.email).toBe("verified@convex.test");
   });
 
-  it("keeps internal webhook provisioning and event recording idempotent", async () => {
+  it("retries user.created after failed provisioning without recording success", async () => {
     const t = convexTest(schema, modules);
-    const provisionInput = {
+    const event = {
+      svixId: "evt_provision_retry",
+      eventType: "user.created",
       clerkUserId: OWNER_ID,
       email: "owner@convex.test",
     };
 
-    await t.mutation(internal.users.provisionFromWebhook, provisionInput);
-    await t.mutation(internal.users.provisionFromWebhook, provisionInput);
-    const firstEvent = await t.mutation(internal.users.recordWebhookEvent, {
-      svixId: "evt_convex_test",
-      eventType: "user.created",
-    });
-    const duplicateEvent = await t.mutation(internal.users.recordWebhookEvent, {
-      svixId: "evt_convex_test",
-      eventType: "user.created",
-    });
+    failures.provision = true;
+    await expect(
+      t.mutation(internal.users.processWebhookEvent, event),
+    ).rejects.toThrow("injected provisioning failure");
+
+    const eventsAfterFailure = await t.run((ctx) =>
+      ctx.db.query("webhookEvents").collect(),
+    );
+    const usersAfterFailure = await t.run((ctx) =>
+      ctx.db.query("users").collect(),
+    );
+    expect(eventsAfterFailure).toHaveLength(0);
+    expect(usersAfterFailure).toHaveLength(0);
+
+    const retried = await t.mutation(internal.users.processWebhookEvent, event);
+    const duplicate = await t.mutation(
+      internal.users.processWebhookEvent,
+      event,
+    );
     const users = await t.run((ctx) => ctx.db.query("users").collect());
     const events = await t.run((ctx) =>
       ctx.db.query("webhookEvents").collect(),
@@ -129,7 +171,80 @@ describe("Convex user access", () => {
 
     expect(users).toHaveLength(1);
     expect(events).toHaveLength(1);
-    expect(firstEvent).toBe(true);
-    expect(duplicateEvent).toBe(false);
+    expect(retried).toBe(true);
+    expect(duplicate).toBe(false);
+  });
+
+  it("retries user.deleted after failed deletion without recording success", async () => {
+    const t = convexTest(schema, modules);
+    await t.mutation(internal.users.processWebhookEvent, {
+      svixId: "evt_delete_setup",
+      eventType: "user.created",
+      clerkUserId: OWNER_ID,
+      email: "owner@convex.test",
+    });
+    const deletion = {
+      svixId: "evt_delete_retry",
+      eventType: "user.deleted",
+      clerkUserId: OWNER_ID,
+    };
+
+    failures.deletion = true;
+    await expect(
+      t.mutation(internal.users.processWebhookEvent, deletion),
+    ).rejects.toThrow("injected deletion failure");
+
+    const eventsAfterFailure = await t.run((ctx) =>
+      ctx.db.query("webhookEvents").collect(),
+    );
+    const userAfterFailure = await t.run((ctx) =>
+      ctx.db
+        .query("users")
+        .withIndex("by_clerk_user_id", (q) => q.eq("clerkUserId", OWNER_ID))
+        .unique(),
+    );
+    expect(eventsAfterFailure.map((event) => event.externalId)).toEqual([
+      "evt_delete_setup",
+    ]);
+    expect(userAfterFailure?.deletedAt).toBeUndefined();
+
+    await expect(
+      t.mutation(internal.users.processWebhookEvent, deletion),
+    ).resolves.toBe(true);
+    await expect(
+      t.mutation(internal.users.processWebhookEvent, deletion),
+    ).resolves.toBe(false);
+
+    const userAfterRetry = await t.run((ctx) =>
+      ctx.db
+        .query("users")
+        .withIndex("by_clerk_user_id", (q) => q.eq("clerkUserId", OWNER_ID))
+        .unique(),
+    );
+    expect(userAfterRetry?.deletedAt).toEqual(expect.any(Number));
+    expect(userAfterRetry?.email).toBeNull();
+  });
+
+  it("applies one effect for concurrent deliveries with the same svix-id", async () => {
+    const t = convexTest(schema, modules);
+    const event = {
+      svixId: "evt_concurrent_duplicate",
+      eventType: "user.created",
+      clerkUserId: OWNER_ID,
+      email: "owner@convex.test",
+    };
+
+    const results = await Promise.all([
+      t.mutation(internal.users.processWebhookEvent, event),
+      t.mutation(internal.users.processWebhookEvent, event),
+    ]);
+    const users = await t.run((ctx) => ctx.db.query("users").collect());
+    const events = await t.run((ctx) =>
+      ctx.db.query("webhookEvents").collect(),
+    );
+
+    expect(results.sort()).toEqual([false, true]);
+    expect(users).toHaveLength(1);
+    expect(events).toHaveLength(1);
   });
 });
