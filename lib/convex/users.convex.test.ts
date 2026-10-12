@@ -175,6 +175,45 @@ describe("Convex user access", () => {
     expect(duplicate).toBe(false);
   });
 
+  it("recovers a legacy event row that was recorded before its effect", async () => {
+    const t = convexTest(schema, modules);
+    const event = {
+      svixId: "evt_legacy_pending",
+      eventType: "user.created",
+      clerkUserId: OWNER_ID,
+      email: "owner@convex.test",
+    };
+    await t.run((ctx) =>
+      ctx.db.insert("webhookEvents", {
+        externalId: event.svixId,
+        eventType: event.eventType,
+        receivedAt: Date.now(),
+      }),
+    );
+
+    await expect(
+      t.mutation(internal.users.processWebhookEvent, event),
+    ).resolves.toBe(true);
+    await expect(
+      t.mutation(internal.users.processWebhookEvent, event),
+    ).resolves.toBe(false);
+
+    const user = await t.run((ctx) =>
+      ctx.db
+        .query("users")
+        .withIndex("by_clerk_user_id", (q) => q.eq("clerkUserId", OWNER_ID))
+        .unique(),
+    );
+    const webhookEvent = await t.run((ctx) =>
+      ctx.db
+        .query("webhookEvents")
+        .withIndex("by_external_id", (q) => q.eq("externalId", event.svixId))
+        .unique(),
+    );
+    expect(user?.email).toBe("owner@convex.test");
+    expect(webhookEvent?.processedAt).toEqual(expect.any(Number));
+  });
+
   it("retries user.deleted after failed deletion without recording success", async () => {
     const t = convexTest(schema, modules);
     await t.mutation(internal.users.processWebhookEvent, {

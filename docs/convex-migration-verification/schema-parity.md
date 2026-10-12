@@ -2,22 +2,22 @@
 
 ## Tablas presentes en ambos
 
-| Tabla Convex            | Tabla Postgres            | Paridad de campos                             |
-| ----------------------- | ------------------------- | --------------------------------------------- |
-| `plans`                 | `plans`                   | Sí (`monthlyAnchorsIncluded`)                 |
-| `users`                 | `users`                   | Sí; timestamps Convex en ms                   |
-| `courses`               | `courses`                 | Sí; mismos enums de status/accent/level       |
-| `courseUnits`           | `course_units`            | Sí                                            |
-| `enrollments`           | `enrollments`             | Sí                                            |
-| `unitProgress`          | `unit_progress`           | Sí                                            |
-| `courseCompletions`     | `course_completions`      | Sí                                            |
-| `certificates`          | `certificates`            | Sí; `publicId` string en Convex vs uuid en PG |
-| `documents`             | `documents`               | Esquema sí; sin API de producto Convex        |
-| `anchors`               | `anchors`                 | Esquema sí; worker cert. no escribe en Convex |
-| `auditEvents`           | `audit_events`            | Parcial (solo emisión cert. en Convex)        |
-| `usageEvents`           | `usage_events`            | Esquema sí; sin API Convex                    |
-| `webhookEvents`         | `webhook_events`          | Sí (`externalId` vs `id` PK)                  |
-| `legacyObjectInventory` | `legacy_object_inventory` | Sí                                            |
+| Tabla Convex            | Tabla Postgres            | Paridad de campos                                                                                                  |
+| ----------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `plans`                 | `plans`                   | Sí (`monthlyAnchorsIncluded`)                                                                                      |
+| `users`                 | `users`                   | Sí; timestamps Convex en ms                                                                                        |
+| `courses`               | `courses`                 | Sí; mismos enums de status/accent/level                                                                            |
+| `courseUnits`           | `course_units`            | Sí                                                                                                                 |
+| `enrollments`           | `enrollments`             | Sí                                                                                                                 |
+| `unitProgress`          | `unit_progress`           | Sí                                                                                                                 |
+| `courseCompletions`     | `course_completions`      | Sí                                                                                                                 |
+| `certificates`          | `certificates`            | Sí; `publicId` string en Convex vs uuid en PG                                                                      |
+| `documents`             | `documents`               | Esquema sí; sin API de producto Convex                                                                             |
+| `anchors`               | `anchors`                 | Esquema sí; worker cert. no escribe en Convex                                                                      |
+| `auditEvents`           | `audit_events`            | Parcial (solo emisión cert. en Convex)                                                                             |
+| `usageEvents`           | `usage_events`            | Esquema sí; sin API Convex                                                                                         |
+| `webhookEvents`         | `webhook_events`          | Compatible (`externalId` vs `id` PK); Convex añade `processedAt` opcional para recuperar filas antiguas pendientes |
+| `legacyObjectInventory` | `legacy_object_inventory` | Sí                                                                                                                 |
 
 ## Unicidad: Postgres `uniqueIndex` vs Convex `.index()`
 

@@ -165,6 +165,7 @@ export default defineSchema({
     externalId: v.string(),
     eventType: v.string(),
     receivedAt: v.number(),
+    processedAt: v.optional(v.number()),
   }).index("by_external_id", ["externalId"]),
 
   legacyObjectInventory: defineTable({

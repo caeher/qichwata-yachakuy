@@ -94,7 +94,7 @@ export const processWebhookEvent = internalMutation({
       .query("webhookEvents")
       .withIndex("by_external_id", (q) => q.eq("externalId", args.svixId))
       .unique();
-    if (existing) return false;
+    if (existing?.processedAt !== undefined) return false;
 
     if (args.eventType === "user.created") {
       if (!args.clerkUserId) throw new Error("missing user id");
@@ -109,11 +109,16 @@ export const processWebhookEvent = internalMutation({
 
     // Convex commits the effect and event marker in one transaction. If either
     // operation throws, neither change is committed and Svix can safely retry.
-    await ctx.db.insert("webhookEvents", {
-      externalId: args.svixId,
-      eventType: args.eventType,
-      receivedAt: Date.now(),
-    });
+    if (existing) {
+      await ctx.db.patch(existing._id, { processedAt: Date.now() });
+    } else {
+      await ctx.db.insert("webhookEvents", {
+        externalId: args.svixId,
+        eventType: args.eventType,
+        receivedAt: Date.now(),
+        processedAt: Date.now(),
+      });
+    }
     return true;
   },
 });
