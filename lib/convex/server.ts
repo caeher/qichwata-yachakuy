@@ -4,7 +4,6 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 
 let adminClient: ConvexHttpClient | null = null;
-let publicClient: ConvexHttpClient | null = null;
 
 type AdminCapableClient = ConvexHttpClient & {
   setAdminAuth: (deployKey: string) => void;
@@ -23,10 +22,8 @@ export function getConvexUrl(): string {
 }
 
 export function getConvexPublicClient(): ConvexHttpClient {
-  if (!publicClient) {
-    publicClient = new ConvexHttpClient(getConvexUrl());
-  }
-  return publicClient;
+  // ConvexHttpClient stores auth on the instance, so never share it across calls.
+  return new ConvexHttpClient(getConvexUrl());
 }
 
 export function getConvexAdminClient(): AdminCapableClient {
@@ -50,8 +47,6 @@ export async function convexQuery<Args extends DefaultFunctionArgs, Result>(
   const client = getConvexPublicClient();
   if (token) {
     client.setAuth(token);
-  } else {
-    client.clearAuth();
   }
   return client.query(ref, args as never);
 }
