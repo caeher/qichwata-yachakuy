@@ -53,6 +53,12 @@ Si no hay configuración Stellar, el certificado se conserva `pending` con `conf
 
 La vista pública solo expone identificador aleatorio, emisor, curso/versión, fechas, SHA-256 y recibo. El snapshot usa como referencia de beneficiario el ID aleatorio del propio certificado; no expone IDs Clerk ni correo. El borrado de cuenta soft-delete conserva matrícula, progreso y finalizaciones con la fila tombstone, y conserva el snapshot mínimo para seguir verificando evidencias. Los registros Stellar no se pueden eliminar. Esta conservación no revoca un certificado ni equivale a acreditación académica externa. Corrección, reemisión y revocación quedan pendientes de una política de producto; el snapshot nunca se sobrescribe. Antes de admitir alumnos reales, producto debe aprobar esta política de datos y conservación.
 
+### Contrato de consultas públicas e internas
+
+`certificates.getByPublicId` y `certificates.getBySha256` devuelven la misma proyección validada: `publicId`, `sha256` y `state`; cuando el snapshot y su hash coinciden, también `issuer`, `courseTitle`, `issuedAt`, `network`, `txHash` y el `beneficiaryRef` opaco del certificado. Si la integridad no coincide, la respuesta contiene solo `publicId`, `sha256` y `state: "integrity_mismatch"`. Los estados conservados son `pending`, `failed`, `anchored` e `integrity_mismatch`; `network` y `txHash` son nulos antes de que exista recibo.
+
+El verificador del servidor consulta `certificates.getBySha256ForVerification`, una función interna que entrega únicamente `_id`, `publicId`, `sha256`, `snapshot`, `schemaVersion` y `status` para comparar el hash y localizar el recibo. `certificates.getAnchorForCertificate` también es interna y devuelve solo red, hash de transacción, owner, ledger y contrato para validar el anclaje. Estas verificaciones internas requieren `CONVEX_DEPLOY_KEY` en el servidor. Los vínculos `userId`/`completionId` solo aparecen en la consulta de certificados del propietario autenticado (`listForUser`) y en funciones internas del worker (`listPendingForWorker`). `pendingAt` y `pendingTxHash`, además de los detalles privados del recibo como comisión, son metadatos operativos y no forman parte de las respuestas públicas de verificación.
+
 ## Recorrido y operación
 
 - `POST /api/education/enrollments` inscribe solo en cursos publicados no demo.

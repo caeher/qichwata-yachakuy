@@ -26,7 +26,7 @@ Copia las claves a `.env.local`. En el Dashboard de Clerk:
 pnpm convex:dev
 ```
 
-Esto rellena `NEXT_PUBLIC_CONVEX_URL` y genera `convex/_generated`. Copia también `CONVEX_DEPLOY_KEY` (Settings → Deploy Key) para webhooks y jobs internos.
+Esto rellena `NEXT_PUBLIC_CONVEX_URL` y genera `convex/_generated`. Copia también `CONVEX_DEPLOY_KEY` (Settings → Deploy Key) para verificación de certificados, webhooks y jobs internos.
 
 Catálogo inicial (borradores):
 
