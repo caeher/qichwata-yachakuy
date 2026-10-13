@@ -1,7 +1,7 @@
 import type { DefaultFunctionArgs, FunctionReference } from "convex/server";
 import { ConvexHttpClient } from "convex/browser";
 
-import { api } from "@/convex/_generated/api";
+import { api, internal } from "@/convex/_generated/api";
 
 let adminClient: ConvexHttpClient | null = null;
 
@@ -85,4 +85,4 @@ export async function convexInternalMutation<
   return client.mutation(ref as never, args as never);
 }
 
-export { api };
+export { api, internal };

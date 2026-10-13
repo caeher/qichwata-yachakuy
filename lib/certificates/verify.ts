@@ -3,7 +3,13 @@ import { and, eq } from "drizzle-orm";
 import type { Database } from "@/db/client";
 import type { TestDatabase } from "@/db/pglite";
 import { anchors, certificates } from "@/db/schema";
-import { api, convexConfigured, convexQuery } from "@/lib/convex/server";
+import {
+  api,
+  convexConfigured,
+  convexInternalQuery,
+  convexQuery,
+  internal,
+} from "@/lib/convex/server";
 import {
   canonicalCertificateJson,
   hashCertificatePayload,
@@ -90,16 +96,14 @@ export async function verifyCertificateByHash(
   },
 ): Promise<CertificateVerification> {
   if (convexConfigured()) {
-    const cert = await convexQuery(api.certificates.getBySha256, { sha256 });
+    const cert = await convexInternalQuery(
+      internal.certificates.getBySha256ForVerification,
+      { sha256 },
+    );
     if (!cert) return { status: "unknown", sha256 };
     const certRow = {
       ...cert,
       id: cert._id,
-      publicId: cert.publicId,
-      sha256: cert.sha256,
-      snapshot: cert.snapshot,
-      schemaVersion: cert.schemaVersion,
-      status: cert.status,
     };
     return verifyCertificateRow(certRow, db, chain, sha256, expected);
   }
@@ -157,9 +161,10 @@ async function verifyCertificateRow(
     | undefined;
 
   if (convexConfigured()) {
-    const anchor = await convexQuery(api.certificates.getAnchorForCertificate, {
-      certificateId: cert.id as never,
-    });
+    const anchor = await convexInternalQuery(
+      internal.certificates.getAnchorForCertificate,
+      { certificateId: cert.id as never },
+    );
     receipt = anchor
       ? {
           network: anchor.network,

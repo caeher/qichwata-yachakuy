@@ -31,6 +31,9 @@ describe("Convex-only path contracts", () => {
       "utf8",
     );
     expect(source).toContain("api.certificates.getByPublicId");
-    expect(source).toContain("api.certificates.getBySha256");
+    expect(source).toContain(
+      "internal.certificates.getBySha256ForVerification",
+    );
+    expect(source).toContain("internal.certificates.getAnchorForCertificate");
   });
 });

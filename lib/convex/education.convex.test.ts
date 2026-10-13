@@ -364,12 +364,118 @@ describe("Convex education persistence", () => {
     const byPublic = await t.query(api.certificates.getByPublicId, {
       publicId: certificate!.publicId,
     });
-    expect(byPublic?.publicId).toBe(certificate!.publicId);
-
     const byHash = await t.query(api.certificates.getBySha256, {
       sha256: certificate!.sha256,
     });
-    expect(byHash?.publicId).toBe(certificate!.publicId);
+    const publicPendingShape = {
+      publicId: certificate!.publicId,
+      sha256: certificate!.sha256,
+      state: "pending",
+      issuer: "Instituto Quechua",
+      courseTitle: snapshot.course.title,
+      issuedAt: snapshot.issuedAt,
+      network: null,
+      txHash: null,
+      beneficiaryRef: snapshot.beneficiaryRef,
+    };
+    expect(byPublic).toEqual(publicPendingShape);
+    expect(byHash).toEqual(publicPendingShape);
+
+    const internalPending = await t.query(
+      internal.certificates.getBySha256ForVerification,
+      { sha256: certificate!.sha256 },
+    );
+    expect(internalPending).toEqual({
+      _id: certificate!._id,
+      publicId: certificate!.publicId,
+      sha256: certificate!.sha256,
+      snapshot,
+      schemaVersion: 1,
+      status: "pending",
+    });
+
+    await t.run(async (ctx) => {
+      await ctx.db.patch(certificate!._id, {
+        snapshot: { ...snapshot, issuer: "Snapshot alterado" },
+      });
+    });
+    const integrityMismatchShape = {
+      publicId: certificate!.publicId,
+      sha256: certificate!.sha256,
+      state: "integrity_mismatch",
+    };
+    expect(
+      await t.query(api.certificates.getByPublicId, {
+        publicId: certificate!.publicId,
+      }),
+    ).toEqual(integrityMismatchShape);
+    expect(
+      await t.query(api.certificates.getBySha256, {
+        sha256: certificate!.sha256,
+      }),
+    ).toEqual(integrityMismatchShape);
+
+    const historicalTxHash = "a".repeat(64);
+    await t.run(async (ctx) => {
+      await ctx.db.patch(certificate!._id, {
+        snapshot,
+        status: "anchored",
+        createdAt: Date.UTC(2020, 0, 2),
+        pendingAt: Date.UTC(2020, 0, 3),
+        pendingTxHash: "private-worker-transaction",
+      });
+      await ctx.db.insert("anchors", {
+        certificateId: certificate!._id,
+        network: "testnet",
+        txHash: historicalTxHash,
+        ownerPublicKey:
+          "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
+        ledger: 42,
+        contractId: "historical-contract",
+        anchoredAt: Date.UTC(2020, 0, 4),
+        feeXlm: "0.01",
+      });
+    });
+
+    const historicalByPublic = await t.query(api.certificates.getByPublicId, {
+      publicId: certificate!.publicId,
+    });
+    const historicalByHash = await t.query(api.certificates.getBySha256, {
+      sha256: certificate!.sha256,
+    });
+    const publicAnchoredShape = {
+      publicId: certificate!.publicId,
+      sha256: certificate!.sha256,
+      state: "anchored",
+      issuer: "Instituto Quechua",
+      courseTitle: snapshot.course.title,
+      issuedAt: snapshot.issuedAt,
+      network: "testnet",
+      txHash: historicalTxHash,
+      beneficiaryRef: snapshot.beneficiaryRef,
+    };
+    expect(historicalByPublic).toEqual(publicAnchoredShape);
+    expect(historicalByHash).toEqual(publicAnchoredShape);
+
+    const historicalForVerification = await t.query(
+      internal.certificates.getBySha256ForVerification,
+      { sha256: certificate!.sha256 },
+    );
+    expect(historicalForVerification).toEqual({
+      _id: certificate!._id,
+      publicId: certificate!.publicId,
+      sha256: certificate!.sha256,
+      snapshot,
+      schemaVersion: 1,
+      status: "anchored",
+    });
+    for (const result of [historicalByPublic, historicalByHash]) {
+      expect(result).not.toHaveProperty("userId");
+      expect(result).not.toHaveProperty("completionId");
+      expect(result).not.toHaveProperty("pendingAt");
+      expect(result).not.toHaveProperty("pendingTxHash");
+      expect(result).not.toHaveProperty("_id");
+    }
   });
 
   it("requires the institutional issuer configuration for authorized issuance", async () => {

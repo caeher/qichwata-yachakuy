@@ -5,7 +5,13 @@ import {
   hashCertificatePayload,
 } from "./lib/certificateCanonical";
 
-import { internalMutation, internalQuery, query } from "./_generated/server";
+import type { Doc } from "./_generated/dataModel";
+import {
+  internalMutation,
+  internalQuery,
+  query,
+  type QueryCtx,
+} from "./_generated/server";
 import { getUserByClerkId, requireIdentity } from "./lib/auth";
 
 type Snapshot = {
@@ -56,6 +62,63 @@ function canonicalFromSnapshot(value: unknown) {
   };
 }
 
+const publicCertificateValidator = v.union(
+  v.object({
+    publicId: v.string(),
+    sha256: v.string(),
+    state: v.literal("integrity_mismatch"),
+  }),
+  v.object({
+    publicId: v.string(),
+    sha256: v.string(),
+    state: v.union(
+      v.literal("pending"),
+      v.literal("anchored"),
+      v.literal("failed"),
+    ),
+    issuer: v.string(),
+    courseTitle: v.string(),
+    issuedAt: v.string(),
+    network: v.union(v.literal("testnet"), v.literal("mainnet"), v.null()),
+    txHash: v.union(v.string(), v.null()),
+    beneficiaryRef: v.string(),
+  }),
+);
+
+async function toPublicCertificate(ctx: QueryCtx, cert: Doc<"certificates">) {
+  const normalized = canonicalFromSnapshot(cert.snapshot);
+  const digest = normalized
+    ? await hashCertificatePayload(normalized.canonical)
+    : null;
+  if (
+    !normalized ||
+    digest !== cert.sha256 ||
+    cert.schemaVersion !== normalized.snapshot.schemaVersion
+  ) {
+    return {
+      publicId: cert.publicId,
+      sha256: cert.sha256,
+      state: "integrity_mismatch" as const,
+    };
+  }
+
+  const receipt = await ctx.db
+    .query("anchors")
+    .withIndex("by_certificate", (q) => q.eq("certificateId", cert._id))
+    .unique();
+  return {
+    publicId: cert.publicId,
+    sha256: cert.sha256,
+    state: cert.status,
+    issuer: normalized.snapshot.issuer,
+    courseTitle: normalized.snapshot.course.title,
+    issuedAt: normalized.snapshot.issuedAt,
+    network: receipt?.network ?? null,
+    txHash: receipt?.txHash ?? null,
+    beneficiaryRef: normalized.snapshot.beneficiaryRef,
+  };
+}
+
 export const listForUser = query({
   args: { userId: v.id("users") },
   returns: v.array(v.any()),
@@ -75,50 +138,61 @@ export const listForUser = query({
 
 export const getByPublicId = query({
   args: { publicId: v.string() },
-  returns: v.union(v.any(), v.null()),
+  returns: v.union(publicCertificateValidator, v.null()),
   handler: async (ctx, args) => {
     const cert = await ctx.db
       .query("certificates")
       .withIndex("by_public_id", (q) => q.eq("publicId", args.publicId))
       .unique();
     if (!cert) return null;
-    const normalized = canonicalFromSnapshot(cert.snapshot);
-    const digest = normalized
-      ? await hashCertificatePayload(normalized.canonical)
-      : null;
-    if (!normalized || digest !== cert.sha256) {
-      return {
-        publicId: cert.publicId,
-        sha256: cert.sha256,
-        state: "integrity_mismatch" as const,
-      };
-    }
-    const receipt = await ctx.db
-      .query("anchors")
-      .withIndex("by_certificate", (q) => q.eq("certificateId", cert._id))
-      .unique();
-    return {
-      publicId: cert.publicId,
-      sha256: cert.sha256,
-      state: cert.status,
-      issuer: normalized.snapshot.issuer,
-      courseTitle: normalized.snapshot.course.title,
-      issuedAt: normalized.snapshot.issuedAt,
-      network: receipt?.network ?? null,
-      txHash: receipt?.txHash ?? null,
-      beneficiaryRef: normalized.snapshot.beneficiaryRef,
-    };
+    return await toPublicCertificate(ctx, cert);
   },
 });
 
 export const getBySha256 = query({
   args: { sha256: v.string() },
-  returns: v.union(v.any(), v.null()),
+  returns: v.union(publicCertificateValidator, v.null()),
   handler: async (ctx, args) => {
-    return await ctx.db
+    const cert = await ctx.db
       .query("certificates")
       .withIndex("by_sha256", (q) => q.eq("sha256", args.sha256))
       .unique();
+    if (!cert) return null;
+    return await toPublicCertificate(ctx, cert);
+  },
+});
+
+export const getBySha256ForVerification = internalQuery({
+  args: { sha256: v.string() },
+  returns: v.union(
+    v.object({
+      _id: v.id("certificates"),
+      publicId: v.string(),
+      sha256: v.string(),
+      snapshot: v.any(),
+      schemaVersion: v.number(),
+      status: v.union(
+        v.literal("pending"),
+        v.literal("anchored"),
+        v.literal("failed"),
+      ),
+    }),
+    v.null(),
+  ),
+  handler: async (ctx, args) => {
+    const cert = await ctx.db
+      .query("certificates")
+      .withIndex("by_sha256", (q) => q.eq("sha256", args.sha256))
+      .unique();
+    if (!cert) return null;
+    return {
+      _id: cert._id,
+      publicId: cert.publicId,
+      sha256: cert.sha256,
+      snapshot: cert.snapshot,
+      schemaVersion: cert.schemaVersion,
+      status: cert.status,
+    };
   },
 });
 
@@ -261,15 +335,32 @@ export const settleWorkerAnchor = internalMutation({
   },
 });
 
-export const getAnchorForCertificate = query({
+export const getAnchorForCertificate = internalQuery({
   args: { certificateId: v.id("certificates") },
-  returns: v.union(v.any(), v.null()),
+  returns: v.union(
+    v.object({
+      network: v.union(v.literal("testnet"), v.literal("mainnet")),
+      txHash: v.string(),
+      ownerPublicKey: v.optional(v.string()),
+      ledger: v.optional(v.number()),
+      contractId: v.optional(v.string()),
+    }),
+    v.null(),
+  ),
   handler: async (ctx, args) => {
-    return await ctx.db
+    const anchor = await ctx.db
       .query("anchors")
       .withIndex("by_certificate", (q) =>
         q.eq("certificateId", args.certificateId),
       )
       .unique();
+    if (!anchor) return null;
+    return {
+      network: anchor.network,
+      txHash: anchor.txHash,
+      ownerPublicKey: anchor.ownerPublicKey,
+      ledger: anchor.ledger,
+      contractId: anchor.contractId,
+    };
   },
 });
