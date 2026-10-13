@@ -18,7 +18,6 @@ export async function POST(
     const outcome = await finalizeEnrollment(legacyDb(), {
       userId: ctx.appUser.id,
       enrollmentId,
-      issuer: process.env.CERTIFICATE_ISSUER?.trim() ?? "",
     });
     return NextResponse.json({
       completionId: outcome.completion!.id,

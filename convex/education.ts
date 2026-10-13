@@ -226,10 +226,7 @@ export const completeUnit = mutation({
 });
 
 export const finalizeEnrollment = mutation({
-  args: {
-    enrollmentId: v.id("enrollments"),
-    issuer: v.string(),
-  },
+  args: { enrollmentId: v.id("enrollments") },
   returns: v.object({
     completion: v.any(),
     certificate: v.union(v.any(), v.null()),
@@ -280,7 +277,8 @@ export const finalizeEnrollment = mutation({
         .unique();
       return { completion: prior, certificate: priorCertificate ?? null };
     }
-    if (!args.issuer.trim()) {
+    const issuer = process.env.CERTIFICATE_ISSUER?.normalize("NFC").trim();
+    if (!issuer) {
       throw new ConvexError("issuer_unconfigured");
     }
 
@@ -302,7 +300,7 @@ export const finalizeEnrollment = mutation({
       schemaVersion: 1,
       certificateId: publicId,
       beneficiaryRef: publicId,
-      issuer: args.issuer.normalize("NFC").trim(),
+      issuer,
       course: {
         slug: course.slug,
         version: course.version,

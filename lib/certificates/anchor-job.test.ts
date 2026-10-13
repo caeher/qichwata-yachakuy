@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createTestDb } from "@/db/pglite";
 import { publishedUnitContent } from "@/db/test-fixtures";
@@ -16,7 +16,10 @@ import type { AnchorClient } from "@/lib/stellar/anchor-types";
 
 const OPERATOR = "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF";
 
+afterEach(() => vi.unstubAllEnvs());
+
 async function pendingCertificate() {
+  vi.stubEnv("CERTIFICATE_ISSUER", "Emisor de prueba");
   const { db } = await createTestDb();
   const { userId } = await provisionUser(db, {
     clerkUserId: "certificate-job-user",
@@ -51,7 +54,6 @@ async function pendingCertificate() {
   const { certificate } = await finalizeEnrollment(db, {
     userId,
     enrollmentId: enrollment.id,
-    issuer: "Emisor de prueba",
     policy: () => ({ eligible: true, policyVersion: "fixture-v1" }),
   });
   return { db, userId, certificate: certificate! };

@@ -211,7 +211,6 @@ export async function finalizeEnrollment(
   input: {
     userId: string;
     enrollmentId: string;
-    issuer: string;
     policy?: CompletionPolicy;
     now?: Date;
   },
@@ -223,7 +222,6 @@ export async function finalizeEnrollment(
         api.education.finalizeEnrollment,
         {
           enrollmentId: input.enrollmentId as Id<"enrollments">,
-          issuer: input.issuer,
         },
         token,
       );
@@ -340,7 +338,8 @@ export async function finalizeEnrollment(
       });
       return { completion: prior, certificate: priorCertificate ?? null };
     }
-    if (!input.issuer.trim()) throw new EducationError("issuer_unconfigured");
+    const issuer = process.env.CERTIFICATE_ISSUER?.normalize("NFC").trim();
+    if (!issuer) throw new EducationError("issuer_unconfigured");
 
     const [completion] = await tx
       .insert(courseCompletions)
@@ -359,7 +358,7 @@ export async function finalizeEnrollment(
       schemaVersion: 1,
       certificateId: publicId,
       beneficiaryRef: publicId,
-      issuer: input.issuer.normalize("NFC").trim(),
+      issuer,
       course: {
         slug: course.slug,
         version: course.version,

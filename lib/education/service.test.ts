@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createTestDb } from "@/db/pglite";
 import { publishedUnitContent } from "@/db/test-fixtures";
@@ -13,11 +13,17 @@ import {
 } from "@/db/schema";
 import { provisionUser } from "@/lib/auth/provision-user";
 import {
+  canonicalCertificateJson,
+  hashCertificatePayload,
+} from "@/lib/certificates/canonical";
+import {
   completeUnit,
   EducationError,
   enrollInCourse,
   finalizeEnrollment,
 } from "@/lib/education/service";
+
+afterEach(() => vi.unstubAllEnvs());
 
 async function educationFixture() {
   const { db } = await createTestDb();
@@ -97,7 +103,6 @@ describe("education completion and certificate intent", () => {
       finalizeEnrollment(db, {
         userId,
         enrollmentId: enrollment.id,
-        issuer: "Issuer",
       }),
     ).rejects.toMatchObject({ code: "criteria_pending" });
     expect(await db.select().from(courseCompletions)).toHaveLength(0);
@@ -105,6 +110,7 @@ describe("education completion and certificate intent", () => {
   });
 
   it("creates one immutable certificate snapshot only after an eligible server policy", async () => {
+    vi.stubEnv("CERTIFICATE_ISSUER", "Instituto Quechua");
     const { db, userId, course, units } = await educationFixture();
     const enrollment = await enrollInCourse(db, {
       userId,
@@ -132,14 +138,12 @@ describe("education completion and certificate intent", () => {
       finalizeEnrollment(db, {
         userId,
         enrollmentId: enrollment.id,
-        issuer: "Issuer validado",
         policy,
         now: issuedAt,
       }),
       finalizeEnrollment(db, {
         userId,
         enrollmentId: enrollment.id,
-        issuer: "Issuer actualizado",
         policy,
         now: new Date(),
       }),
@@ -148,9 +152,39 @@ describe("education completion and certificate intent", () => {
     expect(first.certificate?.id).toBe(second.certificate?.id);
     expect(first.certificate?.sha256).toMatch(/^[a-f0-9]{64}$/);
     expect(first.certificate?.snapshot).toMatchObject({
-      issuer: "Issuer validado",
+      issuer: "Instituto Quechua",
       course: { title: "Introducción al Quechua" },
     });
+    const snapshot = first.certificate!.snapshot as {
+      certificateId: string;
+      beneficiaryRef: string;
+      issuer: string;
+      course: { slug: string; version: string; title: string };
+      completion: { policyVersion: string; completedAt: string };
+      issuedAt: string;
+    };
+    const canonical = canonicalCertificateJson({
+      certificateId: snapshot.certificateId,
+      beneficiaryRef: snapshot.beneficiaryRef,
+      issuer: snapshot.issuer,
+      course: snapshot.course,
+      policyVersion: snapshot.completion.policyVersion,
+      completedAt: new Date(snapshot.completion.completedAt),
+      issuedAt: new Date(snapshot.issuedAt),
+    });
+    expect(first.certificate!.sha256).toBe(hashCertificatePayload(canonical));
+
+    vi.stubEnv("CERTIFICATE_ISSUER", "Emisor institucional posterior");
+    const repeated = await finalizeEnrollment(db, {
+      userId,
+      enrollmentId: enrollment.id,
+      policy,
+      now: new Date("2026-04-06T06:07:08.000Z"),
+    });
+    expect(repeated.completion!.id).toBe(first.completion!.id);
+    expect(repeated.certificate!.id).toBe(first.certificate!.id);
+    expect(repeated.certificate!.snapshot).toEqual(first.certificate!.snapshot);
+    expect(repeated.certificate!.sha256).toBe(first.certificate!.sha256);
     expect(await db.select().from(courseCompletions)).toHaveLength(1);
     expect(await db.select().from(certificates)).toHaveLength(1);
     const otherUser = await provisionUser(db, {
@@ -165,6 +199,35 @@ describe("education completion and certificate intent", () => {
         answers: ["fixture response"],
       }),
     ).rejects.toBeInstanceOf(EducationError);
+  });
+
+  it("requires an institutional issuer before creating a certificate", async () => {
+    vi.stubEnv("CERTIFICATE_ISSUER", "");
+    const { db, userId, course, units } = await educationFixture();
+    await db
+      .update(courses)
+      .set({ completionPolicyStatus: "approved" })
+      .where(eq(courses.id, course.id));
+    const enrollment = await enrollInCourse(db, {
+      userId,
+      courseId: course.id,
+    });
+    for (const unit of units)
+      await completeUnit(db, {
+        userId,
+        enrollmentId: enrollment.id,
+        unitId: unit.id,
+        answers: ["fixture response"],
+      });
+
+    await expect(
+      finalizeEnrollment(db, {
+        userId,
+        enrollmentId: enrollment.id,
+      }),
+    ).rejects.toMatchObject({ code: "issuer_unconfigured" });
+    expect(await db.select().from(courseCompletions)).toHaveLength(0);
+    expect(await db.select().from(certificates)).toHaveLength(0);
   });
 
   it("does not let a learner complete a unit from a different course", async () => {

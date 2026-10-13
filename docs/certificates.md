@@ -45,6 +45,8 @@ El snapshot JSON se congela en la misma transacción que `course_completions`; e
 
 El procesador soporta tanto PostgreSQL como Convex. En ambos casos una política del curso marcada `approved` y su `completionPolicyVersion` validan la finalización del lado servidor. En PostgreSQL, al igual que en Convex, la política pendiente bloquea la creación del certificado. El botón del recorrido prepara una sola emisión idempotente; el registro en Stellar lo realiza el job programado y su estado se consulta desde la vista pública o privada.
 
+La mutación Convex obtiene el emisor de `CERTIFICATE_ISSUER` en el entorno del despliegue; no acepta un emisor como argumento. Configura el mismo valor en el entorno privado de Next.js solo si se usa el backend PostgreSQL legacy. Sin esa configuración, la emisión autorizada falla con `issuer_unconfigured`. La configuración debe representar la identidad institucional aprobada y no cambia los snapshots ya emitidos.
+
 Si no hay configuración Stellar, el certificado se conserva `pending` con `configuration_required`; no se presenta como confirmado. Si el contrato confirma el hash pero se pierde el tx hash antes de persistirlo, la consulta Soroban disponible no devuelve transacción; el job deja la emisión pendiente y audita la discrepancia en vez de fabricar un recibo. La operación debe resolver esta condición con la transacción de envío/RPC y el hash del certificado antes de reintentar. Si el recibo ya quedó en DB, el polling repara el estado aunque falle el primer guardado de `certificates.status`.
 
 ## Privacidad y borrado
@@ -59,4 +61,4 @@ La vista pública solo expone identificador aleatorio, emisor, curso/versión, f
 - `/dashboard/certificates` es privado. `/certificates/[publicId]` y `/api/verify` consultan el contrato configurado para verificación actual; una respuesta solo de base de datos no confirma Stellar.
 - Los anclajes antiguos continúan ligados a `document_id` y usan su metadata original `doc:<id>`. Los nuevos anclajes usan exclusivamente `certificate_id` y `cert:<publicId>`.
 
-Aplicar `pnpm db:migrate` antes de desplegar. Añade `CERTIFICATE_ISSUER` y `CERTIFICATE_WORKER_TOKEN` al entorno; `STELLAR_NETWORK`, `STELLAR_CONTRACT_ID` y la hot wallet existentes se conservan. No se requiere object storage, subida ni PDF.
+Aplicar `pnpm db:migrate` antes de desplegar. Configura `CERTIFICATE_ISSUER` en Convex y, solo para el backend PostgreSQL legacy, también en el entorno privado de Next.js. Añade `CERTIFICATE_WORKER_TOKEN` al entorno que ejecuta el job; `STELLAR_NETWORK`, `STELLAR_CONTRACT_ID` y la hot wallet existentes se conservan. No se requiere object storage, subida ni PDF.
