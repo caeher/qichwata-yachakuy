@@ -7,7 +7,10 @@ import { getDb } from "@/db/client";
 import { courses } from "@/db/schema";
 import { loadDashboardUser } from "@/lib/dashboard/load-dashboard-user";
 import { INITIAL_COURSES } from "@/lib/education/initial-catalog";
-import { isCourseEligibleForEnrollment } from "@/lib/education/content";
+import {
+  isCourseEligibleForEnrollment,
+  toLearnerCourseUnitContent,
+} from "@/lib/education/content";
 import { api, convexConfigured, convexQuery } from "@/lib/convex/server";
 import { getClerkConvexToken } from "@/lib/convex/clerk-token";
 
@@ -34,12 +37,17 @@ export default async function LearnPage() {
     estimatedDurationMinutes: number;
     status: string;
     enrollmentEnabled: boolean;
+    enrollmentAvailable: boolean;
   }>;
   let units: Array<{ courseId: string; content: unknown }>;
 
   if (convexConfigured()) {
     const token = await getClerkConvexToken();
-    const catalog = await convexQuery(api.education.listCatalog, {}, token);
+    const catalog = await convexQuery(
+      api.education.listPublishedCatalog,
+      {},
+      token,
+    );
     visibleCatalog = catalog.courses.map((course) => ({
       ...course,
       id: course._id,
@@ -53,8 +61,34 @@ export default async function LearnPage() {
     const catalog = await db.query.courses.findMany({
       orderBy: [asc(courses.createdAt)],
     });
-    visibleCatalog = catalog.filter((course) => course.status !== "archived");
-    units = await db.query.courseUnits.findMany();
+    const storedUnits = await db.query.courseUnits.findMany();
+    const visibleUnits = storedUnits.flatMap((unit) => {
+      const content = toLearnerCourseUnitContent(unit.content);
+      return content ? [{ courseId: unit.courseId, content }] : [];
+    });
+    visibleCatalog = catalog.flatMap((course) => {
+      if (course.status !== "published") return [];
+      const courseUnits = storedUnits.filter(
+        (unit) => unit.courseId === course.id,
+      );
+      if (
+        courseUnits.length === 0 ||
+        courseUnits.some((unit) => !toLearnerCourseUnitContent(unit.content))
+      ) {
+        return [];
+      }
+      return [
+        {
+          ...course,
+          id: course.id,
+          enrollmentAvailable: isCourseEligibleForEnrollment({
+            course,
+            contents: courseUnits.map((unit) => unit.content),
+          }),
+        },
+      ];
+    });
+    units = visibleUnits;
   }
 
   const initialOrder = new Map(
@@ -97,12 +131,7 @@ export default async function LearnPage() {
                 status={
                   course.demo
                     ? "demo"
-                    : isCourseEligibleForEnrollment({
-                          course,
-                          contents: units
-                            .filter((unit) => unit.courseId === course.id)
-                            .map((unit) => unit.content),
-                        })
+                    : course.enrollmentAvailable
                       ? "available"
                       : "preparation"
                 }
@@ -114,12 +143,7 @@ export default async function LearnPage() {
                 statusLabel={
                   course.demo
                     ? `Demostración · v${course.version}`
-                    : isCourseEligibleForEnrollment({
-                          course,
-                          contents: units
-                            .filter((unit) => unit.courseId === course.id)
-                            .map((unit) => unit.content),
-                        })
+                    : course.enrollmentAvailable
                       ? `Disponible · v${course.version}`
                       : `En preparación · v${course.version}`
                 }

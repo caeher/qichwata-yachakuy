@@ -7,21 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TutorPanel } from "@/components/coach/tutor-panel";
-import type { CourseUnitContent } from "@/lib/education/content";
-
-type SafeUnitContent = Omit<CourseUnitContent, "activity"> & {
-  activity: Omit<CourseUnitContent["activity"], "items"> & {
-    items: Array<
-      Pick<CourseUnitContent["activity"]["items"][number], "prompt" | "options">
-    >;
-  };
-};
+import type { LearnerCourseUnitContent } from "@/lib/education/content";
 
 type LearningUnit = {
   id: string;
   position: number;
   title: string;
-  content: SafeUnitContent;
+  content: LearnerCourseUnitContent;
 };
 
 export function CourseActions({
@@ -411,6 +403,13 @@ export function CourseActions({
                     className="flex flex-col gap-2 text-sm font-medium"
                   >
                     {item.prompt}
+                    {item.options?.length ? (
+                      <ul className="text-muted-foreground list-disc pl-5 font-normal">
+                        {item.options.map((option) => (
+                          <li key={option}>{option}</li>
+                        ))}
+                      </ul>
+                    ) : null}
                     <textarea
                       required
                       rows={3}
@@ -433,12 +432,6 @@ export function CourseActions({
                   </label>
                 ))}
               </div>
-              {activeUnit.content.activity.modality === "text" &&
-              activeUnit.content.source.lessonId === "practica-02" ? (
-                <p className="mt-3 text-sm font-medium">
-                  Actividad textual; no incluye audio.
-                </p>
-              ) : null}
               <div className="mt-4 flex flex-wrap items-center gap-3">
                 <Button
                   type="submit"
@@ -482,22 +475,6 @@ export function CourseActions({
                 enabled={tutorEnabled}
               />
             ) : null}
-            <footer className="border-t pt-4 text-xs">
-              <p>
-                Fuentes:{" "}
-                {activeUnit.content.sources.status === "pending"
-                  ? "pendientes"
-                  : activeUnit.content.sources.items
-                      .map((source) => source.citation)
-                      .join("; ")}
-                . Variedad:{" "}
-                {activeUnit.content.regionalVariant.name ?? "por definir"}.
-              </p>
-              <p className="text-muted-foreground mt-1">
-                Contenido en revisión. La práctica formativa no es evidencia de
-                elegibilidad para certificado.
-              </p>
-            </footer>
           </CardContent>
         </Card>
       ) : null}
@@ -505,7 +482,7 @@ export function CourseActions({
   );
 }
 
-function kindLabel(kind: CourseUnitContent["kind"]) {
+function kindLabel(kind: LearnerCourseUnitContent["kind"]) {
   return kind === "vocabulary"
     ? "Vocabulario"
     : kind === "phrases"

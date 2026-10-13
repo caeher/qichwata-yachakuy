@@ -67,6 +67,28 @@ export type CourseUnitContent = {
   source: { system: "yachay-convex"; moduleSlug: string; lessonId: string };
 };
 
+export type LearnerCourseUnitContent = Pick<
+  CourseUnitContent,
+  | "schemaVersion"
+  | "status"
+  | "kind"
+  | "durationMinutes"
+  | "objectives"
+  | "reading"
+  | "vocabulary"
+  | "phrases"
+  | "examples"
+> & {
+  activity: Pick<
+    CourseUnitContent["activity"],
+    "title" | "instructions" | "modality" | "audioStatus"
+  > & {
+    items: Array<
+      Pick<CourseUnitContent["activity"]["items"][number], "prompt" | "options">
+    >;
+  };
+};
+
 export function isCourseUnitContent(
   value: unknown,
 ): value is CourseUnitContent {
@@ -119,6 +141,38 @@ export function isUnitReadyForPublication(
     value.authorship.status === "attributed" &&
     Boolean(value.authorship.author && value.authorship.license)
   );
+}
+
+/**
+ * Build the content view that may cross the server/client boundary. Evaluation
+ * keys, feedback, and editorial metadata stay in the stored server record.
+ */
+export function toLearnerCourseUnitContent(
+  value: unknown,
+): LearnerCourseUnitContent | null {
+  if (!isUnitReadyForPublication(value)) return null;
+
+  const { activity } = value;
+  return {
+    schemaVersion: value.schemaVersion,
+    status: value.status,
+    kind: value.kind,
+    durationMinutes: value.durationMinutes,
+    objectives: value.objectives,
+    reading: value.reading,
+    vocabulary: value.vocabulary,
+    phrases: value.phrases,
+    examples: value.examples,
+    activity: {
+      title: activity.title,
+      instructions: activity.instructions,
+      items: activity.items.map(({ prompt, options }) =>
+        options === undefined ? { prompt } : { prompt, options },
+      ),
+      modality: activity.modality,
+      audioStatus: activity.audioStatus,
+    },
+  };
 }
 
 export function isCourseEligibleForEnrollment(input: {

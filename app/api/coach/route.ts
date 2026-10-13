@@ -1,8 +1,8 @@
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
-import { api, convexConfigured, convexQuery } from "@/lib/convex/server";
-import { getClerkConvexToken } from "@/lib/convex/clerk-token";
+import { internal } from "@/convex/_generated/api";
+import { convexConfigured, convexInternalQuery } from "@/lib/convex/server";
 import { legacyDb } from "@/lib/db/legacy-db";
 import { courseUnits, courses, enrollments } from "@/db/schema";
 import { loadDashboardUser } from "@/lib/dashboard/load-dashboard-user";
@@ -151,14 +151,13 @@ export async function POST(request: Request) {
     let coachContext: CoachContext | null = null;
 
     if (convexConfigured()) {
-      const token = await getClerkConvexToken();
-      const loaded = await convexQuery(
-        api.education.getCoachContext,
+      const loaded = await convexInternalQuery(
+        internal.education.getCoachContext,
         {
+          clerkUserId: user.appUser.clerkUserId,
           enrollmentId: input.enrollmentId as never,
           unitId: input.unitId as never,
         },
-        token,
       );
       if (!loaded) return errorResponse("unit_unavailable", 404);
       const content = isCourseUnitContent(loaded.unitContent)

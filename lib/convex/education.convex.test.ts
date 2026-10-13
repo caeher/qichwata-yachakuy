@@ -104,6 +104,105 @@ describe("Convex education persistence", () => {
     ).rejects.toBeInstanceOf(ConvexError);
   });
 
+  it("redacts evaluation and editorial fields from public and learner queries", async () => {
+    const t = convexTest(schema, modules);
+    const { courseId, units } = await publishedCourseFixture(t);
+    await t.run(async (ctx) => {
+      const unit = await ctx.db.get(units[0]);
+      expect(unit).toBeTruthy();
+      const content = unit!.content as ReturnType<typeof publishedUnitContent>;
+      await ctx.db.patch(units[0], {
+        content: {
+          ...content,
+          activity: {
+            ...content.activity,
+            items: content.activity.items.map((item) => ({
+              ...item,
+              options: ["opción visible", "otra opción"],
+            })),
+          },
+        },
+      });
+    });
+
+    const publicCatalog = await t.query(api.education.listPublishedCatalog, {});
+    const learner = await asLearner(t);
+    const authenticatedCatalog = await learner.query(
+      api.education.listPublishedCatalog,
+      {},
+    );
+    const detail = await learner.query(api.education.getCourseDetail, {
+      courseId,
+    });
+
+    expect(publicCatalog).toEqual(authenticatedCatalog);
+    expect(detail).toBeTruthy();
+    for (const response of [publicCatalog, authenticatedCatalog, detail]) {
+      const serialized = JSON.stringify(response);
+      expect(serialized).not.toMatch(
+        /"(answer|acceptedAnswers|feedback|review|sources|regionalVariant|authorship|source)"\s*:/,
+      );
+      expect(serialized).not.toContain("fixture response");
+      expect(serialized).not.toContain("another accepted response");
+    }
+
+    const catalogItem = publicCatalog.units[0].content.activity.items[0];
+    const detailItem = detail!.units[0].content.activity.items[0];
+    expect(catalogItem).toEqual({
+      prompt: "What is the reviewed fixture answer?",
+      options: ["opción visible", "otra opción"],
+    });
+    expect(detailItem).toEqual(catalogItem);
+  });
+
+  it("hides draft courses and courses containing draft units, including direct detail IDs", async () => {
+    const t = convexTest(schema, modules);
+    await t.mutation(internal.seed.seedDraftCatalog, {});
+    const { courseId: partiallyDraftCourseId, units } =
+      await publishedCourseFixture(t);
+    await t.run(async (ctx) => {
+      const unit = await ctx.db.get(units[0]);
+      const content = unit!.content as ReturnType<typeof publishedUnitContent>;
+      await ctx.db.patch(units[0], {
+        content: { ...content, status: "draft" },
+      });
+    });
+
+    const draftCourse = await t.run(async (ctx) =>
+      ctx.db
+        .query("courses")
+        .withIndex("by_slug_version", (q) =>
+          q.eq("slug", "saludos-y-presencia").eq("version", "1.0.0"),
+        )
+        .unique(),
+    );
+    expect(draftCourse).toBeTruthy();
+
+    const publicCatalog = await t.query(api.education.listPublishedCatalog, {});
+    const learner = await asLearner(t);
+    const authenticatedCatalog = await learner.query(
+      api.education.listPublishedCatalog,
+      {},
+    );
+    expect(publicCatalog).toEqual({ courses: [], units: [] });
+    expect(authenticatedCatalog).toEqual(publicCatalog);
+    await expect(
+      learner.query(api.education.getCourseDetail, {
+        courseId: draftCourse!._id,
+      }),
+    ).resolves.toBeNull();
+    await expect(
+      learner.query(api.education.getCourseDetail, {
+        courseId: partiallyDraftCourseId,
+      }),
+    ).resolves.toBeNull();
+    await expect(
+      t.query(api.education.getCourseDetail, {
+        courseId: draftCourse!._id,
+      }),
+    ).rejects.toMatchObject({ data: "not_authenticated" });
+  });
+
   it("enrolls, completes units idempotently, and blocks finalize while policy pending", async () => {
     vi.stubEnv("CERTIFICATE_ISSUER", "Instituto Quechua");
     const t = convexTest(schema, modules);
@@ -116,11 +215,27 @@ describe("Convex education persistence", () => {
     const again = await authed.mutation(api.education.enroll, { courseId });
     expect(again?._id).toBe(enrollment!._id);
 
-    await authed.mutation(api.education.completeUnit, {
+    await expect(
+      authed.mutation(api.education.completeUnit, {
+        enrollmentId: enrollment!._id,
+        unitId: units[0],
+        answers: ["unverified response"],
+        acceptedAnswers: ["unverified response"],
+      } as never),
+    ).rejects.toThrow();
+    await expect(
+      authed.mutation(api.education.completeUnit, {
+        enrollmentId: enrollment!._id,
+        unitId: units[0],
+        answers: ["incorrect response"],
+      }),
+    ).rejects.toMatchObject({ data: "evidence_incorrect" });
+    const firstCompletion = await authed.mutation(api.education.completeUnit, {
       enrollmentId: enrollment!._id,
       unitId: units[0],
       answers: ["fixture response"],
     });
+    expect(firstCompletion.feedback).toEqual(["Correct fixture response."]);
     await authed.mutation(api.education.completeUnit, {
       enrollmentId: enrollment!._id,
       unitId: units[0],
@@ -233,7 +348,7 @@ describe("Convex education persistence", () => {
         enrollmentId: enrollment!._id,
         issuer: "Identidad suplantada",
       } as never),
-    ).rejects.toBeInstanceOf(ConvexError);
+    ).rejects.toThrow();
 
     vi.stubEnv("CERTIFICATE_ISSUER", "Otro emisor configurado después");
     const repeated = await authed.mutation(api.education.finalizeEnrollment, {

@@ -12,21 +12,14 @@ import { courseUnits, courses, enrollments, unitProgress } from "@/db/schema";
 import { loadDashboardUser } from "@/lib/dashboard/load-dashboard-user";
 import {
   isCourseEligibleForEnrollment,
-  isCourseUnitContent,
+  toLearnerCourseUnitContent,
+  type LearnerCourseUnitContent,
 } from "@/lib/education/content";
 import { CourseActions } from "@/app/dashboard/learn/course-actions";
 
 type CourseRow = InferSelectModel<typeof courses>;
 
-function LessonContent({ content }: { content: unknown }) {
-  if (!isCourseUnitContent(content)) {
-    return (
-      <p className="text-muted-foreground text-sm">
-        Contenido pendiente de estructurar.
-      </p>
-    );
-  }
-
+function LessonContent({ content }: { content: LearnerCourseUnitContent }) {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center gap-2">
@@ -37,11 +30,7 @@ function LessonContent({ content }: { content: unknown }) {
               ? "Frases"
               : "Actividad"}
         </Badge>
-        <Badge variant="outline">
-          {content.status === "published"
-            ? "Publicado · revisión registrada"
-            : "Borrador · revisión pendiente"}
-        </Badge>
+        <Badge variant="outline">Publicado</Badge>
         <span className="text-muted-foreground text-xs">
           {content.durationMinutes} min
         </span>
@@ -115,29 +104,10 @@ function LessonContent({ content }: { content: unknown }) {
         <p className="text-muted-foreground mt-2 text-sm">
           {content.activity.instructions[0]}
         </p>
-        {content.activity.modality === "text" &&
-        content.source.lessonId === "practica-02" ? (
-          <p className="mt-2 text-sm font-medium">
-            Actividad textual; no incluye audio.
-          </p>
-        ) : null}
         <p className="text-muted-foreground mt-3 text-sm">
-          {content.activity.items.length} actividad(es) textual(es). Las
-          soluciones se muestran después de responder.
+          {content.activity.items.length} actividad(es) textual(es).
         </p>
       </section>
-      <div className="border-t pt-4 text-xs">
-        <p>
-          Fuentes:{" "}
-          {content.sources.status === "pending"
-            ? "pendientes"
-            : `${content.sources.items.length} documentadas`}
-          . Variedad: {content.regionalVariant.name ?? "por definir"}.
-        </p>
-        <p className="text-muted-foreground mt-1">
-          No es material validado ni certificable.
-        </p>
-      </div>
     </div>
   );
 }
@@ -170,8 +140,9 @@ export default async function CoursePage({
     id: string;
     position: number;
     title: string;
-    content: unknown;
+    content: LearnerCourseUnitContent;
   }>;
+  let enrollmentAvailable: boolean;
   let enrollment: { id: string; courseVersion: string } | undefined;
   let progress: Array<{ unitId: string }>;
 
@@ -182,7 +153,7 @@ export default async function CoursePage({
       { courseId: courseId as Id<"courses"> },
       token,
     );
-    if (!detail || detail.course.status === "archived") {
+    if (!detail) {
       return (
         <main className="mx-auto max-w-5xl px-4 py-12">
           <h1 className="text-2xl font-semibold">Curso no disponible</h1>
@@ -193,7 +164,13 @@ export default async function CoursePage({
       ...detail.course,
       id: detail.course._id,
     } as unknown as CourseRow;
-    units = detail.units.map((unit) => ({ ...unit, id: unit._id }));
+    enrollmentAvailable = detail.course.enrollmentAvailable;
+    units = detail.units.map((unit) => ({
+      id: unit._id,
+      position: unit.position,
+      title: unit.title,
+      content: unit.content as LearnerCourseUnitContent,
+    }));
     enrollment = detail.enrollment
       ? {
           id: detail.enrollment._id,
@@ -205,22 +182,42 @@ export default async function CoursePage({
     const row = await db.query.courses.findFirst({
       where: eq(courses.id, courseId),
     });
-    if (!row || row.status === "archived")
+    if (!row || row.status !== "published")
       return (
         <main className="mx-auto max-w-5xl px-4 py-12">
           <h1 className="text-2xl font-semibold">Curso no disponible</h1>
         </main>
       );
     course = row;
-    units = await db.query.courseUnits.findMany({
+    const storedUnits = await db.query.courseUnits.findMany({
       where: eq(courseUnits.courseId, course.id),
       orderBy: [asc(courseUnits.position)],
     });
-    const canEnrollLocal = isCourseEligibleForEnrollment({
+    const learnerUnits = storedUnits.map((unit) => ({
+      id: unit.id,
+      position: unit.position,
+      title: unit.title,
+      content: toLearnerCourseUnitContent(unit.content),
+    }));
+    if (
+      learnerUnits.length === 0 ||
+      learnerUnits.some((unit) => unit.content === null)
+    ) {
+      return (
+        <main className="mx-auto max-w-5xl px-4 py-12">
+          <h1 className="text-2xl font-semibold">Curso no disponible</h1>
+        </main>
+      );
+    }
+    units = learnerUnits.map((unit) => ({
+      ...unit,
+      content: unit.content!,
+    }));
+    enrollmentAvailable = isCourseEligibleForEnrollment({
       course,
-      contents: units.map((unit) => unit.content),
+      contents: storedUnits.map((unit) => unit.content),
     });
-    enrollment = canEnrollLocal
+    enrollment = enrollmentAvailable
       ? ((await db.query.enrollments.findFirst({
           where: and(
             eq(enrollments.courseId, course.id),
@@ -243,10 +240,7 @@ export default async function CoursePage({
       </main>
     );
 
-  const canEnroll = isCourseEligibleForEnrollment({
-    course,
-    contents: units.map((unit) => unit.content),
-  });
+  const canEnroll = enrollmentAvailable;
   if (convexConfigured() && canEnroll && !enrollment) {
     enrollment = undefined;
   }
@@ -298,27 +292,7 @@ export default async function CoursePage({
             process.env.OPENAI_MODEL?.trim(),
           )}
           requestedUnitId={requestedUnitId ?? null}
-          units={units.flatMap((unit) => {
-            if (!isCourseUnitContent(unit.content)) return [];
-            const { activity, ...content } = unit.content;
-            return [
-              {
-                id: unit.id,
-                position: unit.position,
-                title: unit.title,
-                content: {
-                  ...content,
-                  activity: {
-                    ...activity,
-                    items: activity.items.map(({ prompt, options }) => ({
-                      prompt,
-                      options,
-                    })),
-                  },
-                },
-              },
-            ];
-          })}
+          units={units}
           completedUnitIds={progress.map(({ unitId }) => unitId)}
           completionPolicyStatus={course.completionPolicyStatus}
         />

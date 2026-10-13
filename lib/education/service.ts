@@ -16,7 +16,7 @@ import {
 } from "@/db/schema";
 import {
   isCourseEligibleForEnrollment,
-  isCourseUnitContent,
+  isUnitReadyForPublication,
 } from "@/lib/education/content";
 import {
   canonicalCertificateJson,
@@ -162,6 +162,14 @@ export async function completeUnit(
     ),
   });
   if (!enrollment) throw new EducationError("not_found");
+  const course = await db.query.courses.findFirst({
+    where: and(
+      eq(courses.id, enrollment.courseId),
+      eq(courses.version, enrollment.courseVersion),
+      eq(courses.status, "published"),
+    ),
+  });
+  if (!course) throw new EducationError("course_unavailable");
   const unit = await db.query.courseUnits.findFirst({
     where: and(
       eq(courseUnits.id, input.unitId),
@@ -169,8 +177,9 @@ export async function completeUnit(
     ),
   });
   if (!unit) throw new EducationError("not_found");
-  const content = isCourseUnitContent(unit.content) ? unit.content : null;
-  const items = content?.activity.items;
+  const content = isUnitReadyForPublication(unit.content) ? unit.content : null;
+  if (!content) throw new EducationError("course_unavailable");
+  const items = content.activity.items;
   if (!items?.length || input.answers.length !== items.length)
     throw new EducationError("evidence_required");
   const normalize = (value: string) =>
